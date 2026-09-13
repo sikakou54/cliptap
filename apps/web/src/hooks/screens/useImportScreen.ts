@@ -1,11 +1,12 @@
 /**
- * インポート画面のビジネスロジックフック
+ * 復元画面のビジネスロジックフック
  *
  * @description
- * データインポート処理の状態管理とロジックを提供。
- * useWebImportをラップし、Dashboard画面向けの統一インターフェースを提供。
+ * 復元（バックアップファイルによる全件置換）処理の状態管理とロジックを提供。
+ * useWebImportをラップし、Dashboard画面と共通ページレイアウト向けの統一インターフェースを提供。
  *
  * @see pages/Dashboard.tsx - 使用元
+ * @see components/layout/PageLayout.tsx - 使用元
  * @see hooks/useWebImport.ts - 実装詳細
  */
 
@@ -18,7 +19,7 @@ import {
   useVariables,
   useCategories,
 } from '@cliptap/shared';
-import { useWebImport, type UseWebImportResult } from '@hooks/useWebImport';
+import { useWebImport } from '@hooks/useWebImport';
 import { showErrorAlert, showConfirm } from '@utils/alerts';
 
 export interface UseImportScreenParams {
@@ -32,38 +33,20 @@ export interface UseImportScreenReturn {
   /* 状態 */
   /** ファイル選択モーダル表示中か */
   showFileModal: boolean;
-  /** モード選択モーダル表示中か */
-  showModeSelectModal: boolean;
-  /** 項目選択モーダル表示中か */
-  showSelectionModal: boolean;
-  /** インポート候補データ */
-  importCandidates: UseWebImportResult['importCandidates'];
-  /** 処理中か */
-  isProcessing: boolean;
-  /** ローディング中か */
-  isLoading: boolean;
+  /** ファイルの検証または復元の処理中か（ファイル選択モーダルを閉じられないようにする） */
+  isBusy: boolean;
 
   /* ハンドラ */
   /** ファイル選択モーダルを開く */
   openFileModal: () => void;
-  /** ファイル選択モーダルを閉じる */
+  /** ファイル選択モーダルを閉じる（準備済みの一時DBの破棄を伴う） */
   closeFileModal: () => void;
-  /** モード選択モーダルを閉じる */
-  closeModeSelectModal: () => void;
-  /** 項目選択モーダルを閉じる */
-  closeSelectionModal: () => void;
-  /** ファイル選択時のハンドラ */
-  handleFileSelected: UseWebImportResult['handleFileSelected'];
-  /** 全データ復元を実行 */
-  handleRestoreBackup: () => Promise<void>;
-  /** マージモードを選択 */
-  handleSelectMergeMode: () => void;
-  /** 部分インポートを実行 */
-  handleExecuteImport: UseWebImportResult['handleExecutePartialImport'];
+  /** ファイル選択時のハンドラ（検証後に全削除の確認を出し、同意すれば全件置換する） */
+  handleFileSelected: (fileData: unknown, password: string) => Promise<void>;
 }
 
 /**
- * インポート画面のビジネスロジックフック
+ * 復元画面のビジネスロジックフック
  */
 export function useImportScreen({
   user,
@@ -82,7 +65,7 @@ export function useImportScreen({
     showErrorAlert(translatedMessage);
   }, []);
 
-  /* インポート完了時にすべてのProviderをリフレッシュ */
+  /* 復元完了時にすべてのProviderをリフレッシュ */
   const handleImportComplete = useCallback(() => {
     refreshSnippets();
     refreshProfiles();
@@ -103,37 +86,38 @@ export function useImportScreen({
     webImport.setShowFileSelect(true);
   }, [webImport]);
 
-  /* ファイル選択モーダルを閉じる */
+  /* ファイル選択モーダルを閉じる（復元せずに閉じるため、準備済みの一時DBを残さない） */
   const closeFileModal = useCallback(() => {
+    webImport.discardPreparedRestore();
     webImport.setShowFileSelect(false);
   }, [webImport]);
 
-  /* 復元前の確認ダイアログ */
-  const handleRestoreBackup = useCallback(async () => {
-    showConfirm('backup.restore_confirm', () => {
-      void webImport.handleRestoreBackup();
-    });
+  /* ファイルを検証し、全削除の確認に同意した場合だけ全件置換する */
+  const handleFileSelected = useCallback(async (fileData: unknown, password: string) => {
+    const prepared = await webImport.handleFileSelected(fileData, password);
+    if (!prepared) return;
+
+    showConfirm(
+      'backup.restore_confirm',
+      () => {
+        void webImport.handleRestoreBackup();
+      },
+      () => {
+        /* 取消時はファイル選択モーダルを開いたまま、準備した一時DBだけを破棄する */
+        webImport.discardPreparedRestore();
+      }
+    );
   }, [webImport]);
 
   return {
     /* 状態 */
     showFileModal: webImport.showFileSelect,
-    showModeSelectModal: webImport.showModeSelect,
-    showSelectionModal: webImport.showItemSelect,
-    importCandidates: webImport.importCandidates,
-    isProcessing: webImport.isProcessing,
-    isLoading: webImport.isLoading,
+    isBusy: webImport.isLoading || webImport.isProcessing,
 
     /* ハンドラ */
     openFileModal,
     closeFileModal,
-    /* 一時DBの破棄と取込処理中のガードはuseWebImport側へ集約している */
-    closeModeSelectModal: webImport.closeModeSelect,
-    closeSelectionModal: webImport.closeItemSelect,
-    handleFileSelected: webImport.handleFileSelected,
-    handleRestoreBackup,
-    handleSelectMergeMode: webImport.handleSelectMergeMode,
-    handleExecuteImport: webImport.handleExecutePartialImport,
+    handleFileSelected,
   };
 }
 

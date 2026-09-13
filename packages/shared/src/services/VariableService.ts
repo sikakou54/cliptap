@@ -224,60 +224,6 @@ export class VariableService {
 
 
   /**
-   * カスタム変数を作成または更新（名前ベースのupsert）
-   *
-   * @param data - 変数の情報（nameで既存を検索、あれば更新、なければ新規作成）
-   * @returns 作成/更新された変数
-   * @throws {VariableNameRequiredError} 変数名が空の場合
-   * @throws {VariableNameInvalidError} 変数名の形式が無効な場合
-   * @throws {VariableNameReservedError} システム変数名と衝突する場合
-   * @throws {DuplicateNameError} 同名の変数が既に存在する場合（自分以外）
-   * @remarks
-   * 既存変数の表示順は変更しない。無料プランの有効判定は表示順で行うため、
-   * 同名変数の更新で表示順を末尾へ動かすと、それまで有効だった変数が
-   * 上限超過分と入れ替わって無効になる。これを防ぐため表示順を引数に取らない。
-   */
-  static upsert(data: Omit<CreateVariableInput, 'sortOrder'>): Variable {
-    const existing = VariableMapper.getByName(data.name);
-    if (existing) {
-      /* 既存変数を更新（表示順は据え置く） */
-      return this.update(existing.id, {
-        name: data.name,
-        label: data.label,
-        icon: data.icon,
-      });
-    } else {
-      /* 新規作成（sortOrderは自動採番） */
-      return this.create({
-        name: data.name,
-        type: 'custom',
-        label: data.label,
-        icon: data.icon,
-      });
-    }
-  }
-
-
-  /**
-   * 単一プロファイルの変数値を作成/更新
-   * @param profileId - プロファイルID
-   * @param variableId - 変数ID
-   * @param value - 変数値
-   *
-   * @remarks
-   * 値は前後空白を除去して保存する。
-   * UI経由の一括保存 ProfileService.setVariableValuesForVariable と同じ正規化規則。
-   */
-  static upsertValueForProfile(profileId: string, variableId: string, value: string): void {
-    ProfileVariableMapper.upsert({
-      profileId,
-      variableId,
-      value: value.trim(),
-    });
-  }
-
-
-  /**
    * 有効なカスタム変数の取得（無効化されたものは含まない）
    * @returns カスタム変数の配列
    *

@@ -21,7 +21,6 @@
 | SC-SETTINGS-CATEGORIES | `role=AXStaticText&label=カテゴリ + -label=カテゴリ作成 + -label=カテゴリ編集` | 見出しだけでは子画面の項目ラベルと衝突するため否定条件を追加 |
 | SC-SETTINGS-PROFILES | `role=AXStaticText&label=プロファイル + -label=変数を編集 + -label=変数を追加` | 変数編集の表ヘッダと衝突するため否定条件を追加 |
 | SC-SETTINGS-VARIABLES | `role=AXStaticText&label=カスタム変数` | 衝突なし |
-| SC-SETTINGS-SELECT-EXPORT-DATA | `role=AXStaticText&label=エクスポート` | 入出力画面の行は `, エクスポート, …, ` なので完全一致で区別できる |
 | SC-SETTINGS-SYSTEM-VARIABLE-FORMATS | `label=すべて既定に戻す` | 右上ボタン |
 | SC-WEBVIEW-TERMS / SC-WEBVIEW-PRIVACY | `role=AXStaticText&label=利用規約` / `…プライバシーポリシー` | 元は1画面だったが、識別のため2つへ分割 |
 | SC-SNIPPET-EDIT | `label=定型文編集` | 見出し |
@@ -38,7 +37,7 @@
 
 SC-SEARCH / SC-SNIPPET-CREATE / SC-SNIPPET-TITLE-INPUT / SC-SNIPPET-CONTENT-INPUT /
 SC-SNIPPET-PROFILE-SELECT / SC-PROFILE-EDIT / SC-VARIABLE-EDIT /
-SC-VARIABLE-PROFILE-VALUE-EDIT / SC-SETTINGS-EXPORT-IMPORT / SC-SETTINGS-SELECT-IMPORT-DATA /
+SC-VARIABLE-PROFILE-VALUE-EDIT / SC-SETTINGS-EXPORT-IMPORT /
 SC-SUBSCRIPTION-MANAGE / SC-SUBSCRIPTION-PAYWALL
 
 （`SC-PROFILE-VARIABLE-EDIT` は画面ごと削除したため対象外。`screens.csv` からも削除済み）

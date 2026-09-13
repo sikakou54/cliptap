@@ -32,8 +32,6 @@
 | 20 | Web初回読込・新しいスキーマ | `アプリバージョンが異なります。最新版に更新してください` | P-F14-094 | UNREACHABLE | Web版は自動実行の対象外。`apps/web/src/pages/Home.tsx:157` |
 | 21 | モバイル／読込済みWeb・新しいスキーマ | `現在の端末では対応していないバージョンです。アプリを最新バージョンに更新してから再度お試しください。` | P-F14-035 | UNREACHABLE | DocumentPickerに阻まれ、`s=8` のファイルを投入できない |
 | 22 | Web初回読込・その他の読込失敗 | `読み込みに失敗しました: {message}` | P-F14-095 | UNREACHABLE | Web版は自動実行の対象外。`apps/web/src/pages/Home.tsx:164` |
-| 23 | モバイル選択インポート／Web選択エクスポート・選択なし | `インポートするデータが選択されていません` | P-F14-086 | UNREACHABLE | インポートボタンが `disabled={totalSelected === 0 \|\| isProcessing}` のため `onPress` が発火せず `handleImport` の警告分岐へ入らない（`select-import-data.tsx:230`）。加えて画面自体がDocumentPicker越しでしか開けない |
-| 24 | モバイル選択エクスポート・選択なし | `1件以上選択してください` | P-F13-053 | UNREACHABLE | エクスポートボタンが `disabled={totalSelected === 0}` のため `handleExportPress` の `showWarningAlert` 分岐へ到達できない（`select-export-data.tsx:224`） |
 | 25 | 規約未同意 | `利用規約に同意してください` | P-F14-096 | UNREACHABLE | Web版は自動実行の対象外。`apps/web/src/pages/Home.tsx:103` |
 | 26 | プライバシー未同意 | `プライバシーポリシーに同意してください` | P-F14-097 | UNREACHABLE | Web版は自動実行の対象外。`apps/web/src/pages/Home.tsx:108` |
 | 27 | Web・RGB範囲外 | `RGB値が無効です（0-255の範囲で入力してください）` | P-F03-901 | UNREACHABLE | Web版は自動実行の対象外。`apps/web/src/hooks/screens/useCategoriesScreen.ts:317` |

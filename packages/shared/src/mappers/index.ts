@@ -6,10 +6,5 @@ export { VariableMapper } from './VariableMapper';
 export { SystemVariableFormatMapper, type SystemVariableFormatRow } from './SystemVariableFormatMapper';
 export { ShortcutMapper } from './ShortcutMapper';
 
-/* Import/Export Mappers */
-export * from './IImportMapper';
+/* 復元（全件置換）用Mapper */
 export { ImportMapper } from './ImportMapper';
-export {
-  ExportMapper,
-  type ExportSelection,
-} from './ExportMapper';

@@ -12,27 +12,15 @@
  */
 import type { ReactNode } from 'react';
 import { useState, useCallback } from 'react';
-import {
-  Logger,
-  useAuth,
-  useDatabase,
-  useSnippets,
-  useProfiles,
-  useVariables,
-  useCategories,
-  translateError,
-  ExportService,
-} from '@cliptap/shared';
+import { useAuth, useDatabase } from '@cliptap/shared';
 import { SideMenu } from '@components/settings/SideMenu';
-import { showErrorAlert, showConfirm } from '@utils/alerts';
-import { ExportSelectionModal } from '@components/export/ExportSelectionModal';
-import { ImportFileModal } from '@components/import/ImportFileModal';
-import { ImportSelectionModal } from '@components/import/ImportSelectionModal';
-import { ImportModeSelectModal } from '@components/import/ImportModeSelectModal';
+import { ExportPasswordModal } from '@components/export';
+import { ImportFileModal } from '@components/import';
 import { AccountLinkModal } from '@components/auth/AccountLinkModal';
 import { useBodyScrollLock } from '@hooks/useBodyScrollLock';
 import { useMobileMenu } from '@hooks/useMobileMenu';
-import { useWebImport } from '@hooks/useWebImport';
+import { useExportScreen } from '@hooks/screens/useExportScreen';
+import { useImportScreen } from '@hooks/screens/useImportScreen';
 import { PageHeader } from './PageHeader';
 
 interface PageLayoutProps {
@@ -50,14 +38,6 @@ export function PageLayout({ title, icon, children, rightAction }: PageLayoutPro
   const { setLoaded } = useDatabase();
   const { user, signInWithGoogle, signInWithApple, loading: authLoading, error: authError } = useAuth();
 
-  /* Provider refresh関数を取得 */
-  const { refresh: refreshSnippets } = useSnippets();
-  const { refresh: refreshProfiles } = useProfiles();
-  const { refresh: refreshVariables } = useVariables();
-  const { refresh: refreshCategories } = useCategories();
-
-  const [showExportModal, setShowExportModal] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
   const [showAccountLinkModal, setShowAccountLinkModal] = useState(false);
 
   const openAccountLinkModal = useCallback(() => {
@@ -70,81 +50,20 @@ export function PageLayout({ title, icon, children, rightAction }: PageLayoutPro
 
   const { isOpen: isMobileMenuOpen, toggle: toggleMobileMenu, close: closeMobileMenu } = useMobileMenu();
 
-  const handleError = useCallback(
-    (error: Error) => {
-      Logger.error('Export/Import error:', error);
-      const translatedMessage = translateError(error);
-      showErrorAlert(translatedMessage);
-    },
-    []
-  );
+  /* バックアップ・復元はDashboardと同じフックで扱い、閉じる防止や一時DBの破棄の扱いを揃える */
+  const exportScreen = useExportScreen();
+  const importScreen = useImportScreen({ user, setLoaded });
 
-  /* インポート完了時にすべてのProviderをリフレッシュ */
-  const handleImportComplete = useCallback(() => {
-    refreshSnippets();
-    refreshProfiles();
-    refreshVariables();
-    refreshCategories();
-  }, [refreshSnippets, refreshProfiles, refreshVariables, refreshCategories]);
-
-  const webImport = useWebImport({
-    user,
-    setLoaded,
-    onError: handleError,
-    onImportComplete: handleImportComplete,
-  });
-
-  const handleRestoreBackupWithConfirm = useCallback(async () => {
-    showConfirm('backup.restore_confirm', () => {
-      void webImport.handleRestoreBackup();
-    });
-  }, [webImport]);
-
-  const isModalOpen = showExportModal || isMobileMenuOpen || webImport.showFileSelect || webImport.showItemSelect || webImport.showModeSelect || showAccountLinkModal;
+  const isModalOpen = exportScreen.showExportModal || isMobileMenuOpen || importScreen.showFileModal || showAccountLinkModal;
   useBodyScrollLock(isModalOpen);
-
-  const handleExport = () => {
-    setShowExportModal(true);
-  };
-
-  const handleImport = () => {
-    webImport.setShowFileSelect(true);
-  };
-
-  const handleExportSelected = useCallback(
-    async (
-      password: string,
-      snippetIds: string[],
-      profileIds: string[],
-      variableIds: string[],
-      categoryIds: string[]
-    ) => {
-      setIsExporting(true);
-      try {
-        await ExportService.exportSelectedData(password, {
-          snippetIds,
-          profileIds,
-          variableIds,
-          categoryIds,
-        });
-      } catch (err) {
-        Logger.error('Failed to export:', err);
-        const translatedMessage = translateError(err);
-        showErrorAlert(translatedMessage);
-      } finally {
-        setIsExporting(false);
-      }
-    },
-    []
-  );
 
   /* ページレイアウト（サイドメニュー、ヘッダー、メインコンテンツ、モーダル群） */
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-black">
       {/* サイドメニュー（レスポンシブ対応、モバイルではオーバーレイ表示） */}
       <SideMenu
-        onExport={handleExport}
-        onImport={handleImport}
+        onExport={exportScreen.openExportModal}
+        onImport={importScreen.openFileModal}
         isOpen={isMobileMenuOpen}
         onClose={closeMobileMenu}
         onAccountLink={openAccountLinkModal}
@@ -166,43 +85,20 @@ export function PageLayout({ title, icon, children, rightAction }: PageLayoutPro
         </main>
       </div>
 
-      {/* エクスポート選択モーダル（部分エクスポート用） */}
-      <ExportSelectionModal
-        isOpen={showExportModal}
-        onClose={() => setShowExportModal(false)}
-        onExport={handleExportSelected}
-        isProcessing={isExporting}
+      {/* バックアップ用パスワード入力モーダル（出力中は閉じられず、成功時に閉じる） */}
+      <ExportPasswordModal
+        isOpen={exportScreen.showExportModal}
+        onClose={exportScreen.closeExportModal}
+        onSubmit={exportScreen.handleExport}
+        isProcessing={exportScreen.isExporting}
       />
 
-      {/* インポートファイル選択モーダル（.cliptapファイル選択） */}
+      {/* 復元ファイル選択モーダル（検証後に全削除の確認を出し、同意すると全データを置き換える） */}
       <ImportFileModal
-        isOpen={webImport.showFileSelect}
-        onClose={() => webImport.setShowFileSelect(false)}
-        onFileSelected={webImport.handleFileSelected}
-        isLoading={webImport.isLoading}
-      />
-
-      {/* インポートモード選択モーダル（復元/マージ選択） */}
-      <ImportModeSelectModal
-        isOpen={webImport.showModeSelect}
-        onClose={webImport.closeModeSelect}
-        isProcessing={webImport.isProcessing}
-        onSelectMode={(mode) => {
-          if (mode === 'restore') {
-            handleRestoreBackupWithConfirm();
-          } else {
-            webImport.handleSelectMergeMode();
-          }
-        }}
-      />
-
-      {/* インポート選択モーダル（部分インポート用、アイテム選択） */}
-      <ImportSelectionModal
-        isOpen={webImport.showItemSelect}
-        onClose={webImport.closeItemSelect}
-        candidates={webImport.importCandidates}
-        onImport={webImport.handleExecutePartialImport}
-        isProcessing={webImport.isProcessing}
+        isOpen={importScreen.showFileModal}
+        onClose={importScreen.closeFileModal}
+        onFileSelected={importScreen.handleFileSelected}
+        isLoading={importScreen.isBusy}
       />
 
       {/* アカウント連携モーダル（Google/Apple認証） */}

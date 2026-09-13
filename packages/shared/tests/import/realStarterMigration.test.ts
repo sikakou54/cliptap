@@ -3,13 +3,13 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DatabaseSync, type SQLInputValue } from 'node:sqlite';
+import { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import type { DbAdapter, DbRunResult } from '../../src/adapters/DbAdapter';
 import { setTempDbAdapter } from '../../src/adapters/DbAdapter';
 import { setCryptoAdapter } from '../../src/adapters/CryptoAdapter';
 import { setImportAdapter } from '../../src/adapters/ImportAdapter';
 import { ImportService } from '../../src/services/ImportService';
+import { FileDbAdapter } from '../helpers/fileDbAdapter';
 
 const PASSWORD = 'cliptap';
 

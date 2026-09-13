@@ -141,26 +141,13 @@ export class ExportFailedError extends ImportExportError {
 
 
 /**
- * 一時DBパス未設定エラー
+ * 復元失敗エラー
  *
- * 部分インポート時に一時データベースのパスが設定されていない場合にスローされます。
+ * バックアップファイルによる復元（全件置換）が失敗した場合にスローされます。
  */
-export class TempDbPathRequiredError extends ImportExportError {
-  constructor(message: string = 'Temporary database path is required') {
-    super(message, 'error.generic');
-    this.name = 'TempDbPathRequiredError';
-  }
-}
-
-
-/**
- * 部分インポートエラー
- *
- * 部分インポート処理が失敗した場合にスローされます。
- */
-export class PartialImportError extends ImportExportError {
-  constructor(message: string = 'Partial import failed', cause?: unknown) {
+export class RestoreFailedError extends ImportExportError {
+  constructor(message: string = 'Restore failed', cause?: unknown) {
     super(message, 'error.generic', 'error', cause);
-    this.name = 'PartialImportError';
+    this.name = 'RestoreFailedError';
   }
 }

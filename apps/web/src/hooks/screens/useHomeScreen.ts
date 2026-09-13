@@ -164,9 +164,7 @@ export function useHomeScreen(): UseHomeScreenReturn {
     snippetModal.isCreating ||
     !!snippetModal.editingSnippet ||
     isMobileMenuOpen ||
-    importScreen.showFileModal ||
-    importScreen.showSelectionModal ||
-    importScreen.showModeSelectModal;
+    importScreen.showFileModal;
   useBodyScrollLock(isModalOpen);
 
   /* ======================================== */

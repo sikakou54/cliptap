@@ -9,7 +9,15 @@
  */
 
 import * as SQLite from 'expo-sqlite';
-import { type DbAdapter, type DbRunResult, type FileIOAdapter, getFileName, getDirectoryPath, Logger } from '@cliptap/shared';
+import {
+  type DbAdapter,
+  type DbRunResult,
+  type FileIOAdapter,
+  getFileName,
+  getDirectoryPath,
+  Logger,
+  uint8ArrayToBase64,
+} from '@cliptap/shared';
 
 export interface MobileDatabaseAdapterOptions {
   fileIO: FileIOAdapter;
@@ -17,7 +25,6 @@ export interface MobileDatabaseAdapterOptions {
 
 export class MobileDatabaseAdapter implements DbAdapter {
   private db: SQLite.SQLiteDatabase | null = null;
-  private currentPath: string | null = null;
   private fileIO: FileIOAdapter | null = null;
 
   constructor(options: MobileDatabaseAdapterOptions) {
@@ -44,7 +51,6 @@ export class MobileDatabaseAdapter implements DbAdapter {
 
     /* expo-sqlite: openDatabaseAsync(fileName, options, dirPath)形式で開く */
     this.db = await SQLite.openDatabaseAsync(fileName, undefined, dirPath);
-    this.currentPath = path;
   }
 
   close(): void {
@@ -59,7 +65,6 @@ export class MobileDatabaseAdapter implements DbAdapter {
     } finally {
       /* close失敗でも参照を捨て、壊れたハンドルを以降のopenで触らせない */
       this.db = null;
-      this.currentPath = null;
     }
   }
 
@@ -117,18 +122,15 @@ export class MobileDatabaseAdapter implements DbAdapter {
     await this.getDb().execAsync(sql);
   }
 
+  /**
+   * データベースをBase64文字列として出力する
+   *
+   * @remarks
+   * ファイルを直接読むと、キーボード拡張が書き込んでまだチェックポイントされていない
+   * WAL上の内容を取りこぼす。開いている接続からSQLiteの直列化で取得し、その時点の内容を丸ごと得る。
+   * 他の操作はすべてJSスレッドの同期APIで行っているため、同じ接続を別スレッドから触らないよう同期版を使う。
+   */
   async exportAsBase64(): Promise<string> {
-    /* データベースパスが設定されているか確認（一時DBのエクスポート用） */
-    if (!this.currentPath) {
-      throw new Error('MobileDatabaseAdapter: No database path. Call open(path) first.');
-    }
-
-    /* FileIOAdapterが設定されているか確認（バイナリ読み込みに必要） */
-    if (!this.fileIO) {
-      throw new Error('MobileDatabaseAdapter: FileIOAdapter not provided for exportAsBase64.');
-    }
-
-    /* データベースファイルをバイナリとして読み込み、Base64エンコードして返す */
-    return await this.fileIO.readBinary(this.currentPath);
+    return uint8ArrayToBase64(this.getDb().serializeSync());
   }
 }

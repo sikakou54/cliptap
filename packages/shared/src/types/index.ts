@@ -94,23 +94,8 @@ export {
 
 /* ==================== Export/Import ==================== */
 export {
-  ImportCandidatesSchema,
   ClipTapExportDataSchema,
-  SelectionCandidatesSchema,
-  type ImportCandidateSnippetProfile,
-  type ImportCandidateSnippet,
-  type ImportCandidateProfile,
-  type ImportCandidateVariableProfileValue,
-  type ImportCandidateVariable,
-  type ImportCandidateCategory,
-  type ImportCandidates,
   type ClipTapExportData,
-  type SelectionSnippetData,
-  type SelectionProfileData,
-  type SelectionVariableProfileValue,
-  type SelectionVariableData,
-  type SelectionCategoryData,
-  type SelectionCandidates,
 } from './export';
 
 /* ==================== Subscription ==================== */

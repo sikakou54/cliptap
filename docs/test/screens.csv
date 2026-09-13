@@ -24,8 +24,6 @@ SC-SETTINGS-CATEGORIES,カテゴリ管理,/settings/categories,apps/mobile/app/s
 SC-SETTINGS-PROFILES,プロファイル管理,/settings/profiles,apps/mobile/app/settings/profiles.tsx,stack,role=AXStaticText&label=プロファイル + -label=変数を編集 + -label=変数を追加,§9.1
 SC-SETTINGS-VARIABLES,変数管理,/settings/variables,apps/mobile/app/settings/variables.tsx,stack,role=AXStaticText&label=カスタム変数,§9.1
 SC-SETTINGS-SYSTEM-VARIABLE-FORMATS,システム変数書式,/settings/system-variable-formats,apps/mobile/app/settings/system-variable-formats.tsx,stack,label=すべて既定に戻す,§9.1
-SC-SETTINGS-EXPORT-IMPORT,エクスポート・インポート,/settings/export-import,apps/mobile/app/settings/export-import.tsx,stack,label=インポート・エクスポート,§9.1
-SC-SETTINGS-SELECT-EXPORT-DATA,選択エクスポート,/settings/select-export-data,apps/mobile/app/settings/select-export-data.tsx,modal,role=AXStaticText&label=エクスポート,§9.1
-SC-SETTINGS-SELECT-IMPORT-DATA,選択インポート,/settings/select-import-data,apps/mobile/app/settings/select-import-data.tsx,modal,label=インポートするデータを選択,§9.1
+SC-SETTINGS-EXPORT-IMPORT,バックアップ・復元,/settings/export-import,apps/mobile/app/settings/export-import.tsx,stack,label=バックアップ・復元,§9.1
 SC-SUBSCRIPTION-MANAGE,サブスクリプション管理,/subscription/manage,apps/mobile/app/subscription/manage.tsx,stack,label=サブスクリプションを管理,§9.1
 SC-SUBSCRIPTION-PAYWALL,Paywall,/subscription/paywall,apps/mobile/app/subscription/paywall.tsx,fullScreenModal,label=ClipTap Pro + label=Proプランの特典,§9.1

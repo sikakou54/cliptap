@@ -4,7 +4,7 @@
  * @description
  * Mobile（expo-file-system）とWeb（Blob + fetch）の差異を吸収する共通インターフェース。
  * 純粋なファイル操作のみを提供し、UI関連機能（ファイル選択・共有）は別Adapterに分離。
- * エクスポート・インポート処理、App Group共有コンテナアクセスで使用。
+ * バックアップ・復元処理、App Group共有コンテナアクセスで使用。
  *
  * @module FileIOAdapter
  */
@@ -48,11 +48,6 @@ export interface FileIOAdapter {
   writeFile(filename: string, content: string, options?: { encoding?: 'utf8' | 'base64' }): Promise<string>;
 
   /**
-   * ファイルをコピー
-   */
-  copyFile(sourceUri: string, targetUri: string): Promise<void>;
-
-  /**
    * ファイルを削除
    */
   deleteFile(uri: string): Promise<void>;
@@ -71,11 +66,6 @@ export interface FileIOAdapter {
    * ディレクトリを作成
    */
   makeDirectory(uri: string): Promise<void>;
-
-  /**
-   * キャッシュディレクトリのパスを取得
-   */
-  getCacheDirectory(): string;
 
   /**
    * ドキュメントディレクトリのパスを取得

@@ -1,10 +1,8 @@
 /**
- * インポート関連コンポーネントのエクスポート
+ * 復元関連コンポーネントのエクスポート
  *
  * @description
- * データインポートに関するコンポーネントを一括エクスポート
+ * 復元（バックアップファイルによる全件置換）に関するコンポーネントを一括エクスポート
  */
 
 export { ImportFileModal } from './ImportFileModal';
-export { ImportModeSelectModal } from './ImportModeSelectModal';
-export { ImportSelectionModal } from './ImportSelectionModal';

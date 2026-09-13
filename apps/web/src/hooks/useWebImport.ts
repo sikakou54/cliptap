@@ -1,16 +1,15 @@
 /**
- * Web用インポートフック
+ * Web用復元フック
  *
  * @description
- * Dashboard.tsxやPageLayout.tsxで使用するインポート処理の状態管理フック。
- * useExportImportCoreの代わりに、より軽量でWeb専用の実装を提供。
+ * Dashboard.tsxやPageLayout.tsxで使用する復元（バックアップファイルによる全件置換）の状態管理フック。
+ * ファイルの検証と一時DBの準備、確認後の全件置換、準備した一時DBの破棄を分けて提供する。
  *
  * @module useWebImport
  */
 
 import { useState, useCallback, useRef } from 'react';
-import type { ImportCandidates } from '@cliptap/shared';
-import { ImportService, hasMainDbAdapter, getFileIOAdapter, toOpfsPath } from '@cliptap/shared';
+import { ImportService, getFileIOAdapter, toOpfsPath } from '@cliptap/shared';
 import { SQLiteWasm } from '@src/mappers/sqliteWasm';
 import { webDbCacheManager } from '@adapters/WebDbCacheManager';
 import type { WebFileIOAdapter } from '@adapters/WebFileIOAdapter';
@@ -34,68 +33,40 @@ export interface UseWebImportOptions {
  */
 export interface UseWebImportResult {
   /* 状態 */
-  /** インポート候補データ */
-  importCandidates: ImportCandidates;
-  /** 処理中フラグ */
+  /** 処理中フラグ（全件置換の実行中） */
   isProcessing: boolean;
-  /** ローディング中フラグ */
+  /** ローディング中フラグ（ファイルの検証・一時DBの準備中） */
   isLoading: boolean;
   /** ファイル選択モーダル表示 */
   showFileSelect: boolean;
-  /** インポートモード選択モーダル表示 */
-  showModeSelect: boolean;
-  /** 項目選択モーダル表示 */
-  showItemSelect: boolean;
 
   /* Actions */
   /** ファイル選択モーダルを表示 */
   setShowFileSelect: (show: boolean) => void;
-  /** インポートモード選択モーダルを閉じる（保持中の一時DBの破棄を伴う） */
-  closeModeSelect: () => void;
-  /** 項目選択モーダルを閉じる（保持中の一時DBの破棄を伴う） */
-  closeItemSelect: () => void;
-  /** ファイルを解析 */
-  handleFileSelected: (fileData: unknown, password: string) => Promise<void>;
-  /** 全データ復元を実行 */
+  /** ファイルを検証し、復元用の一時DBを準備する（準備できた場合true） */
+  handleFileSelected: (fileData: unknown, password: string) => Promise<boolean>;
+  /** 準備済みの一時DBで全データを置き換える */
   handleRestoreBackup: () => Promise<void>;
-  /** マージモードに移行 */
-  handleSelectMergeMode: () => void;
-  /** 部分インポートを実行 */
-  handleExecutePartialImport: (
-    snippetIds: string[],
-    profileIds: string[],
-    variableIds: string[],
-    categoryIds: string[]
-  ) => Promise<void>;
+  /** 準備済みの一時DBを破棄する（確認の取消・モーダルを閉じたとき） */
+  discardPreparedRestore: () => void;
 }
 
-/* 空のインポート候補（初期値として使用） */
-const EMPTY_CANDIDATES: ImportCandidates = {
-  snippets: [],
-  profiles: [],
-  variables: [],
-  categories: [],
-};
-
 /**
- * Web用インポートフック
+ * Web用復元フック
  */
 export function useWebImport(options: UseWebImportOptions): UseWebImportResult {
   const { onError, onImportComplete } = options;
 
   /* 状態 */
-  const [importCandidates, setImportCandidates] = useState<ImportCandidates>(EMPTY_CANDIDATES);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showFileSelect, setShowFileSelect] = useState(false);
-  const [showModeSelect, setShowModeSelect] = useState(false);
-  const [showItemSelect, setShowItemSelect] = useState(false);
 
   /* 一時DBパス（キー）をrefで保持 */
   const tempDbPathRef = useRef<string | null>(null);
 
   /**
-   * 保持中のプレビュー用一時DBをOPFSから削除する
+   * 保持中の復元用一時DBをOPFSから削除する
    *
    * @remarks
    * OPFSは永続領域のため、削除しないと `import_temp_*.db` が取込のたびに溜まり続ける。
@@ -117,11 +88,13 @@ export function useWebImport(options: UseWebImportOptions): UseWebImportResult {
   }, []);
 
   /**
-   * ファイルを解析してインポート候補を取得
+   * ファイルを検証し、復元用の一時DBを準備する
+   *
+   * @returns 一時DBを準備できた場合true
    */
-  const handleFileSelected = useCallback(async (fileData: unknown, password: string) => {
+  const handleFileSelected = useCallback(async (fileData: unknown, password: string): Promise<boolean> => {
     setIsLoading(true);
-    /* 連続して取り込んだときに前回の一時DBが孤児として残らないよう先に破棄する */
+    /* 連続して読み込んだときに前回の一時DBが孤児として残らないよう先に破棄する */
     discardTempDb();
     /* FileオブジェクトをOPFSに一時保存してから処理 */
     const file = fileData as File;
@@ -136,22 +109,12 @@ export function useWebImport(options: UseWebImportOptions): UseWebImportResult {
       /* SQLiteWasmを初期化 */
       await SQLiteWasm.init();
 
-      /* shared層のImportServiceを使ってファイル解析・一時DB作成 */
-      const tempDbPath = await ImportService.prepareImportDatabase(password, tempImportPath);
-      tempDbPathRef.current = tempDbPath;
-
-      /* インポート候補を取得 */
-      const candidates = await ImportService.getImportCandidates(tempDbPath);
-      setImportCandidates(candidates);
-
-      /* ファイル選択モーダルを閉じる */
-      setShowFileSelect(false);
-      /* インポートモード選択モーダルを開く */
-      setShowModeSelect(true);
+      /* shared層のImportServiceを使ってファイル検証・一時DB作成（失敗時の一時DBはService側で削除される） */
+      tempDbPathRef.current = await ImportService.prepareImportDatabase(password, tempImportPath);
+      return true;
     } catch (error) {
-      /* 候補読込に失敗した場合、作成済みの一時DBは使い道が無いため破棄する */
-      discardTempDb();
       onError?.(error instanceof Error ? error : new Error(String(error)));
+      return false;
     } finally {
       /* 一時ファイルを削除 */
       try {
@@ -164,7 +127,10 @@ export function useWebImport(options: UseWebImportOptions): UseWebImportResult {
   }, [onError, discardTempDb]);
 
   /**
-   * 全データ復元を実行
+   * 準備済みの一時DBで全データを置き換える
+   *
+   * @remarks
+   * 再試行はファイルの読み込みからやり直すため、成功・失敗のいずれでも一時DBを残さない。
    */
   const handleRestoreBackup = useCallback(async () => {
     const tempDbPath = tempDbPathRef.current;
@@ -182,114 +148,25 @@ export function useWebImport(options: UseWebImportOptions): UseWebImportResult {
       /* Provider refresh */
       onImportComplete?.();
 
-      /* 状態リセット */
-      setImportCandidates(EMPTY_CANDIDATES);
-      discardTempDb();
-      setShowModeSelect(false);
+      setShowFileSelect(false);
     } catch (error) {
       onError?.(error instanceof Error ? error : new Error(String(error)));
     } finally {
-      setIsProcessing(false);
-    }
-  }, [onError, onImportComplete, postImportProcess, discardTempDb]);
-
-  /**
-   * マージモードに移行
-   */
-  const handleSelectMergeMode = useCallback(() => {
-    setShowModeSelect(false);
-    setShowItemSelect(true);
-  }, []);
-
-  /**
-   * 部分インポートを実行
-   */
-  const handleExecutePartialImport = useCallback(async (
-    snippetIds: string[],
-    profileIds: string[],
-    variableIds: string[],
-    categoryIds: string[]
-  ) => {
-    const tempDbPath = tempDbPathRef.current;
-    if (!tempDbPath) return;
-
-    setIsProcessing(true);
-    try {
-      /* メインDBが初期化されていない場合は空のDBを作成 */
-      if (!hasMainDbAdapter()) {
-        /* この時点でmainDbAdapterが登録されていない場合はエラー */
-        throw new Error('MainDbAdapter is not initialized');
-      }
-
-      /* shared層のImportServiceを使って部分インポートを実行 */
-      await ImportService.importPartial(
-        tempDbPath,
-        snippetIds,
-        profileIds,
-        variableIds,
-        categoryIds
-      );
-      /* 注意: サブスクリプション状態の更新とupdateValidFlagsはImportService内で実行される */
-
-      /* 後処理 */
-      await postImportProcess();
-
-      /* Provider refresh */
-      onImportComplete?.();
-
-      /* 状態リセット */
-      setImportCandidates(EMPTY_CANDIDATES);
       discardTempDb();
-      setShowItemSelect(false);
-    } catch (error) {
-      onError?.(error instanceof Error ? error : new Error(String(error)));
-    } finally {
       setIsProcessing(false);
     }
   }, [onError, onImportComplete, postImportProcess, discardTempDb]);
-
-  /**
-   * インポートモード選択モーダルを閉じる
-   *
-   * @remarks
-   * 取込を中断するため、保持中の一時DBもここで破棄する。
-   * 取込処理中は実行中の一時DBを消してしまうため閉じない。
-   */
-  const closeModeSelect = useCallback(() => {
-    if (isProcessing) return;
-    discardTempDb();
-    setShowModeSelect(false);
-  }, [isProcessing, discardTempDb]);
-
-  /**
-   * 項目選択モーダルを閉じる
-   *
-   * @remarks
-   * 取込を中断するため、保持中の一時DBもここで破棄する。
-   * 取込処理中は実行中の一時DBを消してしまうため閉じない。
-   */
-  const closeItemSelect = useCallback(() => {
-    if (isProcessing) return;
-    discardTempDb();
-    setShowItemSelect(false);
-  }, [isProcessing, discardTempDb]);
 
   return {
     /* 状態 */
-    importCandidates,
     isProcessing,
     isLoading,
     showFileSelect,
-    showModeSelect,
-    showItemSelect,
 
     /* Actions */
     setShowFileSelect,
-    closeModeSelect,
-    closeItemSelect,
     handleFileSelected,
     handleRestoreBackup,
-    handleSelectMergeMode,
-    handleExecutePartialImport,
+    discardPreparedRestore: discardTempDb,
   };
 }

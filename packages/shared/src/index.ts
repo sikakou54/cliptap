@@ -193,7 +193,6 @@ export * from './utils/logger';           /* ロガー */
 export * from './utils/pathUtils';        /* パス操作ユーティリティ */
 export * from './utils/categoryUtils';    /* カテゴリ関連ユーティリティ */
 export * from './utils/snippetFilterUtils'; /* スニペットフィルタリングユーティリティ */
-export * from './utils/selectionTabLabels'; /* 選択タブの見出し */
 export * from './utils/profileSelectLabels'; /* プロファイル選択の説明文・未選択時の表示 */
 export * from './shortcuts/search';       /* ショートカット検索ユーティリティ */
 export * from './shortcuts/sort';         /* ショートカット並べ替えユーティリティ */
@@ -212,17 +211,9 @@ export {
 /* Reactカスタムフックをエクスポート */
 
 export {
-  /* インポート選択フック */
-  useImportSelection,
-  type ImportTabType,
-
   /* デバウンスフック */
   useDebounce,
   DEFAULT_DEBOUNCE_DELAY,
-
-  /* Selection (汎用版選択フック) */
-  useSelection,
-  type SelectionTabType,
 
   /* Search（検索フック） */
   useSearch,

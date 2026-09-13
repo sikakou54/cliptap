@@ -73,7 +73,7 @@ Templates, variables and profiles stay in your phone's storage. No cloud sync, n
 
 It asks for no location, camera, photo or microphone permission - those requests were removed in this version.
 
-Changing phones? Export everything, or just what you pick, as a .cliptap file and import it on the other device with the password you set. A checksum rejects damaged files.
+Changing phones? Back up all your data as a .cliptap file and restore it on the other device with the password you set (restoring replaces the data on that device). A checksum rejects damaged files.
 
 FREE AND PRO
 

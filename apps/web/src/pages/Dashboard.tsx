@@ -2,7 +2,7 @@
  * Dashboard - 定型文一覧画面（メイン）
  *
  * アプリケーションのメイン画面。定型文の一覧表示、検索、フィルタリング、
- * CRUD操作、エクスポート/インポート機能を提供する。
+ * CRUD操作、バックアップ・復元機能を提供する。
  *
  * ビジネスロジックはuseHomeScreenに集約し、UIはシンプルに保つ。
  * Mobile版と同様の構成パターンを採用。
@@ -17,8 +17,8 @@ import { DashboardHeader } from '@components/dashboard/DashboardHeader';
 import { SnippetGrid } from '@components/dashboard/SnippetGrid';
 import { AccountLinkModal } from '@components/auth/AccountLinkModal';
 import { SideMenu } from '@components/settings/SideMenu';
-import { ImportFileModal, ImportSelectionModal, ImportModeSelectModal } from '@components/import';
-import { ExportSelectionModal } from '@components/export';
+import { ImportFileModal } from '@components/import';
+import { ExportPasswordModal } from '@components/export';
 import { shouldShowSubscriptionVerificationWarning } from '@services/SubscriptionVerificationService';
 
 
@@ -109,7 +109,7 @@ export function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-black">
       {/* サイドメニュー（レスポンシブ対応、モバイルではオーバーレイ表示）
-          エクスポート・インポート・アカウント連携などの機能へのアクセスを提供。
+          バックアップ・復元・アカウント連携などの機能へのアクセスを提供。
           デスクトップでは常時表示、モバイルではハンバーガーメニューで開閉。 */}
       <SideMenu
         onExport={exportScreen.openExportModal}
@@ -173,12 +173,12 @@ export function Dashboard() {
         </main>
       </div>
 
-      {/* エクスポートモーダル（部分エクスポート用）
-          選択したスニペット・カテゴリ・プロファイルのみをエクスポートするための選択画面。 */}
-      <ExportSelectionModal
+      {/* バックアップ用パスワード入力モーダル
+          全データを.cliptapファイルとして出力する。出力中は閉じられず、成功時に閉じる。 */}
+      <ExportPasswordModal
         isOpen={exportScreen.showExportModal}
         onClose={exportScreen.closeExportModal}
-        onExport={exportScreen.handleExportSelected}
+        onSubmit={exportScreen.handleExport}
         isProcessing={exportScreen.isExporting}
       />
 
@@ -224,43 +224,14 @@ export function Dashboard() {
         />
       )}
 
-      {/* インポートファイル選択モーダル（.cliptapファイル選択）
-          ユーザーがエクスポートした.cliptapファイルを選択するためのモーダル。
-          ファイル選択後、パスワード入力とモード選択へ進む。 */}
+      {/* 復元ファイル選択モーダル（.cliptapファイル選択とパスワード入力）
+          ファイルの検証後に全削除の確認を出し、同意すると全データを置き換える。
+          読込・復元の処理中は閉じられない。 */}
       <ImportFileModal
         isOpen={importScreen.showFileModal}
         onClose={importScreen.closeFileModal}
         onFileSelected={importScreen.handleFileSelected}
-        isLoading={importScreen.isLoading}
-      />
-
-      {/* インポートモード選択モーダル（復元/マージ選択）
-          ファイル選択後、復元モード（既存データを全て置き換え）か
-          マージモード（既存データに追加）かを選択する画面。 */}
-      <ImportModeSelectModal
-        isOpen={importScreen.showModeSelectModal}
-        onClose={importScreen.closeModeSelectModal}
-        isProcessing={importScreen.isProcessing}
-        onSelectMode={(mode) => {
-          if (mode === 'restore') {
-            /* 復元モード: 既存データを全て置き換え */
-            importScreen.handleRestoreBackup();
-          } else {
-            /* マージモード: 既存データに追加（アイテム選択画面へ） */
-            importScreen.handleSelectMergeMode();
-          }
-        }}
-      />
-
-      {/* インポート選択モーダル（部分インポート用、アイテム選択）
-          マージモード選択時、どのスニペット・カテゴリ・プロファイルをインポートするか選択する画面。
-          重複チェックと競合解決のためのUIを提供。 */}
-      <ImportSelectionModal
-        isOpen={importScreen.showSelectionModal}
-        onClose={importScreen.closeSelectionModal}
-        candidates={importScreen.importCandidates}
-        onImport={importScreen.handleExecuteImport}
-        isProcessing={importScreen.isProcessing}
+        isLoading={importScreen.isBusy}
       />
 
       {/* アカウント連携モーダル（Google/Apple認証）

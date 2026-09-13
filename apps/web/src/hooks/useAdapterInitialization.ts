@@ -53,7 +53,7 @@ export function useAdapterInitialization() {
         i18n: new WebI18nAdapter(),
         fileIO: fileIOAdapter,
         auth: new WebAuthAdapter(),
-        export: new WebExportAdapter(fileShareAdapter, fileIOAdapter),
+        export: new WebExportAdapter(fileShareAdapter),
         import: new WebImportAdapter(fileIOAdapter),
         sortPreference: new WebSortPreferenceAdapter(),
       },

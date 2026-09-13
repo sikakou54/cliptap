@@ -13,7 +13,6 @@ import {
   type FileIOAdapter,
   type FileShareAdapter,
 } from '@cliptap/shared';
-import { getDatabasePath } from '@database/DatabaseFileManager';
 
 export class MobileExportAdapter implements ExportAdapter {
   private fileIO: FileIOAdapter;
@@ -33,24 +32,5 @@ export class MobileExportAdapter implements ExportAdapter {
     await this.fileIO.deleteFile(exportFileUri).catch(() => { });
 
     return exportFileUri;
-  }
-
-  /**
-   * 部分エクスポート用の一時データベースファイルを作成
-   *
-   * @returns 一時データベースファイルのパス（file://プレフィックスなし）
-   */
-  async createTempDbFile(): Promise<string> {
-    const dbPath = await getDatabasePath(this.fileIO);
-
-    const tempDbName = `export_temp_${new Date().getTime()}.db`;
-    const cacheDir = this.fileIO.getCacheDirectory();
-    const separator = cacheDir.endsWith('/') ? '' : '/';
-    const tempDbPath = `${cacheDir}${separator}${tempDbName}`;
-    const tempDbFullUri = `file://${tempDbPath}`;
-
-    await this.fileIO.copyFile(dbPath, tempDbFullUri);
-
-    return tempDbPath;
   }
 }

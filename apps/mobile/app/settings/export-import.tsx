@@ -1,12 +1,12 @@
 /**
  * @module ExportImportScreen
- * @description エクスポート・インポート画面
+ * @description バックアップ・復元画面
  *
- * データのバックアップと復元を行う画面。
+ * 全データのバックアップと、バックアップファイルによる復元（全件置換）を行う画面。
  *
  * @features
- * - データのエクスポート（.cliptapファイル形式）
- * - データのインポート（フルリストア/部分インポート）
+ * - バックアップ（全データを.cliptapファイルへ出力）
+ * - 復元（確認後に現在のデータをファイルの内容で置き換え）
  * - パスワード一致とチェックサムによるファイル確認（暗号化ではない）
  *
  * @security
@@ -14,7 +14,8 @@
  * - 全フィールドのチェックサム検証
  *
  * @see src/hooks/screens/useExportImportScreen.ts - ビジネスロジック
- * @see packages/shared/src/services/ImportService.ts - インポート実処理
+ * @see packages/shared/src/services/ExportService.ts - バックアップ実処理
+ * @see packages/shared/src/services/ImportService.ts - 復元実処理
  */
 import React from 'react';
 import {
@@ -49,15 +50,11 @@ export default function ExportImportScreen() {
     modalMode,
     password,
     isProcessing,
-    showImportModeModal,
     setPassword,
     handleExportBackup,
     handleImportBackup,
     handlePasswordSubmit,
     closePasswordModal,
-    closeImportModeModal,
-    executeFullRestore,
-    preparePartialImport,
   } = useExportImportScreen();
 
   const menuItems = [
@@ -166,7 +163,7 @@ export default function ExportImportScreen() {
         </View>
       )}
 
-      {/* パスワード入力モーダル */}
+      {/* パスワード入力モーダル（バックアップ・復元で共用） */}
       <Modal
         visible={showPasswordModal}
         transparent
@@ -237,74 +234,6 @@ export default function ExportImportScreen() {
             </View>
           </View>
         </TouchableWithoutFeedback>
-      </Modal>
-
-      {/* インポートモード選択モーダル */}
-      <Modal
-        visible={showImportModeModal}
-        transparent
-        animationType="fade"
-        onRequestClose={closeImportModeModal}
-      >
-        <View style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}>
-          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-            <View style={styles.modalHeader}>
-              <Ionicons name="options-outline" size={48} color={colors.primary} />
-              <Text style={[styles.modalTitle, { color: colors.text, fontSize: responsiveFontSizes.lg }]}>
-                {t('backup.import_mode_title')}
-              </Text>
-            </View>
-
-            <View style={styles.modeSelectionContainer}>
-              <TouchableOpacity
-                style={[styles.modeButton, { borderColor: colors.border }]}
-                onPress={executeFullRestore}
-              >
-                <View style={[styles.iconContainer, { backgroundColor: colors.error + '15' }]}>
-                  <Ionicons name="refresh-circle" size={32} color={colors.error} />
-                </View>
-                <View style={styles.modeTextContainer}>
-                  <Text style={[styles.modeTitle, { color: colors.text }]}>{t('backup.mode_restore')}</Text>
-                  <Text style={[styles.modeDescription, { color: colors.textSecondary }]}>
-                    {t('backup.mode_restore_desc')}
-                  </Text>
-                  <Text style={[styles.modeDescription, { color: colors.textSecondary }]}>
-                    {t('export_import.restore_includes_formats')}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modeButton, { borderColor: colors.border }]}
-                onPress={preparePartialImport}
-              >
-                <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}>
-                  <Ionicons name="add-circle" size={32} color={colors.primary} />
-                </View>
-                <View style={styles.modeTextContainer}>
-                  <Text style={[styles.modeTitle, { color: colors.text }]}>{t('backup.mode_merge')}</Text>
-                  <Text style={[styles.modeDescription, { color: colors.textSecondary }]}>
-                    {t('backup.mode_merge_desc')}
-                  </Text>
-                  <Text style={[styles.modeDescription, { color: colors.textSecondary }]}>
-                    {t('export_import.partial_excludes_formats')}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: colors.border }]}
-                onPress={closeImportModeModal}
-              >
-                <Text style={[styles.modalButtonText, { color: colors.text }]}>
-                  {t('common.cancel')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
       </Modal>
     </ScreenContainer>
   );
@@ -492,28 +421,5 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontWeight: '600',
-  },
-  modeSelectionContainer: {
-    gap: 16,
-    marginBottom: 24,
-  },
-  modeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 16,
-  },
-  modeTextContainer: {
-    flex: 1,
-    gap: 4,
-  },
-  modeTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  modeDescription: {
-    fontSize: 12,
   },
 });

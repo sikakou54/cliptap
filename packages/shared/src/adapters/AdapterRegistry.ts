@@ -152,7 +152,7 @@ export interface AllAdapters {
   mainDB?: DbAdapter;
   /** システムDB用アダプター（user_version管理・マイグレーション用） */
   systemDB?: DbAdapter;
-  /** 一時DB用アダプター（エクスポート・インポート処理用） */
+  /** 一時DB用アダプター（インポート（復元）処理用） */
   tempDb?: DbAdapter;
   /** 暗号化アダプター（SHA-256ハッシュ計算を抽象化） */
   crypto?: CryptoAdapter;

@@ -8,7 +8,7 @@
  * 3種類のDB用アダプターを提供:
  * - メインDB: 共有コンテナDB（アプリ・キーボード拡張で共有）
  * - システムDB: user_version管理用DB（マイグレーション時のデータ読み取り元としても使用）
- * - 一時DB: エクスポート・インポート処理用
+ * - 一時DB: インポート（復元）処理用
  *
  * @module DbAdapter
  */
@@ -89,8 +89,8 @@ export interface DbAdapter {
    * データベースをBase64文字列としてエクスポート（オプション）
    *
    * @description
-   * 一時DBのエクスポート処理で使用。
-   * - Mobile: ファイルを読み込んでBase64化
+   * メインDBのバックアップで使用。
+   * - Mobile: 開いている接続からSQLiteの直列化で取得してBase64化（WAL上の未反映分も含む）
    * - Web: sql.jsのdb.export()をBase64化
    *
    * @returns Base64エンコードされたデータベースバイナリ
@@ -216,7 +216,7 @@ export function getSystemDbAdapter(): DbAdapter {
  * 一時DB用DbAdapterを登録
  *
  * @description
- * エクスポート・インポート処理で使用する一時DB用のアダプターを登録。
+ * インポート（復元）処理で使用する一時DB用のアダプターを登録。
  *
  * @param adapter - プラットフォーム固有の一時DB用DbAdapter実装
  */

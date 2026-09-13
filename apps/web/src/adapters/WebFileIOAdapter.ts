@@ -242,39 +242,6 @@ export class WebFileIOAdapter implements FileIOAdapter {
   }
 
   /**
-   * ファイルをコピー
-   */
-  async copyFile(sourceUri: string, targetUri: string): Promise<void> {
-    try {
-      /* ソースがOPFSパスの場合 */
-      if (isOpfsPath(sourceUri)) {
-        const data = await this.readBytes(sourceUri);
-        await this.writeBytes(targetUri, data);
-        return;
-      }
-
-      /* ソースがBlob URLの場合 */
-      const response = await fetch(sourceUri);
-      const arrayBuffer = await response.arrayBuffer();
-      const data = new Uint8Array(arrayBuffer);
-
-      /* ターゲットがOPFSパスの場合 */
-      if (isOpfsPath(targetUri)) {
-        await this.writeBytes(targetUri, data);
-        return;
-      }
-
-      /* 両方Blob URLの場合（従来の動作） */
-      const blob = new Blob([data], { type: 'application/octet-stream' });
-      const newUrl = URL.createObjectURL(blob);
-      this.tempFiles.set(targetUri, newUrl);
-    } catch (error) {
-      Logger.error('[WebFileIOAdapter] Copy failed:', error);
-      throw error;
-    }
-  }
-
-  /**
    * ファイルを削除
    */
   async deleteFile(uri: string): Promise<void> {
@@ -388,10 +355,6 @@ export class WebFileIOAdapter implements FileIOAdapter {
   /* ======================================== */
   /* ディレクトリパス取得（Webでは空文字またはnull） */
   /* ======================================== */
-
-  getCacheDirectory(): string {
-    return '';
-  }
 
   getDocumentDirectory(): string {
     return '';

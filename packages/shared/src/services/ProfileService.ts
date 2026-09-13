@@ -68,16 +68,6 @@ export class ProfileService {
   }
 
   /**
-   * 名前でプロファイルを取得
-   *
-   * @param name - プロファイル名
-   * @returns プロファイルオブジェクト（存在しない場合はnull）
-   */
-  static getByName(name: string): Profile | null {
-    return ProfileMapper.getByName(name);
-  }
-
-  /**
    * アクティブなプロファイルを取得
    *
    * @returns アクティブなプロファイル（存在しない場合はnull）
@@ -254,20 +244,15 @@ export class ProfileService {
    * @remarks
    * 補完先は有効なプロファイルに限る。標準は値フォールバック先、アクティブは展開と
    * 絞り込みの基準であり、無効なものを指定すると解決先が失われるため。
-   * getAll()は有効なもののみを返すので、取込元の標準が無効だった場合はそちらへ退避する。
+   * getAll()は有効なもののみを返すため、その先頭を補完先とする。
    * 有効なプロファイルが1件もない場合は補完しない。
    */
-  static ensureDefaultAndActive(importedDefaultProfileId: string | null = null): void {
+  static ensureDefaultAndActive(): void {
     const defaultProfile = this.getDefault();
     const activeProfile = this.getActive();
     if (defaultProfile && activeProfile) return;
 
-    const importedProfile = importedDefaultProfileId
-      ? this.getById(importedDefaultProfileId)
-      : null;
-    const targetProfileId = importedProfile?.valid
-      ? importedProfile.id
-      : this.getAll()[0]?.id;
+    const targetProfileId = this.getAll()[0]?.id;
     if (!targetProfileId) {
       Logger.warn('[ProfileService] No profile available for default/active state');
       return;
@@ -293,9 +278,7 @@ export class ProfileService {
    * 変数の全プロファイル値を一括設定
    *
    * @remarks
-   * 値は前後空白を除去して保存する。インポート経路の
-   * VariableService.upsertValueForProfile と同じ正規化規則にそろえ、
-   * 保存経路によって同じ入力が違う値になることを防ぐ。
+   * 値は前後空白を除去して保存する。
    * 空白だけの値をそのまま保存すると、必須判定（前後空白を除去して判定する）では
    * 空なのに解決時は非空として標準値を覆う、という矛盾が起きるため、
    * 書き込み境界であるService層で正規化する。
@@ -375,37 +358,5 @@ export class ProfileService {
     }
 
     this.delete(id);
-  }
-
-  /**
-   * プロファイルを作成または更新（upsert）
-   *
-   * @param data - プロファイルの情報（nameで既存を検索、あれば更新、なければ新規作成）
-   * @returns 作成/更新されたプロファイル
-   * @throws {EmptyContentError} プロファイル名が空の場合
-   * @throws {DuplicateNameError} 同名のプロファイルが既に存在する場合（自分以外）
-   * @remarks
-   * 既存プロファイルの表示順は変更しない。無料プランの有効判定は標準優先かつ表示順で
-   * 行うため、同名プロファイルの更新で表示順を末尾へ動かすと、それまで有効だった
-   * プロファイルが上限超過分と入れ替わって無効になる。これを防ぐため表示順を引数に取らない。
-   */
-  static upsert(data: Omit<CreateProfileInput, 'sortOrder'>): Profile {
-    const trimmedName = data.name.trim();
-    if (!trimmedName) {
-      throw new EmptyContentError();
-    }
-
-    const existing = ProfileMapper.getByName(trimmedName);
-    if (existing) {
-      /* 既存プロファイルを更新（表示順は据え置く） */
-      return this.update(existing.id, {
-        name: trimmedName,
-      });
-    } else {
-      /* 新規作成（sortOrderは自動採番） */
-      return this.create({
-        name: trimmedName,
-      });
-    }
   }
 }

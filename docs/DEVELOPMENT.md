@@ -635,7 +635,6 @@ src/components/
 ├── category/         # カテゴリ関連コンポーネント
 ├── profile/          # 環境関連コンポーネント
 ├── variable/         # 変数関連コンポーネント
-├── selection/        # 選択関連コンポーネント
 └── settings/         # 設定関連コンポーネント
 ```
 

@@ -31,8 +31,7 @@
  *     │   ├── InvalidFileFormatError
  *     │   ├── PasswordRequiredError
  *     │   ├── ExportFailedError
- *     │   ├── TempDbPathRequiredError
- *     │   └── PartialImportError
+ *     │   └── RestoreFailedError
  *     └── EnvironmentError (実行環境関連)
  * ```
  */
@@ -79,8 +78,7 @@ export {
   InvalidFileFormatError,
   PasswordRequiredError,
   ExportFailedError,
-  TempDbPathRequiredError,
-  PartialImportError,
+  RestoreFailedError,
 } from './importExport';
 
 /* ======================================== */
