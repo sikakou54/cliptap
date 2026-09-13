@@ -110,13 +110,14 @@ export function ItemActionMenu({ itemName, onEdit, onDelete }: ItemActionMenuPro
             },
           ]}
         >
-          {/* 編集 */}
+          {/* 編集（カードにあった編集ボタンと同じ鉛筆のアイコン） */}
           <TouchableOpacity
             style={styles.item}
             onPress={handleSelectEdit}
             accessibilityRole="button"
             accessibilityLabel={t('common.edit')}
           >
+            <Ionicons name="create-outline" size={UI_CONSTANTS.ICON_SIZE.SM} color={colors.text} />
             <Text
               style={[styles.itemText, { color: colors.text, fontSize: responsiveFontSizes.base }]}
               numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.SINGLE}
@@ -125,13 +126,14 @@ export function ItemActionMenu({ itemName, onEdit, onDelete }: ItemActionMenuPro
             </Text>
           </TouchableOpacity>
 
-          {/* 削除（取り消せない操作のため、一番下に赤字で置く） */}
+          {/* 削除（取り消せない操作のため、一番下に赤字で置く。アイコンもゴミ箱を同じ赤で出す） */}
           <TouchableOpacity
             style={styles.item}
             onPress={handleSelectDelete}
             accessibilityRole="button"
             accessibilityLabel={t('common.delete')}
           >
+            <Ionicons name="trash-outline" size={UI_CONSTANTS.ICON_SIZE.SM} color={colors.danger} />
             <Text
               style={[styles.itemText, { color: colors.danger, fontSize: responsiveFontSizes.base }]}
               numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.SINGLE}
@@ -159,9 +161,12 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
+  /* アイコンと項目名を横に並べる（並べ替えメニュー SortMenu.option と同じ間隔） */
   item: {
     minHeight: MENU_ITEM_HEIGHT,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: UI_CONSTANTS.GAP.MD,
     paddingHorizontal: UI_CONSTANTS.SPACING.LG,
   },
   itemText: {
