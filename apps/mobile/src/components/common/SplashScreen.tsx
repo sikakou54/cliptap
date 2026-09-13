@@ -14,7 +14,7 @@
  * - Animated.Valueでスムーズなフェードアウト
  * - useNativeDriver: false でフェードアウト（アニメーション対象は opacity のみ）
  * - 保持時間はマウント時点から数える。isLoadingの完了後に数え始めると、
- *   起動時広告の表示判定などの待ちと直列に積み上がって起動が遅くなる
+ *   初期化の待ちと直列に積み上がって起動が遅くなる
  * - 不透明な間はタッチを遮断し、フェード中だけ下位へ透過する
  * - zIndex: 9999で最前面に表示
  *
@@ -91,8 +91,8 @@ export function SplashScreen({ onFinish, isLoading, onReady }: SplashScreenProps
 
   /**
    * 保持時間の計測
-   * マウント直後から数え始めることで、初期化や起動時広告の判定の待ちと並行して進む。
-   * isLoadingの完了後に数え始めると、それらの待ちに1秒が上乗せされてしまう。
+   * マウント直後から数え始めることで、初期化の待ちと並行して進む。
+   * isLoadingの完了後に数え始めると、その待ちに1秒が上乗せされてしまう。
    */
   useEffect(() => {
     const timer = setTimeout(() => setIsHoldElapsed(true), SPLASH_HOLD_MS);

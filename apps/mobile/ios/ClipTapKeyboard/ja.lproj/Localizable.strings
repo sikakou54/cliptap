@@ -30,7 +30,6 @@
 "snippet_no_title" = "（タイトルなし）";
 
 /* ショートカット関連 */
-"shortcut.title" = "ショートカット";
 "shortcut.empty" = "ショートカットがありません";
 "shortcut.empty_hint" = "メインアプリでショートカットを作成してください";
 
@@ -82,7 +81,6 @@
 "accessibility.insert_newline_button" = "改行ボタン";
 "accessibility.show_shortcuts_button" = "ショートカットを表示";
 "accessibility.show_snippets_button" = "定型文を表示";
-"accessibility.back_button" = "戻るボタン";
 
 /* ソート関連 */
 "sort.label" = "並順";

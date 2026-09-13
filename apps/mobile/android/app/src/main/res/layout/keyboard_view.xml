@@ -63,8 +63,10 @@
              【切替スイッチの形にする理由】
              アイコン1つの差し替えだと、今どちらを見ているのかと、押すとどうなるのかが
              同じ絵に重なって分かりにくい。トラックの中をノブが左右に動く形にすると、
-             位置と色で現在の状態を示し、反対側へ移せることも同時に伝えられる。
-             左（灰色・書類）が定型文、右（アクセント色・稲妻）がショートカット。
+             ノブの位置とアイコンの形で現在の状態を示し、反対側へ移せることも同時に伝えられる。
+             左（書類）が定型文、右（稲妻）がショートカット。
+             見た目はアプリのホームの切替トグル（ListModeToggle.tsx）に揃え、
+             枠線だけのトラックと白いノブにして、表示対象によって色を変えない。
 
              【横幅が足りなくなる場合の検討】
              この行の固定幅の合計は 92(環境) + 8 + 92(カテゴリ) + 4 + 52(表示切替) + 4 + 36(ソート) = 288dp。
@@ -83,7 +85,7 @@
             android:layout_width="52dp"
             android:layout_height="32dp"
             android:layout_marginStart="4dp"
-            android:background="@drawable/list_mode_toggle_track_off"
+            android:background="@drawable/list_mode_toggle_track"
             android:contentDescription="@string/accessibility_show_shortcuts_button"
             android:clickable="true"
             android:focusable="true">
@@ -99,7 +101,7 @@
                 android:layout_marginStart="2dp"
                 android:background="@drawable/list_mode_toggle_knob">
 
-                <!-- ノブの中のアイコン。絵と色はコードから状態に合わせて差し替える。
+                <!-- ノブの中のアイコン。絵はコードから状態に合わせて差し替え、色は表示対象によらず同じ。
                      行そのものが読み上げ対象のため、この装飾は読み上げから除く -->
                 <ImageView
                     android:id="@+id/shortcutToggleIcon"
@@ -107,6 +109,7 @@
                     android:layout_height="16dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_snippet"
+                    android:tint="@color/keyboardToggleKnobIcon"
                     android:importantForAccessibility="no" />
 
             </FrameLayout>

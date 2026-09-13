@@ -47,7 +47,8 @@
     "copy_with_title_description": "オフの場合は内容のみをコピーします",
     "system_variables": "システム変数",
     "custom_variables": "カスタム変数",
-    "no_title": "（タイトルなし）"
+    "no_title": "（タイトルなし）",
+    "limit_message": "無料版では{{limit}}件まで定型文を登録できます。無制限に登録するにはProプランにアップグレードしてください。"
   },
   "category": {
     "title": "カテゴリ",
@@ -238,6 +239,8 @@
     "features_title": "Proプランの特典",
     "feature_no_ads": "広告なし",
     "feature_no_ads_desc": "広告を非表示にしてスムーズに利用",
+    "feature_unlimited_items": "定型文・ショートカット",
+    "feature_unlimited_items_desc": "定型文とショートカット（値を含む）を無制限に登録",
     "feature_unlimited_profiles": "プロファイル",
     "feature_unlimited_profiles_desc": "プロファイルを無制限に作成・管理",
     "feature_custom_variables": "カスタム変数",
@@ -347,6 +350,8 @@
     "variable_reference_clear": "解除",
     "variable_reference_title": "カスタム変数を選択",
     "variable_reference_description": "参照した変数は、選択中のプロファイルの値になります。値が未設定のときは標準プロファイルの値を使います。",
-    "variable_reference_empty": "参照できるカスタム変数がありません"
+    "variable_reference_empty": "参照できるカスタム変数がありません",
+    "limit_message": "無料版では{{limit}}件までショートカットを登録できます。無制限に登録するにはProプランにアップグレードしてください。",
+    "value_limit_message": "無料版では1つのショートカットに{{limit}}件まで値を登録できます。無制限に登録するにはProプランにアップグレードしてください。"
   }
 }

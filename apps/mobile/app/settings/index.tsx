@@ -59,6 +59,7 @@ export default function SettingsScreen() {
     handleSubscriptionPress,
 
     handleDevSubscriptionToggle,
+    handleDevAdsToggle,
     handleResetDatabase,
   } = useSettingsScreen();
 
@@ -125,6 +126,7 @@ export default function SettingsScreen() {
         {__DEV__ && (
           <DeveloperMenu
             onSubscriptionToggle={handleDevSubscriptionToggle}
+            onAdsToggle={handleDevAdsToggle}
             onResetDatabase={handleResetDatabase}
           />
         )}

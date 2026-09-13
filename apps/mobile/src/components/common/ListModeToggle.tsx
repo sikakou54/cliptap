@@ -1,15 +1,20 @@
 /**
  * 定型文／ショートカットの表示切替トグル
  *
- * 角丸のトラックの中をノブが左右に動く切替スイッチ。
- * 左（無彩色・書類のアイコン）が定型文、右（アクセント色・稲妻のアイコン）がショートカットを表す。
+ * 枠線だけの角丸のトラックの中を、同じ色の縁を付けた白いノブが左右に動く切替スイッチ。
+ * 左（書類のアイコン）が定型文、右（稲妻のアイコン）がショートカットを表す。
  *
  * 【拡張キーボードと同じ見た目にしている理由】
  * 同じ「一覧の表示対象を切り替える」操作をアプリとキーボードの両方で行うため、
  * 見た目と位置を揃えて、どちらでも同じものだと分かるようにしている。
- * 寸法はiOSの `ListModeToggle`（KeyboardViewController.swift）と
+ * 寸法と配色はiOSの `ListModeToggle`（KeyboardViewController.swift）と
  * Androidの `shortcutToggle`（keyboard_view.xml）に合わせた値で、
  * 変えるときは3実装を同じ変更で揃えること。
+ *
+ * 【枠線を textTertiary にしている理由】
+ * border（ライト #E5E7EB）では、iOSキーボードの背景（ライト #E2E4E8）に溶けてトラックが見えない。
+ * また白いノブは、白い背景（アプリのホーム・Androidキーボード）に溶けて見えない。
+ * そのため、白でも灰色でも見える textTertiary でトラックを囲み、ノブにも同じ色の縁を付ける。
  *
  * 【状態を持たない理由】
  * 表示対象はホーム画面が持つ正本で、追加ボタンの行き先やカテゴリチップの集合も
@@ -35,7 +40,7 @@ const TRACK_WIDTH = 52;
 /** トラックの高さ（pt）。カテゴリチップとソートボタンの高さとも揃う */
 const TRACK_HEIGHT = UI_CONSTANTS.SIZE.ICON_CONTAINER_MD;
 
-/** トラックとノブの隙間（pt）。iOS `ListModeToggle.knobInset` と同値 */
+/** トラックの外形からノブまでの距離（pt）。枠線の太さを含む。iOS `ListModeToggle.knobInset` と同値 */
 const KNOB_INSET = 2;
 
 /** ノブの直径（pt）。トラックの高さから上下のインセットを引いた値 */
@@ -89,7 +94,7 @@ export function ListModeToggle({ isShowingShortcuts, onToggle }: ListModeToggleP
   return (
     /* 読み上げは「押したら何が起きるか」を伝えるため、見た目とは向きが逆になる */
     <TouchableOpacity
-      style={[styles.track, { borderColor: colors.border }]}
+      style={[styles.track, { borderColor: colors.textTertiary }]}
       onPress={onToggle}
       hitSlop={{ top: HIT_SLOP_VERTICAL, bottom: HIT_SLOP_VERTICAL, left: 0, right: 0 }}
       accessibilityRole="button"
@@ -99,12 +104,14 @@ export function ListModeToggle({ isShowingShortcuts, onToggle }: ListModeToggleP
     >
       {/* ノブは白固定。今どちら側かは、ノブの位置と中のアイコンの形で示す。
           表示対象で色を変えないのは、色が変わる箇所が増えるほど
-          「どこを見れば今の状態が分かるのか」がぼやけるため */}
+          「どこを見れば今の状態が分かるのか」がぼやけるため。
+          白い背景に溶けないよう、トラックと同じ色の縁を付ける */}
       <Animated.View
         style={[
           styles.knob,
           {
             backgroundColor: colors.onPrimary,
+            borderColor: colors.textTertiary,
             transform: [{ translateX: knobOffset }],
           },
         ]}
@@ -130,12 +137,15 @@ const styles = StyleSheet.create({
     borderRadius: TRACK_HEIGHT / 2,
     borderWidth: UI_CONSTANTS.BORDER_WIDTH.THIN,
     justifyContent: 'center',
-    padding: KNOB_INSET,
+    /* paddingは枠線の内側から数えるため、枠線の太さを引いてノブをトラックの外形から KNOB_INSET の位置に置く。
+       引かないとノブが枠線の分だけ右へずれ、右端でノブの縁がトラックの枠線に接する */
+    padding: KNOB_INSET - UI_CONSTANTS.BORDER_WIDTH.THIN,
   },
   knob: {
     width: KNOB_SIZE,
     height: KNOB_SIZE,
     borderRadius: KNOB_SIZE / 2,
+    borderWidth: UI_CONSTANTS.BORDER_WIDTH.THIN,
     justifyContent: 'center',
     alignItems: 'center',
   },

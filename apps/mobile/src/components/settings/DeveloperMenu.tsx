@@ -2,7 +2,7 @@
  * 開発者メニュー
  *
  * 開発モード（__DEV__）でのみ表示されるデバッグ機能メニュー。
- * サブスクリプション状態の上書きとDBリセットの2機能を提供。
+ * サブスクリプション状態の上書き・広告の非表示・DBリセットの3機能を提供。
  *
  * 開発者専用メニューのため、表示文言は英語固定とし i18n キーを持たない。
  * app/settings/index.tsx の __DEV__ 判定配下でのみ描画されるため、
@@ -16,6 +16,7 @@ import { UI_CONSTANTS } from '@constants/ui';
 
 interface DeveloperMenuProps {
   onSubscriptionToggle: () => void;
+  onAdsToggle: () => void;
   onResetDatabase: () => void;
 }
 
@@ -60,6 +61,7 @@ function DevMenuItem({ icon, iconColor, title, description, onPress }: MenuItemP
 
 export function DeveloperMenu({
   onSubscriptionToggle,
+  onAdsToggle,
   onResetDatabase,
 }: DeveloperMenuProps) {
   const { colors, responsiveFontSizes, responsiveLineHeights } = useTheme();
@@ -72,6 +74,14 @@ export function DeveloperMenu({
       title: 'Subscription Override',
       description: 'Test keyboard extension states',
       onPress: onSubscriptionToggle,
+    },
+    {
+      id: 'ads',
+      icon: 'eye-off-outline' as const,
+      iconColor: colors.text,
+      title: 'Ads Override',
+      description: 'Show or hide banner and App Open ads',
+      onPress: onAdsToggle,
     },
     {
       id: 'reset',

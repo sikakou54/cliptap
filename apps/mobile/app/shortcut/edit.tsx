@@ -229,42 +229,52 @@ export default function ShortcutEditModal() {
             {t('shortcut.values')}
           </Text>
 
-          {/* 登録済みの値（タップで編集）。
-              区切り線は値と値の間にだけ引き、最後の値の下には引かない。
-              引くとセクションの終わりの線に見えて、下の「値を追加」と切り離されて見える */}
-          {values.map((draft, index) => (
-            <TouchableOpacity
-              key={draft.key}
-              style={[
-                styles.valueRow,
-                index < values.length - 1 && {
-                  borderBottomWidth: UI_CONSTANTS.BORDER_WIDTH.THIN,
-                  borderBottomColor: colors.border,
-                },
-              ]}
-              onPress={() => handleEditValue(draft)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.valueCardMain}>
-                {/* 値名 */}
-                <Text
-                  style={[
-                    styles.valueName,
-                    {
-                      color: colors.text,
-                      fontSize: responsiveFontSizes.base,
-                      lineHeight: responsiveLineHeights.base,
-                    },
-                  ]}
-                  numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.SINGLE}
-                >
-                  {draft.name}
-                </Text>
-                {/* 挿入する値。カスタム変数を参照している値は、中身が環境ごとに変わるため
-                    具体的な文字列ではなく参照先を示す（§8.24） */}
-                {draft.variableId ? (
-                  <View style={styles.valueReferenceRow}>
-                    <Ionicons name="link" size={14} color={colors.textSecondary} />
+          {/* 値の一覧と「値を追加」を、間隔を空けて縦に並べる */}
+          <View style={styles.valueList}>
+            {/* 登録済みの値（タップで編集）。
+                名前・プロファイル・カテゴリの入力欄と同じ下地・角丸の箱で1件ずつ表示する */}
+            {values.map((draft) => (
+              <TouchableOpacity
+                key={draft.key}
+                style={[styles.valueRow, { backgroundColor: colors.surface }]}
+                onPress={() => handleEditValue(draft)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.valueCardMain}>
+                  {/* 値名 */}
+                  <Text
+                    style={[
+                      styles.valueName,
+                      {
+                        color: colors.text,
+                        fontSize: responsiveFontSizes.base,
+                        lineHeight: responsiveLineHeights.base,
+                      },
+                    ]}
+                    numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.SINGLE}
+                  >
+                    {draft.name}
+                  </Text>
+                  {/* 挿入する値。カスタム変数を参照している値は、中身が環境ごとに変わるため
+                      具体的な文字列ではなく参照先を示す（§8.24） */}
+                  {draft.variableId ? (
+                    <View style={styles.valueReferenceRow}>
+                      <Ionicons name="link" size={14} color={colors.textSecondary} />
+                      <Text
+                        style={[
+                          styles.valueText,
+                          {
+                            color: colors.textSecondary,
+                            fontSize: responsiveFontSizes.sm,
+                            lineHeight: responsiveLineHeights.sm,
+                          },
+                        ]}
+                        numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.SINGLE}
+                      >
+                        {getVariableLabel(draft.variableId)}
+                      </Text>
+                    </View>
+                  ) : (
                     <Text
                       style={[
                         styles.valueText,
@@ -274,62 +284,48 @@ export default function ShortcutEditModal() {
                           lineHeight: responsiveLineHeights.sm,
                         },
                       ]}
-                      numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.SINGLE}
+                      numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.DOUBLE}
                     >
-                      {getVariableLabel(draft.variableId)}
+                      {draft.value}
                     </Text>
-                  </View>
-                ) : (
-                  <Text
-                    style={[
-                      styles.valueText,
-                      {
-                        color: colors.textSecondary,
-                        fontSize: responsiveFontSizes.sm,
-                        lineHeight: responsiveLineHeights.sm,
-                      },
-                    ]}
-                    numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.DOUBLE}
-                  >
-                    {draft.value}
-                  </Text>
-                )}
-              </View>
+                  )}
+                </View>
 
-              {/* 削除ボタン */}
-              <TouchableOpacity
-                onPress={(e) => {
-                  e.stopPropagation();
-                  handleDeleteValue(draft);
-                }}
-                hitSlop={UI_CONSTANTS.HIT_SLOP.DEFAULT}
-                style={styles.valueDeleteButton}
-              >
-                <Ionicons name="trash-outline" size={UI_CONSTANTS.ICON_SIZE.SM} color={colors.error} />
+                {/* 削除ボタン */}
+                <TouchableOpacity
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    handleDeleteValue(draft);
+                  }}
+                  hitSlop={UI_CONSTANTS.HIT_SLOP.DEFAULT}
+                  style={styles.valueDeleteButton}
+                >
+                  <Ionicons name="trash-outline" size={UI_CONSTANTS.ICON_SIZE.SM} color={colors.error} />
+                </TouchableOpacity>
               </TouchableOpacity>
-            </TouchableOpacity>
-          ))}
+            ))}
 
-          {/* 値を追加 */}
-          <TouchableOpacity
-            style={[styles.addValueButton, { borderColor: colors.primary }]}
-            onPress={handleAddValue}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="add" size={UI_CONSTANTS.ICON_SIZE.SM} color={colors.primary} />
-            <Text
-              style={[
-                styles.addValueText,
-                {
-                  color: colors.primary,
-                  fontSize: responsiveFontSizes.base,
-                  lineHeight: responsiveLineHeights.base,
-                },
-              ]}
+            {/* 値を追加 */}
+            <TouchableOpacity
+              style={[styles.addValueButton, { borderColor: colors.primary }]}
+              onPress={handleAddValue}
+              activeOpacity={0.7}
             >
-              {t('shortcut.value_create')}
-            </Text>
-          </TouchableOpacity>
+              <Ionicons name="add" size={UI_CONSTANTS.ICON_SIZE.SM} color={colors.primary} />
+              <Text
+                style={[
+                  styles.addValueText,
+                  {
+                    color: colors.primary,
+                    fontSize: responsiveFontSizes.base,
+                    lineHeight: responsiveLineHeights.base,
+                  },
+                ]}
+              >
+                {t('shortcut.value_create')}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </ScreenContainer>
@@ -395,14 +391,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: UI_CONSTANTS.GAP.XS,
   },
-  /* フラットデザイン。枠・角丸・下地を持たず、区切り線だけで値を分ける
-     （一覧のカード SnippetCard / ShortcutCard と同じ扱い）。
-     線は値と値の間にだけ引くため、ここでは幅を持たせない */
+  /* 値の箱と「値を追加」を縦に並べる。箱どうしの間隔はここで取る */
+  valueList: {
+    gap: UI_CONSTANTS.GAP.SM,
+  },
+  /* 名前・プロファイル・カテゴリの入力欄（input / categoryButton）と同じ角丸・余白の箱。
+     下地の色はテーマに従うため描画時に渡す */
   valueRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: UI_CONSTANTS.SPACING.BASE,
-    minHeight: UI_CONSTANTS.BUTTON_HEIGHT.LARGE,
+    borderRadius: UI_CONSTANTS.BORDER_RADIUS.BASE,
+    padding: UI_CONSTANTS.SPACING.BASE,
+    minHeight: UI_CONSTANTS.BUTTON_HEIGHT.MEDIUM,
   },
   valueCardMain: {
     flex: 1,

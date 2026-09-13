@@ -16,57 +16,12 @@
     android:orientation="vertical"
     android:visibility="gone">
 
-    <!-- ヘッダー（戻るボタン + ショートカット名）
-
-         【値一覧のときだけ表示する理由】
-         ショートカット一覧（1階層目）では、上にフィルター行があり、トグルの見た目でも
-         ショートカット表示中と分かるため、見出しをもう1行置くと一覧の領域を44dp削るだけになる。
-         値一覧（2階層目）では「どのショートカットの値か」と「1階層目へ戻る導線」が要るため表示する。
-
-         【定型文一覧と同じ44dpにする理由】
-         フィルター行と同じ高さにして、階層を移動しても行の高さの印象を揃える。 -->
-    <LinearLayout
-        android:id="@+id/shortcutHeader"
-        android:layout_width="match_parent"
-        android:layout_height="44dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="@android:color/transparent"
-        android:visibility="gone">
-
-        <!-- 戻るボタン（ショートカット一覧へ戻る） -->
-        <ImageButton
-            android:id="@+id/shortcutBackButton"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:src="@drawable/ic_chevron_left"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/accessibility_back_button"
-            android:scaleType="fitCenter"
-            android:padding="6dp" />
-
-        <!-- タイトル（選択中のショートカット名） -->
-        <TextView
-            android:id="@+id/shortcutTitleLabel"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp"
-            android:textSize="16sp"
-            android:textColor="?android:attr/textColorPrimary"
-            android:maxLines="1"
-            android:ellipsize="end" />
-
-    </LinearLayout>
-
     <!-- 一覧とEmptyビューのコンテナ
-         高さを重み（weight=1）で決める理由: ヘッダーの有無で使える高さが変わるため、
-         dpで書くと畳んだときに一覧の下に44dpの空きが残ってしまう -->
+         値一覧にも見出しの行と戻るボタンは置かず、一覧と値一覧のどちらもこの領域いっぱいに表示する。
+         ショートカット一覧へは、値を挿入するか、トグルで定型文へ切り替えてから戻すと開き直す -->
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_height="match_parent">
 
         <!-- ショートカット一覧／値一覧（アダプターを差し替えて共用する） -->
         <androidx.recyclerview.widget.RecyclerView

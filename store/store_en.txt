@@ -44,7 +44,7 @@ CLIPTAP IS FOR YOU IF YOU
 WHAT YOU CAN DO
 
 A text expander you tap, not abbreviations you memorize
-Save any phrase: a greeting, a canned reply, a whole email, a code snippet, a prompt. One tap in the app copies it, or tap its title to copy just the title. Unlimited templates and categories, even free.
+Save any phrase: a greeting, a canned reply, a whole email, a code snippet, a prompt. One tap in the app copies it, or tap its title to copy just the title.
 
 The snippet keyboard, in any app
 Filter by category, switch profile and reorder the list without leaving the keyboard. Title and line-break buttons fill a subject line and then the body in one go. On iOS it works without Full Access; grant it and keyboard use also counts towards the usage ranking. Android needs nothing extra.
@@ -77,8 +77,8 @@ Changing phones? Back up all your data as a .cliptap file and restore it on the 
 
 FREE AND PRO
 
-Free: unlimited templates and categories, the snippet keyboard, all 7 text expander variables with all 94 format presets, 3 profiles, 5 custom variables.
-Pro (monthly or yearly): no ads, unlimited profiles and custom variables. Pricing varies by country or region - see the purchase screen in the app, or this store page, for the current price. Billing runs through your store account, cancel any time.
+Free: 50 templates, 10 shortcuts with 2 values each, unlimited categories, the snippet keyboard, all 7 text expander variables with all 94 format presets, 3 profiles, 5 custom variables.
+Pro (monthly or yearly): no ads, unlimited templates, shortcuts and values, profiles and custom variables. Prices vary by region; see the app or this page for the current price. Billing runs through your store account, cancel any time.
 
 FROM THE DEVELOPER
 

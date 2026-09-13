@@ -107,7 +107,7 @@
             "name": "無料でどこまで使えますか？",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "定型文とカテゴリは無制限、拡張キーボードは件数上限なし、システム変数7種と94書式もすべて無料です。プロファイルは3件、カスタム変数は5件まで無料で使えます。"
+              "text": "カテゴリは無制限、拡張キーボードは件数上限なし、システム変数7種と94書式もすべて無料です。定型文は50件、ショートカットは10件（値は1つにつき2件）まで登録でき、プロファイルは3件、カスタム変数は5件まで無料で使えます。"
             }
           },
           {
@@ -147,7 +147,7 @@
             "name": "Proを解約するとどうなりますか？",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "契約期間の終わりまでProを使えます。上限を超えたプロファイル・カスタム変数は削除されず無効になるだけで、Proに戻せば再び使えます。"
+              "text": "契約期間の終わりまでProを使えます。上限を超えたプロファイル・カスタム変数は削除されず無効になるだけで、Proに戻せば再び使えます。定型文・ショートカットは無料プランの上限を超えていても無効にならずそのまま使え、上限を超える新規追加だけができなくなります。"
             }
           }
         ]
@@ -203,7 +203,7 @@
         <hr class="rule" />
 
         <section class="stats" aria-label="ClipTapの数字">
-          <div><p class="stat-num">無制限</p><p class="stat-label">定型文とカテゴリ。無料のまま</p></div>
+          <div><p class="stat-num">50件</p><p class="stat-label">定型文を無料で登録</p></div>
           <div><p class="stat-num">7 + 94</p><p class="stat-label">システム変数7種と書式プリセット94種</p></div>
           <div><p class="stat-num">0円</p><p class="stat-label">基本機能はずっと無料</p></div>
           <div><p class="stat-num">端末内</p><p class="stat-label">データはクラウドに送らない</p></div>
@@ -336,7 +336,9 @@
             <caption class="sr-only">FreeプランとProプランの機能比較</caption>
             <thead><tr><th scope="col">機能</th><th scope="col">Free</th><th scope="col" class="pro">Pro</th></tr></thead>
             <tbody>
-              <tr><th scope="row">定型文・カテゴリ</th><td>無制限</td><td class="pro">無制限</td></tr>
+              <tr><th scope="row">定型文</th><td>50件まで</td><td class="pro">無制限</td></tr>
+              <tr><th scope="row">カテゴリ</th><td>無制限</td><td class="pro">無制限</td></tr>
+              <tr><th scope="row">ショートカット</th><td>10件まで（値は1つにつき2件）</td><td class="pro">無制限</td></tr>
               <tr><th scope="row">プロファイル</th><td>3件まで</td><td class="pro">無制限</td></tr>
               <tr><th scope="row">カスタム変数</th><td>5件まで</td><td class="pro">無制限</td></tr>
               <tr><th scope="row">広告</th><td>あり</td><td class="pro">なし</td></tr>
@@ -355,12 +357,12 @@
           <span class="kicker">FAQ</span>
           <h2 class="section-title">よくある質問。</h2>
           <div class="faq-list">
-            <details><summary>無料でどこまで使えますか？</summary><p>定型文とカテゴリは無制限、拡張キーボードは件数上限なし、システム変数7種と94書式もすべて無料です。プロファイルは3件、カスタム変数は5件まで無料で使えます。</p></details>
+            <details><summary>無料でどこまで使えますか？</summary><p>カテゴリは無制限、拡張キーボードは件数上限なし、システム変数7種と94書式もすべて無料です。定型文は50件、ショートカットは10件（値は1つにつき2件）まで登録でき、プロファイルは3件、カスタム変数は5件まで無料で使えます。</p></details>
             <details><summary>データはどこに保存されますか？</summary><p>定型文・カテゴリ・プロファイル・変数はすべて端末内に保存されます。クラウドには保存されず、定型文の中身が外部へ送られることもありません。</p></details>
             <details><summary>オフラインでも使えますか？</summary><p>定型文の作成・検索・変数展開・コピー・キーボード入力はオフラインで完結します。アカウント連携・Pro権利の確認・広告・ストア遷移だけネットワークが必要です。</p></details>
             <details><summary>iPhoneで使うには設定が必要ですか？</summary><p>「設定」からClipTapキーボードの追加が必要です。使用回数の記録にはフルアクセスの許可が必要ですが、定型文の入力そのものはフルアクセスなしでも行えます。</p></details>
             <details><summary>機種変更のときデータを移せますか？</summary><p>.cliptapファイルで書き出して、新しい端末で読み込めます。パスワードの一致確認とチェックサム検証を行いますが、ファイルの内容は暗号化されません。</p></details>
-            <details><summary>Proを解約するとどうなりますか？</summary><p>契約期間の終わりまでProを使えます。上限を超えたプロファイル・カスタム変数は削除されず無効になるだけで、Proに戻せば再び使えます。</p></details>
+            <details><summary>Proを解約するとどうなりますか？</summary><p>契約期間の終わりまでProを使えます。上限を超えたプロファイル・カスタム変数は削除されず無効になるだけで、Proに戻せば再び使えます。定型文・ショートカットは無料プランの上限を超えていても無効にならずそのまま使え、上限を超える新規追加だけができなくなります。</p></details>
           </div>
         </section>
       </div>

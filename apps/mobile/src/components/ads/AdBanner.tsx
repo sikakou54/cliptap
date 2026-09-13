@@ -26,6 +26,7 @@ import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads'
 import { useTheme } from '@lib/themeSystem';
 import { useTracking } from '@hooks/useTracking';
 import { Logger, useSharedSubscription } from '@cliptap/shared';
+import { isDevAdsDisabled } from '@utils/devAdsOverride';
 
 /* ========================================
    Props定義
@@ -85,6 +86,24 @@ export function AdBanner({ style }: AdBannerProps) {
   }, [getTrackingStatus]);
 
   /**
+   * 開発者メニューで広告を非表示にしているか
+   * 開発ビルドでは保存値を読むまでnullにし、一瞬バナーを出してから消すちらつきを避ける。
+   * 本番ビルドは保存値を読まないため初期化時点でfalseに確定する。
+   */
+  const [isAdsDisabledByDev, setIsAdsDisabledByDev] = useState<boolean | null>(() =>
+    __DEV__ ? null : false
+  );
+
+  /**
+   * 開発者メニューの広告非表示スイッチの読み込み（開発ビルドのみ）
+   */
+  useEffect(() => {
+    if (!__DEV__) return;
+
+    void isDevAdsDisabled().then(setIsAdsDisabledByDev);
+  }, []);
+
+  /**
    * 広告ユニットID
    * 開発時: テストID、本番時: プラットフォーム別の本番ID
    */
@@ -94,6 +113,10 @@ export function AdBanner({ style }: AdBannerProps) {
         ios: AD_UNIT_IDS.ios,
         android: AD_UNIT_IDS.android,
       })!;
+
+  if (isAdsDisabledByDev !== false) {
+    return null;
+  }
 
   if (!shouldShowAds()) {
     return null;

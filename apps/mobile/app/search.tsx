@@ -9,6 +9,7 @@
  * - リアルタイム検索（300msデバウンス）
  * - 定型文はタイトル・本文の全文検索
  * - ショートカットは名前・値名・値の検索
+ * - プロファイルの一時切替と一致件数（定型文・ショートカット共通）
  * - 検索結果のワンタップコピー
  * - 検索結果から編集画面への遷移
  *
@@ -49,7 +50,7 @@ export default function SearchScreen() {
     profiles,
     filteredProfiles,
     categories,
-    getProfileSnippetCount,
+    getProfileResultCount,
     hasSearchQuery,
     handleRefresh,
     handleCopySnippet,
@@ -105,14 +106,14 @@ export default function SearchScreen() {
         ]}
       >
         {/* プロファイルチップセレクター（複数プロファイルがある場合のみ表示）。
-            ショートカットはアクティブなプロファイルの分だけを対象にするため出さない（§8.24） */}
-        {!isShowingShortcuts && profiles.length > 1 && filteredProfiles.length > 0 && (
+            定型文・ショートカットとも、選んだプロファイルで一時的に検索範囲を切り替える（§8.7） */}
+        {profiles.length > 1 && filteredProfiles.length > 0 && (
           <ProfileChipSelector
             profiles={filteredProfiles}
             selectedProfileId={selectedProfileId}
             onSelectProfile={setSelectedProfileId}
             showCount={hasSearchQuery}
-            getCount={getProfileSnippetCount}
+            getCount={getProfileResultCount}
             containerPadding={responsiveSpacing.containerPadding}
           />
         )}

@@ -8,7 +8,7 @@
  *
  * 主な機能:
  * - サブスクリプション状態の管理・照会
- * - 機能制限チェック（変数数・プロファイル数）
+ * - 機能制限チェック（変数数・プロファイル数・定型文数・ショートカット数・ショートカットの値の数）
  * - validフラグの更新（無料版での使用可能アイテム管理）
  * - 認証連携（Firebase UID ↔ RevenueCat）
  *
@@ -33,6 +33,28 @@ import type { Profile } from '../schema';
 export const FREE_PROFILES_LIMIT = 3;
 /** 無料プランで使用可能な変数数 */
 export const FREE_VARIABLES_LIMIT = 5;
+/**
+ * 無料プランで登録できる定型文数（全プロファイル合計）
+ *
+ * @remarks
+ * プロファイル・変数と違い、上限を超えた分を無効化しない（定型文はvalidフラグを持たない）。
+ * 既に上限以上ある利用者のデータは使えるまま残し、新規登録だけを止める。
+ */
+export const FREE_SNIPPETS_LIMIT = 50;
+/**
+ * 無料プランで登録できるショートカット数（全プロファイル合計）
+ *
+ * @remarks 超過分を無効化せず新規登録だけを止める点は FREE_SNIPPETS_LIMIT と同じ。
+ */
+export const FREE_SHORTCUTS_LIMIT = 10;
+/**
+ * 無料プランで1つのショートカットに登録できる値の数
+ *
+ * @remarks
+ * 超過分を無効化せず新規登録だけを止める点は FREE_SNIPPETS_LIMIT と同じ。
+ * 上限を超える値を既に持つショートカットも、値を増やさない限り編集して保存できる。
+ */
+export const FREE_SHORTCUT_VALUES_LIMIT = 2;
 
 /**
  * 上限なしを表す番兵値。
@@ -212,6 +234,41 @@ export class SubscriptionService {
    */
   static canAddProfile(currentCount: number): boolean {
     return this.isSubscribed() || currentCount < this.freeProfilesLimit;
+  }
+
+  /**
+   * 定型文を追加可能か判定
+   *
+   * @param currentCount - 保存済みの定型文総数（全プロファイル合計）
+   * @returns 追加可能な場合true
+   * @remarks
+   * Pro版は無制限、無料版は上限まで。上限以上を保持していても既存の定型文は無効化せず、
+   * 新規登録だけを止める（validフラグの再計算の対象外）。
+   */
+  static canAddSnippet(currentCount: number): boolean {
+    return this.isSubscribed() || currentCount < FREE_SNIPPETS_LIMIT;
+  }
+
+  /**
+   * ショートカットを追加可能か判定
+   *
+   * @param currentCount - 保存済みのショートカット総数（全プロファイル合計）
+   * @returns 追加可能な場合true
+   * @remarks Pro版は無制限、無料版は上限まで。既存分を無効化しない点は canAddSnippet と同じ。
+   */
+  static canAddShortcut(currentCount: number): boolean {
+    return this.isSubscribed() || currentCount < FREE_SHORTCUTS_LIMIT;
+  }
+
+  /**
+   * ショートカットに値を追加可能か判定
+   *
+   * @param currentCount - 追加前の値の件数（1つのショートカット内）
+   * @returns 追加可能な場合true
+   * @remarks Pro版は無制限、無料版は上限まで。既存の値を無効化しない点は canAddSnippet と同じ。
+   */
+  static canAddShortcutValue(currentCount: number): boolean {
+    return this.isSubscribed() || currentCount < FREE_SHORTCUT_VALUES_LIMIT;
   }
 
 

@@ -7,8 +7,8 @@
  *
  * 【コンポーネントとして置く理由】
  * 判定には加入状態が必要で、SubscriptionProviderの内側でしかフックを呼べない。
- * 一方でスプラッシュの保持解除はProviderの外側にあるルートレイアウトの責務になる。
- * 判定だけを行うこのコンポーネントをProviderの内側へ挿し、結果をコールバックで外へ返すことで、
+ * 一方でスプラッシュの表示状態はProviderの外側にあるルートレイアウトが持つ。
+ * 判定だけを行うこのコンポーネントをProviderの内側へ挿し、スプラッシュの状態をpropsで受け取ることで、
  * ナビゲーションを組み立てるAppContentに広告の責務を持ち込まずに両者をつなぐ。
  *
  * @see src/hooks/useAppOpenAd.ts - 表示条件と失敗時の扱い
@@ -22,14 +22,14 @@ import { useAppOpenAd } from '@hooks/useAppOpenAd';
 
 /**
  * AppOpenAdGateのProps
- * @property onSettled - 表示判定が決着したときのコールバック（表示の有無によらず必ず1回呼ばれる。引数は実際に広告を表示したか）
+ * @property isSplashFinished - スプラッシュの表示が完全に終わったか（広告はこれがtrueになってから表示する）
  */
 interface AppOpenAdGateProps {
-  onSettled: (adShown: boolean) => void;
+  isSplashFinished: boolean;
 }
 
-export function AppOpenAdGate({ onSettled }: AppOpenAdGateProps) {
-  useAppOpenAd({ onSettled });
+export function AppOpenAdGate({ isSplashFinished }: AppOpenAdGateProps) {
+  useAppOpenAd({ isSplashFinished });
 
   /* 判定専用のため描画しない */
   return null;

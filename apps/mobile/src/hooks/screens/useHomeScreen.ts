@@ -27,9 +27,10 @@ import { useState, useCallback, useMemo } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useTranslation } from '@cliptap/shared';
 import i18next from '@i18n/config';
-import { useSnippets, useCategories, useProfiles, useVariables, useFilteredSnippets, filterCategoriesInUse, type Category, type Shortcut, type ShortcutValue, type SnippetWithDisplay, type SnippetSortBy } from '@cliptap/shared';
+import { useSnippets, useCategories, useProfiles, useVariables, useFilteredSnippets, useSharedSubscription, filterCategoriesInUse, type Category, type Shortcut, type ShortcutValue, type SnippetWithDisplay, type SnippetSortBy } from '@cliptap/shared';
 import { showErrorAlert } from '@utils/alerts';
 import { useHomeShortcuts } from '@hooks/screens/useHomeShortcuts';
+import { useItemLimitGuard } from '@hooks/useItemLimitGuard';
 
 /**
  * 一覧に出す対象
@@ -96,6 +97,8 @@ export function useHomeScreen(): UseHomeScreenReturn {
   const { categories, refresh: refreshCategories } = useCategories();
   const { activeProfile, profileVariables, defaultProfile, refresh: refreshProfiles } = useProfiles();
   const { variables } = useVariables();
+  const { isLoading: isSubscriptionLoading } = useSharedSubscription();
+  const { ensureCanAddSnippet } = useItemLimitGuard();
 
   /* アクティブなプロファイル（現在選択中の環境）はProviderの値を使う。
      検索画面・環境選択・Web版も同じ入口を使っており、ここだけ配列から導出すると
@@ -283,8 +286,13 @@ export function useHomeScreen(): UseHomeScreenReturn {
       handleCreateShortcut();
       return;
     }
+    /* 権利確認中は登録上限の判定を保留して作成画面を開く。起動直後はPro利用者もまだFree扱いのため、
+       ここで判定すると誤ってPro案内を出してしまう。上限は作成画面の保存時に必ず判定する */
+    if (!isSubscriptionLoading && !ensureCanAddSnippet()) {
+      return;
+    }
     router.push('/snippet/create');
-  }, [listMode, handleCreateShortcut, router]);
+  }, [listMode, handleCreateShortcut, isSubscriptionLoading, ensureCanAddSnippet, router]);
 
   const handleProfileChange = useCallback(() => {
     refreshProfiles();

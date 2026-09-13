@@ -205,28 +205,12 @@ class KeyboardViewController: UIInputViewController {
     private var keyboardHeightConstraint: NSLayoutConstraint?
 
     /**
-     * ショートカット画面のヘッダーの高さ（pt）
-     *
-     * ヘッダーは値一覧の戻り導線（＜ ショートカット名）専用のため、
-     * ショートカット一覧では0ptへ畳む。
-     */
-    private static let shortcutHeaderHeight: CGFloat = 44
-
-    /**
      * ショートカット行の二度押しを無視する時間（秒）
      *
      * Android IMEの `INSERT_DEBOUNCE_MS` と同じ値にして、
      * 同じ操作で同じ結果になるようにする。
      */
     private static let shortcutTapDebounce: TimeInterval = 0.3
-
-    /**
-     * ショートカット画面のヘッダーの高さ制約
-     *
-     * 表示モードに応じて44pt⇔0ptを入れ替えるため1本だけ保持する。
-     * isHiddenだけでは44ptの高さが残り、一覧の先頭がその分だけ下がってしまう。
-     */
-    private var shortcutHeaderHeightConstraint: NSLayoutConstraint?
 
     // MARK: - UI Components（画面を構成するUI部品）
 
@@ -323,7 +307,7 @@ class KeyboardViewController: UIInputViewController {
     /// タップするたびに一覧の表示対象が入れ替わる
     ///
     /// 【見た目を初期化時に固定しない理由】
-    /// アイコン・色・読み上げラベルは表示中の一覧によって変わるため、
+    /// ノブの位置・アイコン・読み上げラベルは表示中の一覧によって変わるため、
     /// updateShortcutToggleAppearance(isShowingShortcuts:) が一元的に更新する。
     /// ここでは既定（定型文表示）の見た目だけを与える。
     private let shortcutToggle: ListModeToggle = {
@@ -652,49 +636,6 @@ class KeyboardViewController: UIInputViewController {
         view.translatesAutoresizingMaskIntoConstraints = false
         view.isHidden = true
         return view
-    }()
-
-    /// ショートカット画面のヘッダービュー
-    /// 値一覧の戻り導線（＜ ショートカット名）専用。ショートカット一覧では畳む
-    private let shortcutHeaderView: UIView = {
-        let view = UIView()
-        view.backgroundColor = .clear
-        view.translatesAutoresizingMaskIntoConstraints = false
-        return view
-    }()
-
-    /// ショートカット画面のタイトルラベル
-    /// 値一覧で選択中のショートカット名を表示する（ヘッダーごと値一覧でのみ表示する）
-    private let shortcutTitleLabel: UILabel = {
-        let label = UILabel()
-        label.font = .boldSystemFont(ofSize: 16)
-        label.textAlignment = .center
-        /* 長いショートカット名でも左右のボタンに重ならないよう、末尾を省略して1行に収める */
-        label.lineBreakMode = .byTruncatingTail
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
-
-    /// ショートカット画面の戻るボタン（値一覧からショートカット一覧へ戻る）
-    ///
-    /// 【個別に隠さない理由】
-    /// 戻るボタンが要るのは値一覧だけで、その値一覧でだけヘッダーごと表示する。
-    /// ヘッダーの表示は setShortcutHeaderVisible(_:) に一元化している。
-    ///
-    /// 【閉じるボタンを置かない理由】
-    /// 定型文への切り替えはフィルター行のトグルが担うため、
-    /// 同じ役目のボタンをこのヘッダーにも置くと戻り方が2通りになって迷わせる。
-    private let shortcutBackButton: UIButton = {
-        let button = UIButton(type: .system)
-        let config = UIImage.SymbolConfiguration(pointSize: 14, weight: .medium)
-        let image = UIImage(systemName: "chevron.left", withConfiguration: config)
-        button.setImage(image, for: .normal)
-        button.backgroundColor = .secondarySystemFill
-        button.tintColor = .label
-        button.layer.cornerRadius = 15
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.accessibilityLabel = L10n.Accessibility.backButton
-        return button
     }()
 
     /// ショートカット／値の一覧を表示するテーブルビュー
@@ -1314,14 +1255,8 @@ class KeyboardViewController: UIInputViewController {
      */
     private func setupShortcutView() {
         view.addSubview(shortcutView)
-        shortcutView.addSubview(shortcutHeaderView)
-        shortcutHeaderView.addSubview(shortcutBackButton)
-        shortcutHeaderView.addSubview(shortcutTitleLabel)
         shortcutView.addSubview(shortcutTableView)
         shortcutView.addSubview(shortcutEmptyLabel)
-
-        // ショートカット画面のアクションを設定
-        shortcutBackButton.addTarget(self, action: #selector(shortcutBackButtonTapped), for: .touchUpInside)
 
         shortcutTableView.delegate = self
         shortcutTableView.dataSource = self
@@ -1341,12 +1276,6 @@ class KeyboardViewController: UIInputViewController {
         /* セルの余白を読みやすさ優先の幅に合わせず、行を画面幅いっぱいに使う */
         shortcutTableView.cellLayoutMarginsFollowReadableWidth = false
 
-        /* ヘッダーの高さは表示モードで入れ替えるため、1本だけ作って保持する */
-        let headerHeightConstraint = shortcutHeaderView.heightAnchor.constraint(
-            equalToConstant: Self.shortcutHeaderHeight
-        )
-        shortcutHeaderHeightConstraint = headerHeightConstraint
-
         NSLayoutConstraint.activate([
             /* Shortcut View: フィルター行の下（定型文一覧と同じ位置・同じ余白）。
                フィルター行を覆わないことで、トグルと環境の切り替えが常に触れる */
@@ -1355,28 +1284,11 @@ class KeyboardViewController: UIInputViewController {
             shortcutView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             shortcutView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
-            /* ヘッダー: ショートカット画面の上部に固定
-               （左右は横向き時のノッチ側を避けるためセーフエリア基準） */
-            shortcutHeaderView.topAnchor.constraint(equalTo: shortcutView.topAnchor),
-            shortcutHeaderView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            shortcutHeaderView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            headerHeightConstraint,
-
-            // Back Button: ヘッダー左端（ヘッダーごと値一覧のときだけ表示）
-            shortcutBackButton.leadingAnchor.constraint(equalTo: shortcutHeaderView.leadingAnchor, constant: 12),
-            shortcutBackButton.centerYAnchor.constraint(equalTo: shortcutHeaderView.centerYAnchor),
-            shortcutBackButton.widthAnchor.constraint(equalToConstant: 30),
-            shortcutBackButton.heightAnchor.constraint(equalToConstant: 30),
-
-            /* Title: ヘッダー中央。戻るボタンと右端より内側に収め、長い名前は末尾を省略する */
-            shortcutTitleLabel.centerXAnchor.constraint(equalTo: shortcutHeaderView.centerXAnchor),
-            shortcutTitleLabel.centerYAnchor.constraint(equalTo: shortcutHeaderView.centerYAnchor),
-            shortcutTitleLabel.leadingAnchor.constraint(greaterThanOrEqualTo: shortcutBackButton.trailingAnchor, constant: 8),
-            shortcutTitleLabel.trailingAnchor.constraint(lessThanOrEqualTo: shortcutHeaderView.trailingAnchor, constant: -12),
-
-            /* TableView: ヘッダーの下。下端をセーフエリアに合わせるのはスニペット一覧と同じ理由で、
+            /* TableView: ショートカット画面いっぱい（一覧・値一覧とも見出しの行は置かない）。
+               左右は横向き時のノッチ側を避けるためセーフエリア基準。
+               下端をセーフエリアに合わせるのはスニペット一覧と同じ理由で、
                ホームインジケータ帯から始めたドラッグをOSのジェスチャに奪われないようにするため */
-            shortcutTableView.topAnchor.constraint(equalTo: shortcutHeaderView.bottomAnchor),
+            shortcutTableView.topAnchor.constraint(equalTo: shortcutView.topAnchor),
             shortcutTableView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             shortcutTableView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             shortcutTableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
@@ -1387,9 +1299,6 @@ class KeyboardViewController: UIInputViewController {
             shortcutEmptyLabel.leadingAnchor.constraint(equalTo: shortcutTableView.leadingAnchor, constant: 20),
             shortcutEmptyLabel.trailingAnchor.constraint(equalTo: shortcutTableView.trailingAnchor, constant: -20)
         ])
-
-        /* 既定はショートカット一覧（値一覧ではない）なのでヘッダーは畳んだ状態から始める */
-        setShortcutHeaderVisible(false)
     }
 
     private func loadInitialData() {
@@ -1764,13 +1673,8 @@ class KeyboardViewController: UIInputViewController {
      *
      * - Parameter isShowingShortcuts: ショートカットを表示中ならtrue
      *
-     * 【アイコンで「押した先」を示す理由】
-     * トグルは押すと表示対象が入れ替わるため、今の状態ではなく押した結果を示す方が迷わない。
-     * 定型文表示中は稲妻（＝ショートカットへ）、ショートカット表示中は一覧（＝定型文へ戻る）。
-     *
-     * 【色で「今どちらか」を示す理由】
-     * アイコンだけでは今どちらの一覧を見ているのかが読み取れないため、
-     * ショートカット表示中は強調色にして選択中であることを示す。
+     * 今どちらの一覧かは、ノブの位置と中のアイコンの形（定型文=書類、ショートカット=稲妻）で示す。
+     * 配色などの見た目の詳細はListModeToggleが持つ。
      */
     private func updateShortcutToggleAppearance(isShowingShortcuts: Bool) {
         /* 読み上げは「押したら何が起きるか」を伝える。見た目は今どちらかを表すため、
@@ -2246,12 +2150,6 @@ class KeyboardViewController: UIInputViewController {
         sortedShortcutValues = []
         KeyboardLog.debug("⚡ [Shortcut] Loaded %d shortcuts", sortedShortcuts.count)
 
-        /* 値一覧から戻ったときに前のショートカット名が残らないよう既定の見出しへ戻す
-           （ヘッダー自体は次の行で畳むため、表示に出るのは値一覧へ進んだときだけ） */
-        shortcutTitleLabel.text = L10n.Shortcut.title
-        /* 一覧は戻る先が無く、定型文へはフィルター行のトグルで戻るためヘッダーを畳む */
-        setShortcutHeaderVisible(false)
-
         applyShortcutRowHeight()
         shortcutTableView.reloadData()
         /* 前に開いたときのスクロール位置が残ると、並べ替えた先頭が画面外になるため先頭へ戻す */
@@ -2270,11 +2168,8 @@ class KeyboardViewController: UIInputViewController {
         sortedShortcutValues = shortcutService.sortedValues(shortcut.values)
         KeyboardLog.debug("⚡ [Shortcut] Showing %d values for shortcut: %@", sortedShortcutValues.count, shortcut.name)
 
-        /* ヘッダーは「＜ <ショートカット名>」。＜は戻るボタン、名前はタイトルが担当する。
-           1階層下がったことと戻り道を示すのは値一覧だけの役目なので、ここでだけ開く */
-        shortcutTitleLabel.text = shortcut.name
-        setShortcutHeaderVisible(true)
-
+        /* 値一覧にも見出しの行と戻るボタンは置かない。ショートカット一覧へは、
+           値を挿入するか、トグルで定型文へ切り替えてから戻すと開き直す */
         applyShortcutRowHeight()
         shortcutTableView.reloadData()
         shortcutTableView.setContentOffset(.zero, animated: false)
@@ -2353,12 +2248,6 @@ class KeyboardViewController: UIInputViewController {
         return true
     }
 
-    /// 値一覧からショートカット一覧へ戻る
-    @objc private func shortcutBackButtonTapped() {
-        KeyboardLog.debug("⚡ [Shortcut] Back button tapped")
-        reloadShortcutList()
-    }
-
     /**
      * 表示中のショートカット画面を最新のデータで作り直す
      *
@@ -2407,20 +2296,6 @@ class KeyboardViewController: UIInputViewController {
 
         /* showShortcutView()と同じ理由で、表示対象を戻したら並べ替えメニューも定型文のものへ戻す */
         setupSortButtonMenu()
-    }
-
-    /**
-     * ショートカット画面のヘッダーの表示を切り替える
-     *
-     * - Parameter isVisible: 値一覧を表示するときtrue
-     *
-     * 【高さも入れ替える理由】
-     * isHiddenだけでは44ptの高さがAuto Layout上に残り、
-     * ショートカット一覧の先頭がその分だけ下がって空白が空いてしまう。
-     */
-    private func setShortcutHeaderVisible(_ isVisible: Bool) {
-        shortcutHeaderView.isHidden = !isVisible
-        shortcutHeaderHeightConstraint?.constant = isVisible ? Self.shortcutHeaderHeight : 0
     }
 
     /**
@@ -2932,14 +2807,16 @@ extension UIColor {
  * 定型文／ショートカットの表示切替トグル
  *
  * 【見た目】
- * 角丸のトラックの中を白いノブが左右に動く、OSの切替スイッチと同じ形。
- * 左（灰色のトラック・書類のアイコン）が定型文、右（アクセント色・稲妻のアイコン）がショートカット。
+ * 枠線だけの角丸のトラックの中を、同じ色の縁を付けた白いノブが左右に動く切替スイッチの形。
+ * 左（書類のアイコン）が定型文、右（稲妻のアイコン）がショートカット。
  * アイコンだけの切替と違い、今どちらを見ているかと、押すと反対側へ移ることが同時に分かる。
  *
- * 【ノブを白で固定する理由】
- * トラックの色がライト・ダークとアクセント色で変わるため、ノブまで追随させると
- * どの組み合わせでもノブが背景に沈む場面が出る。OSの切替スイッチと同じく白で固定する。
- * 中のアイコンも、白の上に置く前提で固定の灰とアクセント色を使う。
+ * 【アプリと同じ見た目にする理由】
+ * 同じ「一覧の表示対象を切り替える」操作をアプリのホームとキーボードの両方で行うため、
+ * どちらでも同じものだと分かるようにしている。配色と寸法はアプリの
+ * ListModeToggle（apps/mobile/src/components/common/ListModeToggle.tsx）と同値で、
+ * 変えるときはアプリ・iOS・Androidの3実装を同じ変更で揃えること。
+ * トラックとアイコンの色は表示対象で変えず、ノブの位置とアイコンの形だけで見分ける。
  *
  * 【タップ領域】
  * トラックは32ptでHIGの44ptに届かないため、判定だけを44ptまで広げる。
@@ -2965,6 +2842,24 @@ final class ListModeToggle: UIControl {
     /// ノブの中に置くアイコンの一辺（pt）
     private static let iconSize: CGFloat = 16
 
+    /// トラックの枠線とノブの縁の太さ（pt）。アプリの `UI_CONSTANTS.BORDER_WIDTH.THIN` と同値
+    private static let outlineWidth: CGFloat = 1
+
+    /// トラックの枠線とノブの縁の色。アプリのテーマの `textTertiary`（ライト #9CA3AF / ダーク #707070）と同値。
+    /// `border`（ライト #E5E7EB）はキーボードの背景（ライト #E2E4E8）とほぼ同じ色で、トラックが見えなくなる
+    private static let outlineColor = UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 0x70 / 255, green: 0x70 / 255, blue: 0x70 / 255, alpha: 1)
+            : UIColor(red: 0x9C / 255, green: 0xA3 / 255, blue: 0xAF / 255, alpha: 1)
+    }
+
+    /// ノブの中のアイコンの色。アプリのテーマの `textSecondary`（ライト #6B7280 / ダーク #A0A0A0）と同値
+    private static let iconColor = UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 0xA0 / 255, green: 0xA0 / 255, blue: 0xA0 / 255, alpha: 1)
+            : UIColor(red: 0x6B / 255, green: 0x72 / 255, blue: 0x80 / 255, alpha: 1)
+    }
+
     /// 確保する最小タップ領域（pt）
     private static let minimumHitSize: CGFloat = 44
 
@@ -2980,20 +2875,32 @@ final class ListModeToggle: UIControl {
     override init(frame: CGRect) {
         super.init(frame: frame)
 
+        /* トラックは塗りを持たず、ノブが動く範囲を示す枠線だけを引く */
+        backgroundColor = .clear
         layer.cornerRadius = Self.trackHeight / 2
+        layer.borderWidth = Self.outlineWidth
         clipsToBounds = true
 
+        /* ノブは白。白い背景でも形が分かるよう、トラックと同じ色の縁を付ける */
         knobView.backgroundColor = .white
         knobView.layer.cornerRadius = Self.knobSize / 2
+        knobView.layer.borderWidth = Self.outlineWidth
         knobView.isUserInteractionEnabled = false
         addSubview(knobView)
+        applyOutlineColor()
 
         iconView.contentMode = .scaleAspectFit
+        iconView.tintColor = Self.iconColor
         iconView.isUserInteractionEnabled = false
         knobView.addSubview(iconView)
 
         isAccessibilityElement = true
         accessibilityTraits = .button
+
+        /* layer.borderColorはCGColorのため、ライト・ダークが切り替わっても自動では塗り直されない */
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (toggle: ListModeToggle, _: UITraitCollection) in
+            toggle.applyOutlineColor()
+        }
 
         applyAppearance()
     }
@@ -3049,15 +2956,18 @@ final class ListModeToggle: UIControl {
         }
     }
 
-    /// トラックの色とノブの中のアイコンを現在の状態に合わせる
+    /// ノブの中のアイコンを現在の状態に合わせる（色は状態によらず同じ）
     private func applyAppearance() {
-        backgroundColor = isShowingShortcuts ? .systemBlue : .systemGray4
-
         let config = UIImage.SymbolConfiguration(pointSize: 12, weight: .semibold)
         let symbolName = isShowingShortcuts ? "bolt.fill" : "doc.text"
         iconView.image = UIImage(systemName: symbolName, withConfiguration: config)
-        /* 白のノブの上に置くため、テーマで色が反転しない値を使う */
-        iconView.tintColor = isShowingShortcuts ? .systemBlue : .systemGray
+    }
+
+    /// トラックの枠線とノブの縁の色を現在のライト・ダークに合わせる
+    private func applyOutlineColor() {
+        let outlineColor = Self.outlineColor.resolvedColor(with: traitCollection).cgColor
+        layer.borderColor = outlineColor
+        knobView.layer.borderColor = outlineColor
     }
 
     /// ノブとアイコンの位置を現在の状態に合わせる

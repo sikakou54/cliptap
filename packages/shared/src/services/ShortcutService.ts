@@ -39,6 +39,8 @@ export class ShortcutService {
    *
    * @remarks
    * そのプロファイルに紐づくものと、紐づけが0件のもの（全プロファイル向け）を返す。
+   * 値の参照はこのプロファイルで解決する。プロファイルを跨ぐ検索（検索画面）でも
+   * プロファイルごとに解決結果が変わるため、プロファイルごとに呼ぶ。
    */
   static getByProfileId(profileId: string): Shortcut[] {
     return ShortcutMapper.getByProfileId(profileId);
@@ -199,13 +201,25 @@ export class ShortcutService {
   }
 
   /**
+   * 保存済みのショートカット総数を取得
+   *
+   * @returns 全プロファイル合計のショートカット数（複数プロファイルに紐づくものも1件と数える）
+   * @remarks
+   * 無料プランの登録上限の判定に使う。Providerの一覧はアクティブなプロファイルで絞り込まれ、
+   * プロファイル未確定の間は空になるため、その件数では上限をすり抜ける。
+   */
+  static count(): number {
+    return ShortcutMapper.count();
+  }
+
+  /**
    * 指定プロファイルから見えるショートカット数を取得
    *
    * @param profileId - 表示中のプロファイルID
    * @returns ショートカット数（紐づくもの＋0件で全プロファイル向けのもの）
    */
-  static count(profileId: string): number {
-    return ShortcutMapper.count(profileId);
+  static countByProfile(profileId: string): number {
+    return ShortcutMapper.countByProfile(profileId);
   }
 
   /**

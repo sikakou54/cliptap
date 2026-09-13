@@ -380,9 +380,11 @@ describe('ショートカットの紐づけプロファイル', () => {
         OTHER,
       ]);
 
-      expect(ShortcutService.count(MAIN)).toBe(3);
-      expect(ShortcutService.count(OTHER)).toBe(3);
-      expect(ShortcutService.count(THIRD)).toBe(1);
+      expect(ShortcutService.countByProfile(MAIN)).toBe(3);
+      expect(ShortcutService.countByProfile(OTHER)).toBe(3);
+      expect(ShortcutService.countByProfile(THIRD)).toBe(1);
+      /* 総数は紐づけの数によらず1件ずつ数える（両方に紐づくものも1件） */
+      expect(ShortcutService.count()).toBe(4);
     });
   });
 });

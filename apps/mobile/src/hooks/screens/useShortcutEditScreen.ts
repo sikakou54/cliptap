@@ -22,12 +22,14 @@ import {
   translateError,
   useCategories,
   useProfiles,
+  useSharedSubscription,
   useShortcuts,
   type Category,
   type ShortcutValueInput,
 } from '@cliptap/shared';
 import { showConfirm, showErrorAlert } from '@utils/alerts';
 import { useTranslation } from '@cliptap/shared';
+import { useItemLimitGuard } from '@hooks/useItemLimitGuard';
 
 /* ======================================== */
 /* 型定義 */
@@ -141,11 +143,13 @@ export function useShortcutEditScreen(
 
   const { t } = useTranslation();
   const router = useRouter();
-  const { shortcuts, activeProfileId, createShortcut, updateShortcut } = useShortcuts();
+  const { activeProfileId, createShortcut, updateShortcut, getById } = useShortcuts();
   /* 既定のチェックは選択画面に出る有効なプロファイル（validProfiles）だけから選ぶ。
      選択済みの名前は無効なプロファイルへの保存済みの紐づけも含めて出すため、profilesから引く */
   const { profiles, validProfiles } = useProfiles();
   const { categories } = useCategories();
+  const { isLoading: isSubscriptionLoading } = useSharedSubscription();
+  const { ensureCanAddShortcut, ensureCanAddShortcutValue } = useItemLimitGuard();
 
   /* ======================================== */
   /* 状態管理 */
@@ -163,9 +167,13 @@ export function useShortcutEditScreen(
   /* ======================================== */
   const isEdit = !!shortcutId;
 
+  /* 編集対象はIDで引く。Providerの一覧はアクティブなプロファイルから見える分しか持たないが、
+     検索画面はプロファイルを跨いで検索し、他のプロファイルのショートカットからも編集へ進む。
+     一覧から探すと見つからずフォームが空で開き、保存すると作成の分岐へ流れて重複して登録される。
+     値の解決基準はアクティブなプロファイルになるが、フォームは保存文字列と参照先だけを使うため影響しない */
   const editingShortcut = useMemo(
-    () => shortcuts.find((shortcut) => shortcut.id === shortcutId),
-    [shortcuts, shortcutId]
+    () => (shortcutId ? getById(shortcutId) : null),
+    [getById, shortcutId]
   );
 
   /**
@@ -302,8 +310,13 @@ export function useShortcutEditScreen(
    *
    * @remarks
    * keyを空文字で渡すことで、モーダル側の戻り値を「新規追加」として扱わせる。
+   * 無料プランの値の上限はここで先に判定する。権利確認中は判定を保留し、保存時に必ず判定する
+   * （保留する理由はホームの追加ボタンと同じ）。
    */
   const handleAddValue = useCallback(() => {
+    if (!isSubscriptionLoading && !ensureCanAddShortcutValue(values.length)) {
+      return;
+    }
     router.push({
       pathname: '/shortcut/value-edit',
       params: {
@@ -315,7 +328,7 @@ export function useShortcutEditScreen(
         profileIds: profileIds.join(','),
       },
     });
-  }, [router, profileIds]);
+  }, [isSubscriptionLoading, ensureCanAddShortcutValue, values.length, router, profileIds]);
 
   /**
    * 値の編集画面を開く
@@ -411,6 +424,17 @@ export function useShortcutEditScreen(
   const handleSave = useCallback(() => {
     if (!canSave || saving) return;
 
+    /* 新規作成だけ登録上限を判定する（保存時は保留しない理由は useSnippetFormScreen と同じ）。
+       editingShortcutが見つからない場合は作成へ進むため、条件は下の作成・更新の分岐と揃える */
+    if (!(isEdit && editingShortcut) && !ensureCanAddShortcut()) return;
+
+    /* 値の件数も保存時に保留せず判定する（値の追加ボタンを経由しない追加への保険）。
+       ただし保存済みの件数を超えない保存は許可する。上限を超える値を既に持つショートカット
+       （Pro加入中に登録したもの等）を、値を増やさずに編集して保存できるようにするため。
+       判定には最後の1件を追加する前の件数を渡す */
+    const savedValueCount = isEdit && editingShortcut ? editingShortcut.values.length : 0;
+    if (values.length > savedValueCount && !ensureCanAddShortcutValue(values.length - 1)) return;
+
     setSaving(true);
     try {
       /* 新規追加の値はidを持たないため、そのままMapperの差し替え判定に渡せる */
@@ -448,6 +472,8 @@ export function useShortcutEditScreen(
     values,
     isEdit,
     editingShortcut,
+    ensureCanAddShortcut,
+    ensureCanAddShortcutValue,
     updateShortcut,
     createShortcut,
     name,

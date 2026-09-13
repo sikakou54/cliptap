@@ -6,10 +6,11 @@
  *
  * 主な責務:
  * - 検索クエリの管理とデバウンス検索
- * - プロファイル（環境）によるフィルタリング
+ * - プロファイル（環境）の一時切替と、プロファイルごとの一致件数（定型文・ショートカット共通）
  * - 検索結果の定型文操作（コピー・編集・削除）
- * - ショートカット検索と、その編集・削除
  * - Pull-to-refresh処理
+ *
+ * ショートカットの取得・絞り込みと操作は useSearchShortcuts が持つ。
  *
  * 【検索対象をホームの表示対象に合わせる理由】
  * 検索はホームの一覧を絞り込む延長の操作なので、ホームで見ていたものと
@@ -18,6 +19,7 @@
  *
  * @see app/search.tsx - UIコンポーネント
  * @see src/hooks/screens/useHomeScreen.ts - 表示対象の正本
+ * @see src/hooks/screens/useSearchShortcuts.ts - ショートカット検索
  * @see packages/shared/src/hooks/useSearch.ts - 検索デバウンス処理
  */
 
@@ -28,9 +30,7 @@ import {
   useCategories,
   useProfiles,
   useSearch,
-  useShortcuts,
   getSnippetCountByProfile,
-  searchShortcuts,
   useSnippets,
   useVariables,
   useFilteredSnippets,
@@ -41,11 +41,9 @@ import {
   type Profile,
 } from '@cliptap/shared';
 import { Logger } from '@cliptap/shared';
-import { showConfirm, showErrorAlert } from '@utils/alerts';
+import { showErrorAlert } from '@utils/alerts';
+import { useSearchShortcuts } from '@hooks/screens/useSearchShortcuts';
 
-/**
- * useSearchScreenの戻り値の型
- */
 /**
  * useSearchScreenの引数の型
  */
@@ -54,6 +52,9 @@ interface UseSearchScreenParams {
   isShowingShortcuts: boolean;
 }
 
+/**
+ * useSearchScreenの戻り値の型
+ */
 export interface UseSearchScreenReturn {
   /* 検索状態 */
   query: string;
@@ -68,14 +69,15 @@ export interface UseSearchScreenReturn {
 
   /* データ */
   displaySnippets: SnippetWithDisplay[];
-  /** 検索語に一致したショートカット（ショートカット検索時のみ中身が入る） */
+  /** 選択中のプロファイルで検索語に一致したショートカット（ショートカット検索時のみ中身が入る） */
   displayShortcuts: Shortcut[];
   profiles: Profile[];
   filteredProfiles: Profile[];
   categories: Category[];
 
   /* 派生関数 */
-  getProfileSnippetCount: (profileId: string) => number;
+  /** 指定したプロファイルの一致件数を返す（表示中の対象が定型文かショートカットかで数える対象が変わる） */
+  getProfileResultCount: (profileId: string) => number;
   hasSearchQuery: boolean;
 
   /* ハンドラ */
@@ -93,6 +95,7 @@ export interface UseSearchScreenReturn {
 /**
  * 検索画面のビジネスロジックフック
  *
+ * @param params - 検索対象（ホームの表示対象）
  * @returns 画面に必要な全ての状態とハンドラ
  */
 export function useSearchScreen(params: UseSearchScreenParams): UseSearchScreenReturn {
@@ -109,9 +112,6 @@ export function useSearchScreen(params: UseSearchScreenParams): UseSearchScreenR
   const { categories } = useCategories();
   const { variables } = useVariables();
   const { allSnippets, snippetProfiles, deleteSnippet, copySnippet, copySnippetTitle, refresh: refreshSnippets } = useSnippets();
-  /* ショートカットはアクティブなプロファイルの分だけを保持する（§8.24）。
-     検索もその範囲を対象にするため、プロファイルチップはショートカット検索では出さない */
-  const { shortcuts, refresh: refreshShortcuts, deleteShortcut, copyShortcutValue } = useShortcuts();
 
   /* onErrorコールバックをメモ化（無限ループ防止） */
   const handleSearchError = useCallback((msg: string, err: unknown) => {
@@ -162,20 +162,23 @@ export function useSearchScreen(params: UseSearchScreenParams): UseSearchScreenR
    *
    * 入力中は定型文検索と同じデバウンス値を使い、キー入力ごとに全件を評価しない。
    * 検索欄を空にしたときだけデバウンスを待たず、即座に全件表示へ戻す（§8.7）。
-   * 生の query を displayShortcuts の依存に入れるとキー入力ごとに再評価されるため、ここで確定させる。
+   * 生の query を絞り込みの依存に入れるとキー入力ごとに再評価されるため、ここで確定させる。
    */
   const shortcutQuery = query === '' ? '' : debouncedQuery;
 
-  /**
-   * 検索語に一致したショートカット
-   *
-   * 定型文の検索はSQLで行うが、ショートカットは取得済みの一覧が小さいためメモリ上で絞り込む。
-   * 突き合わせの規則は共有パッケージ側に置き、規則を1箇所に保つ。
-   */
-  const displayShortcuts = useMemo(
-    () => (isShowingShortcuts ? searchShortcuts(shortcuts, shortcutQuery) : []),
-    [isShowingShortcuts, shortcuts, shortcutQuery]
-  );
+  /* ショートカットの取得・絞り込みと操作。表示するプロファイルは定型文と同じ選択に従う */
+  const {
+    displayShortcuts,
+    getProfileShortcutCount,
+    handleRefreshShortcuts,
+    handleCopyShortcutValue,
+    handleEditShortcut,
+    handleDeleteShortcut,
+  } = useSearchShortcuts({
+    enabled: isShowingShortcuts,
+    query: shortcutQuery,
+    selectedProfileId,
+  });
 
   /**
    * 各環境の定型文件数を計算
@@ -185,16 +188,19 @@ export function useSearchScreen(params: UseSearchScreenParams): UseSearchScreenR
     [baseSnippets, snippetProfiles]
   );
 
+  /* チップの件数と絞り込みは、表示中の対象（定型文かショートカット）で数える */
+  const getProfileResultCount = isShowingShortcuts ? getProfileShortcutCount : getProfileSnippetCountFn;
+
   /**
    * 表示する環境リスト
    * 検索時は検索結果を持つ環境のみフィルタリング
    */
   const filteredProfiles = useMemo(() => {
     if (hasSearchQuery) {
-      return validProfiles.filter((p: Profile) => getProfileSnippetCountFn(p.id) > 0);
+      return validProfiles.filter((p: Profile) => getProfileResultCount(p.id) > 0);
     }
     return validProfiles;
-  }, [validProfiles, hasSearchQuery, getProfileSnippetCountFn]);
+  }, [validProfiles, hasSearchQuery, getProfileResultCount]);
 
   /**
    * 画面表示用の定型文リスト（プロファイルフィルタリング適用、変数展開済み）
@@ -220,11 +226,11 @@ export function useSearchScreen(params: UseSearchScreenParams): UseSearchScreenR
    */
   const handleRefresh = useCallback(() => {
     if (isShowingShortcuts) {
-      refreshShortcuts();
+      handleRefreshShortcuts();
       return;
     }
     refreshSnippets();
-  }, [isShowingShortcuts, refreshShortcuts, refreshSnippets]);
+  }, [isShowingShortcuts, handleRefreshShortcuts, refreshSnippets]);
 
   /**
    * 定型文コピー
@@ -286,63 +292,6 @@ export function useSearchScreen(params: UseSearchScreenParams): UseSearchScreenR
   );
 
   /**
-   * ショートカット値をクリップボードへコピーする
-   *
-   * ホームの一覧と同じ経路を使う（値だけをコピーし、値名は含めない）。
-   */
-  const handleCopyShortcutValue = useCallback(
-    async (value: ShortcutValue) => {
-      try {
-        await copyShortcutValue(value);
-      } catch (error) {
-        Logger.error('[SearchScreen] Failed to copy the shortcut value:', error);
-        showErrorAlert(t('error.generic'));
-        /* 行側でコピー完了表示を出さないよう再スローする */
-        throw error;
-      }
-    },
-    [copyShortcutValue, t]
-  );
-
-  /**
-   * ショートカット編集画面へ遷移
-   *
-   * ホームの一覧と同じく、編集アイコンから編集へ進む。
-   */
-  const handleEditShortcut = useCallback(
-    (shortcut: Shortcut) => {
-      router.push({
-        pathname: '/shortcut/edit',
-        params: { id: shortcut.id },
-      });
-    },
-    [router]
-  );
-
-  /**
-   * ショートカット削除
-   *
-   * 値もまとめて削除されるため、ホームの一覧と同じく確認を挟む。
-   */
-  const handleDeleteShortcut = useCallback(
-    (shortcut: Shortcut) => {
-      showConfirm(
-        t('shortcut.delete_confirm', { name: shortcut.name }),
-        () => {
-          try {
-            deleteShortcut(shortcut.id);
-          } catch (error) {
-            Logger.error('[SearchScreen] Failed to delete shortcut:', error);
-          }
-        },
-        undefined,
-        'danger'
-      );
-    },
-    [deleteShortcut, t]
-  );
-
-  /**
    * 検索画面を閉じる
    */
   const handleClose = useCallback(() => {
@@ -370,7 +319,7 @@ export function useSearchScreen(params: UseSearchScreenParams): UseSearchScreenR
     categories,
 
     /* 派生関数 */
-    getProfileSnippetCount: getProfileSnippetCountFn,
+    getProfileResultCount,
     hasSearchQuery,
 
     /* ハンドラ */

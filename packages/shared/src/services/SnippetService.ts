@@ -36,6 +36,18 @@ export class SnippetService {
   }
 
   /**
+   * 保存済みのスニペット総数を取得
+   *
+   * @returns 全プロファイル合計のスニペット数
+   * @remarks
+   * 無料プランの登録上限の判定に使う。画面の一覧はプロファイル・カテゴリで絞り込まれているため、
+   * その件数では他のプロファイルの分を取りこぼす。
+   */
+  static count(): number {
+    return SnippetMapper.count();
+  }
+
+  /**
    * スニペットを作成
    *
    * @param data - 作成するスニペットの情報

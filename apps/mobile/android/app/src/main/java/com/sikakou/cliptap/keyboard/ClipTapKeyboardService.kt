@@ -13,7 +13,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.ContextThemeWrapper
 import androidx.core.content.ContextCompat
-import androidx.core.widget.ImageViewCompat
 import com.sikakou.cliptap.R
 import com.sikakou.cliptap.models.Profile
 import com.sikakou.cliptap.models.Category
@@ -84,9 +83,6 @@ class ClipTapKeyboardService : InputMethodService() {
 
     // ショートカット画面のビュー
     private lateinit var shortcutView: View
-    private lateinit var shortcutHeader: View
-    private lateinit var shortcutBackButton: android.widget.ImageButton
-    private lateinit var shortcutTitleLabel: android.widget.TextView
     private lateinit var shortcutRecyclerView: RecyclerView
     private lateinit var shortcutEmptyView: View
     private lateinit var shortcutAdapter: ShortcutAdapter
@@ -284,7 +280,6 @@ class ClipTapKeyboardService : InputMethodService() {
      *    - SnippetAdapter: スニペットカードを表示
      * 3. ショートカット関連のボタンにリスナーを設定
      *    - shortcutToggle: 一覧に出す対象を切り替える
-     *    - shortcutBackButton: 値一覧からショートカット一覧へ戻る
      * 4. 詳細画面のボタンにリスナーを設定
      *    - copyButton: スニペットを挿入
      *    - insertNewlineButton: 改行を挿入
@@ -311,9 +306,6 @@ class ClipTapKeyboardService : InputMethodService() {
 
         // ショートカット画面のビューを初期化
         shortcutView = keyboardView.findViewById(R.id.shortcutView)
-        shortcutHeader = keyboardView.findViewById(R.id.shortcutHeader)
-        shortcutBackButton = keyboardView.findViewById(R.id.shortcutBackButton)
-        shortcutTitleLabel = keyboardView.findViewById(R.id.shortcutTitleLabel)
         shortcutRecyclerView = keyboardView.findViewById(R.id.shortcutRecyclerView)
         shortcutEmptyView = keyboardView.findViewById(R.id.shortcutEmptyView)
 
@@ -351,9 +343,7 @@ class ClipTapKeyboardService : InputMethodService() {
         shortcutRecyclerView.layoutManager = LinearLayoutManager(this)
 
         /* 行数が変わってもRecyclerView自体の大きさは変わらない。
-           これを伝えることでスクロール中のレイアウト再計算を省ける。
-           値一覧でヘッダーを出すと表示枠の高さは44dp縮むが、それは親からのレイアウト変更で、
-           行数の増減による再計算ではないため、この指定と矛盾しない */
+           これを伝えることでスクロール中のレイアウト再計算を省ける */
         shortcutRecyclerView.setHasFixedSize(true)
 
         /* ショートカット一覧と値一覧は1つのRecyclerViewでアダプターを差し替えて表示する。
@@ -370,11 +360,6 @@ class ClipTapKeyboardService : InputMethodService() {
            以前のように別画面へ遷移しないため、ショートカット側に閉じる専用のボタンは置かない */
         shortcutToggle.setOnClickListener {
             toggleListMode()
-        }
-
-        /* 値一覧（2階層目）からショートカット一覧（1階層目）へ戻る */
-        shortcutBackButton.setOnClickListener {
-            showShortcutList()
         }
 
         // 詳細画面のボタンにクリックリスナーを設定
@@ -1203,22 +1188,15 @@ class ClipTapKeyboardService : InputMethodService() {
      * ボタンは出したまま、バッジだけを表示中の一覧の基準に合わせて付け替える。
      *
      * 【トグルの見た目】
-     * トラックの色とノブの位置・中のアイコンで、今どちらを見ているかを示す。
-     * 左（灰色・書類）が定型文、右（アクセント色・稲妻）がショートカット。
+     * ノブの位置と中のアイコンの形で、今どちらを見ているかを示す。
+     * 左（書類）が定型文、右（稲妻）がショートカット。
+     * トラックの枠線とアイコンの色はアプリのホームの切替トグルに揃えてレイアウト側で固定し、表示対象では変えない。
      * 読み上げだけは「押したら何が起きるか」を伝えるため、見た目と逆の側を読ませる。
-     *
-     * 【ノブの中のアイコンをコードから着色する理由】
-     * ノブは常に白のため、テーマで反転する色を焼き込むとダークで見えなくなる。
-     * 選択されていない側は固定の灰、選択されている側はアクセント色を使う。
      */
     private fun updateListModeChrome() {
         /* 並べ替えの基準は定型文とショートカットで別々のため、表示対象が変わるとバッジの要否も変わる */
         updateSortBadgeVisibility()
 
-        shortcutToggle.setBackgroundResource(
-            if (isShortcutMode) R.drawable.list_mode_toggle_track_on
-            else R.drawable.list_mode_toggle_track_off
-        )
         shortcutToggle.contentDescription = getString(
             if (isShortcutMode) R.string.accessibility_show_snippets_button
             else R.string.accessibility_show_shortcuts_button
@@ -1226,15 +1204,6 @@ class ClipTapKeyboardService : InputMethodService() {
 
         shortcutToggleIcon.setImageResource(
             if (isShortcutMode) R.drawable.ic_shortcut else R.drawable.ic_snippet
-        )
-        ImageViewCompat.setImageTintList(
-            shortcutToggleIcon,
-            android.content.res.ColorStateList.valueOf(
-                ContextCompat.getColor(
-                    this,
-                    if (isShortcutMode) R.color.keyboardAccent else R.color.keyboardToggleKnobIcon
-                )
-            )
         )
 
         moveToggleKnob()
@@ -1308,21 +1277,13 @@ class ClipTapKeyboardService : InputMethodService() {
      *
      * 【何をするか】
      * 1. 選んだ基準で並べ替えたショートカット一覧を取得
-     * 2. ヘッダー（戻るボタン + ショートカット名）を畳む
-     * 3. 一覧を差し替え、0件なら空状態を表示する
+     * 2. 一覧を差し替え、0件なら空状態を表示する
      *
      * 【開くたびに取得し直す理由】
      * メインアプリでの追加・削除・並べ替えを次に開いたときに反映するため。
-     *
-     * 【1階層目でヘッダーを畳む理由】
-     * 上にフィルター行（環境チップとトグル）が出たままになり、トグルの見た目でも
-     * ショートカット表示中と分かるため、見出しをもう1行置くと一覧に使える高さを削るだけになる。
-     * 戻る導線が要るのは値一覧（2階層目）だけ。
      */
     private fun showShortcutList() {
         val shortcuts = loadRankedShortcuts()
-
-        shortcutHeader.visibility = View.GONE
 
         shortcutRecyclerView.adapter = shortcutAdapter
         shortcutAdapter.submitList(shortcuts)
@@ -1339,8 +1300,11 @@ class ClipTapKeyboardService : InputMethodService() {
      *
      * 【何をするか】
      * 1. 使用回数の多い順に値を並べ替える
-     * 2. ヘッダーを出して「＜ <ショートカット名>」にする（戻るボタン + ショートカット名）
-     * 3. 一覧を値用のアダプターへ差し替える
+     * 2. 一覧を値用のアダプターへ差し替える
+     *
+     * 【見出しと戻るボタンを置かない】
+     * 値一覧にも見出しの行と戻るボタンは置かない。ショートカット一覧へは、
+     * 値を挿入するか、トグルで定型文へ切り替えてから戻すと開き直す。
      *
      * 【一覧の並べ替えを掛けない理由】
      * 値が持つのは名前と使用回数だけで、4種の基準のうち2種が対応しない（ShortcutService.rankedValues）。
@@ -1349,9 +1313,6 @@ class ClipTapKeyboardService : InputMethodService() {
      */
     private fun showShortcutValues(shortcut: Shortcut) {
         val values = shortcutService.rankedValues(shortcut.values)
-
-        shortcutTitleLabel.text = shortcut.name
-        shortcutHeader.visibility = View.VISIBLE
 
         shortcutRecyclerView.adapter = shortcutValueAdapter
         shortcutValueAdapter.submitList(values)

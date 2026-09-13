@@ -21,6 +21,7 @@ import { useSnippets, useCategories, useProfiles, type Category } from '@cliptap
 import { showInfo, showErrorAlert } from '@utils/alerts';
 import { Profile } from '@cliptap/shared';
 import { Logger } from '@cliptap/shared';
+import { useItemLimitGuard } from '@hooks/useItemLimitGuard';
 
 /**
  * useSnippetFormScreenの引数
@@ -79,6 +80,7 @@ export function useSnippetFormScreen({
   const { categories, refresh: refreshCategories } = useCategories();
   /* 選択済みプロファイル名の表示は、選択肢と同じく有効なプロファイルだけを対象にする */
   const { validProfiles: profiles, activeProfile } = useProfiles();
+  const { ensureCanAddSnippet } = useItemLimitGuard();
 
   /* ======================================== */
   /* 状態管理 */
@@ -254,6 +256,13 @@ export function useSnippetFormScreen({
       return;
     }
 
+    /* 新規作成だけ登録上限を判定する。ディープリンクなどホームの追加ボタンを経由しない開き方があり、
+       権利確認中にホームが判定を保留した場合もここで止めるため、保存時は保留せず必ず判定する。
+       止めた場合も画面は閉じず、入力は残る。条件は下の作成・更新の分岐と揃える */
+    if (!(isEditMode && snippetId) && !ensureCanAddSnippet()) {
+      return;
+    }
+
     setSaving(true);
     try {
       if (isEditMode && snippetId) {
@@ -288,6 +297,7 @@ export function useSnippetFormScreen({
     selectedCategoryId,
     selectedProfileIds,
     copyWithTitle,
+    ensureCanAddSnippet,
     updateSnippet,
     createSnippet,
     router,

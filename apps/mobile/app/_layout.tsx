@@ -18,7 +18,6 @@
  * @see docs/機能仕様書.md §3.3 システム構成
  */
 
-import { useCallback, useState } from 'react';
 import { Stack } from 'expo-router';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { ThemeProvider } from '@lib/themeSystem';
@@ -157,32 +156,6 @@ function AppContent({ isTabletDevice }: { isTabletDevice: boolean }) {
 export default function RootLayout() {
   const { isAdaptersReady, showSplash, isTabletDevice, hideSplash } = useAdapterInitialization();
 
-  /**
-   * 起動時App Open広告の表示判定が未決着か
-   *
-   * 決着するまでスプラッシュを保持し、広告をスプラッシュの裏で表示させる。
-   * こうすると利用者には「スプラッシュ → 広告 → ホーム」と見える。
-   * スプラッシュ側の保持時間はマウント時点から並行して進むため、
-   * この保留がそのまま起動時間へ上乗せされることはない。
-   * AppOpenAdGate は上限時間で必ず決着するため、ここで起動が止まることもない。
-   */
-  const [isAppOpenAdPending, setIsAppOpenAdPending] = useState(true);
-
-  const handleAppOpenAdSettled = useCallback(
-    (adShown: boolean) => {
-      setIsAppOpenAdPending(false);
-
-      /* 広告を全画面で表示できたなら、その裏でスプラッシュを演出する意味はない。
-         保持したままだと、広告を閉じた利用者にスプラッシュが1.5秒現れてしまう
-         （Androidは広告表示中にJSタイマーが止まるため必ずそうなる）。
-         ここで畳んでおけば、閉じた時点でホーム画面が見えている */
-      if (adShown) {
-        hideSplash();
-      }
-    },
-    [hideSplash]
-  );
-
   return (
     <>
       {/* アダプター初期化完了後のメインアプリコンテンツ */}
@@ -192,8 +165,9 @@ export default function RootLayout() {
           <ThemeProvider>
             <AuthProvider>
               <SubscriptionProvider>
-                {/* 起動時App Open広告の表示判定（加入状態を見るためSubscriptionProviderの内側に置く。描画はしない） */}
-                <AppOpenAdGate onSettled={handleAppOpenAdSettled} />
+                {/* 起動時App Open広告の表示判定（加入状態を見るためSubscriptionProviderの内側に置く。描画はしない。
+                    広告はスプラッシュの表示が完全に終わってから出す） */}
+                <AppOpenAdGate isSplashFinished={!showSplash} />
                 <AppContent isTabletDevice={isTabletDevice} />
               </SubscriptionProvider>
             </AuthProvider>
@@ -201,11 +175,11 @@ export default function RootLayout() {
         </View>
       )}
 
-      {/* スプラッシュスクリーン（初期化中と、起動時広告の判定中に表示） */}
+      {/* スプラッシュスクリーン（初期化中に表示。起動時広告は待たない） */}
       {showSplash && (
         <SplashScreen
           onFinish={hideSplash}
-          isLoading={!isAdaptersReady || isAppOpenAdPending}
+          isLoading={!isAdaptersReady}
         />
       )}
     </>

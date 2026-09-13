@@ -48,7 +48,7 @@ describe('ショートカット値の使用回数', () => {
 
     for (const file of [
       'src/hooks/screens/useHomeShortcuts.ts',
-      'src/hooks/screens/useSearchScreen.ts',
+      'src/hooks/screens/useSearchShortcuts.ts',
     ]) {
       const source = readFileSync(resolve(mobileRoot, file), 'utf8');
       expect(source).toContain('copyShortcutValue(value)');

@@ -30,7 +30,6 @@
 "snippet_no_title" = "(No Title)";
 
 /* Shortcut related */
-"shortcut.title" = "Shortcuts";
 "shortcut.empty" = "No shortcuts available";
 "shortcut.empty_hint" = "Create shortcuts in the main app";
 
@@ -82,7 +81,6 @@
 "accessibility.insert_newline_button" = "Insert newline button";
 "accessibility.show_shortcuts_button" = "Show shortcuts";
 "accessibility.show_snippets_button" = "Show snippets";
-"accessibility.back_button" = "Back button";
 
 /* Sort related */
 "sort.label" = "Sort";

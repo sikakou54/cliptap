@@ -6,14 +6,14 @@ SC-WEBVIEW-PRIVACY,プライバシーポリシー,/webview,apps/mobile/app/webvi
 SC-SNIPPET-CREATE,定型文作成,/snippet/create,apps/mobile/app/snippet/create.tsx,modal|card,label=定型文作成,§9.1
 SC-SNIPPET-EDIT,定型文編集,/snippet/edit,apps/mobile/app/snippet/edit.tsx,modal|card,label=定型文編集,§9.1
 SC-SNIPPET-TITLE-INPUT,タイトル入力,/snippet/title-input,apps/mobile/app/snippet/title-input.tsx,modal|card,label=タイトルを入力,§9.1
-SC-SNIPPET-CONTENT-INPUT,内容入力,/snippet/content-input,apps/mobile/app/snippet/content-input.tsx,modal|card,label=内容を入力,§9.1
+SC-SNIPPET-CONTENT-INPUT,内容入力,/snippet/content-input,apps/mobile/app/snippet/content-input.tsx,modal|card,label=本文を入力,§9.1
 SC-SNIPPET-PROFILE-SELECT,定型文のプロファイル選択,/profile/select,apps/mobile/app/profile/select.tsx,modal,text~=この定型文を使用するプロファイルを選択してください,§9.1
 SC-CATEGORY-SELECT,カテゴリ選択,/category/select,apps/mobile/app/category/select.tsx,modal,label=カテゴリを選択,§9.1
 SC-CATEGORY-EDIT,カテゴリ作成・編集,/category/edit,apps/mobile/app/category/edit.tsx,modal,label=カスタムRGB,§9.1
 SC-PROFILE-EDIT,プロファイル作成・編集,/profile/edit,apps/mobile/app/profile/edit.tsx,modal,label=プロファイル名,§9.1
 SC-VARIABLE-EDIT,カスタム変数作成・編集,/variable/edit,apps/mobile/app/variable/edit.tsx,modal,label=ツールバーに表示される名前,§9.1
 SC-VARIABLE-SELECT,カスタム変数選択,/variable/select,apps/mobile/app/variable/select.tsx,modal,label=カスタム変数を選択,§9.1
-SC-VARIABLE-PROFILE-VALUE-EDIT,プロファイル別変数値編集,/variable/profile-value-edit,apps/mobile/app/variable/profile-value-edit.tsx,modal,label=完了 + -label=タイトルを入力 + -label=内容を入力,§9.1
+SC-VARIABLE-PROFILE-VALUE-EDIT,プロファイル別変数値編集,/variable/profile-value-edit,apps/mobile/app/variable/profile-value-edit.tsx,modal,label=完了 + -label=タイトルを入力 + -label=本文を入力,§9.1
 SC-VARIABLE-FORMAT-EDIT,システム変数書式選択,/variable/format-edit,apps/mobile/app/variable/format-edit.tsx,modal,label~=既定 + -label=すべて既定に戻す,§9.1
 SC-SHORTCUT-EDIT,ショートカット作成・編集,/shortcut/edit,apps/mobile/app/shortcut/edit.tsx,modal,role=AXStaticText&label=ショートカット名,§9.1
 SC-SHORTCUT-PROFILE-SELECT,ショートカットのプロファイル選択,/profile/select,apps/mobile/app/profile/select.tsx,modal,text~=このショートカットを使用するプロファイルを選択してください,§9.1

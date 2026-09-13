@@ -103,7 +103,7 @@ describe('ShortcutService', () => {
       expect(() => ShortcutService.create({ profileIds: [PROFILE_ID], name: '電話番号', values: [] })).toThrow(
         ShortcutValueRequiredError
       );
-      expect(ShortcutService.count(PROFILE_ID)).toBe(0);
+      expect(ShortcutService.countByProfile(PROFILE_ID)).toBe(0);
     });
 
     it('値名が空の場合は保存できない', async () => {
@@ -112,7 +112,7 @@ describe('ShortcutService', () => {
       expect(() =>
         ShortcutService.create({ profileIds: [PROFILE_ID], name: '電話番号', values: [{ name: '  ', value: '080' }] })
       ).toThrow(ShortcutValueNameRequiredError);
-      expect(ShortcutService.count(PROFILE_ID)).toBe(0);
+      expect(ShortcutService.countByProfile(PROFILE_ID)).toBe(0);
     });
 
     it('ショートカット名が空白だけの場合は保存できない', async () => {

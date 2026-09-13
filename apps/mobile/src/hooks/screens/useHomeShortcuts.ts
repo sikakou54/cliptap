@@ -30,6 +30,7 @@ import {
   filterCategoriesInUse,
   sortShortcuts,
   useCategories,
+  useSharedSubscription,
   useShortcuts,
   useTranslation,
   Logger,
@@ -39,6 +40,7 @@ import {
   type SnippetSortBy,
 } from '@cliptap/shared';
 import { showConfirm, showErrorAlert } from '@utils/alerts';
+import { useItemLimitGuard } from '@hooks/useItemLimitGuard';
 
 /**
  * 並べ替え設定の保存キー
@@ -106,6 +108,8 @@ export function useHomeShortcuts(params: UseHomeShortcutsParams): UseHomeShortcu
   const router = useRouter();
   const { shortcuts: allShortcuts, refresh, deleteShortcut, copyShortcutValue } = useShortcuts();
   const { categories } = useCategories();
+  const { isLoading: isSubscriptionLoading } = useSharedSubscription();
+  const { ensureCanAddShortcut } = useItemLimitGuard();
 
   /* ======================================== */
   /* 状態管理 */
@@ -194,8 +198,13 @@ export function useHomeShortcuts(params: UseHomeShortcutsParams): UseHomeShortcu
   );
 
   const handleCreateShortcut = useCallback(() => {
+    /* 権利確認中は登録上限の判定を保留する（理由は useHomeScreen の定型文と同じ）。
+       上限は作成画面の保存時に必ず判定する */
+    if (!isSubscriptionLoading && !ensureCanAddShortcut()) {
+      return;
+    }
     router.push('/shortcut/edit');
-  }, [router]);
+  }, [isSubscriptionLoading, ensureCanAddShortcut, router]);
 
   const handleEditShortcut = useCallback(
     (shortcut: Shortcut) => {

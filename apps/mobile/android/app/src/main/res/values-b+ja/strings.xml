@@ -13,8 +13,6 @@
   <string name="snippet_empty">"スニペットがありません"</string>
   <string name="accessibility_show_shortcuts_button">"ショートカットを表示"</string>
   <string name="accessibility_show_snippets_button">"定型文を表示"</string>
-  <string name="accessibility_back_button">"戻るボタン"</string>
-  <string name="shortcut_title">"ショートカット"</string>
   <string name="shortcut_empty">"ショートカットがありません"</string>
   <string name="shortcut_empty_hint">"メインアプリでショートカットを作成してください"</string>
 </resources>

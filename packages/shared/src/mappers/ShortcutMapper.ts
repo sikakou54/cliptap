@@ -68,6 +68,8 @@ const ShortcutQueries = {
   DELETE: 'DELETE FROM shortcuts WHERE id = ?',
   /* ショートカットの並び順を更新 */
   UPDATE_SORT_ORDER: 'UPDATE shortcuts SET sortOrder = ? WHERE id = ?',
+  /* ショートカット総数を取得（プロファイルを問わない。複数プロファイルに紐づくものも1件と数える） */
+  SELECT_COUNT: 'SELECT COUNT(*) AS count FROM shortcuts',
   /* 指定プロファイルから見えるショートカット数を取得 */
   SELECT_COUNT_BY_PROFILE: `SELECT COUNT(*) AS count FROM shortcuts s WHERE ${VISIBLE_IN_PROFILE}`,
   /* 名前の重複を探す（0件で保存する場合）。0件のショートカットは全プロファイルから見えるため、
@@ -222,7 +224,8 @@ export class ShortcutMapper {
    * （編集画面が一覧の要素を初期値にするため、表示中の1件だけにすると保存時に他の紐づけが消える）。
    *
    * 値と紐づけは、ショートカットの件数によらずそれぞれ1回のクエリでまとめて取得する。
-   * 全プロファイル横断で取得する用途は無いため、プロファイル指定を必須にしている。
+   * 値の参照はプロファイルごとに解決結果が変わるため、全プロファイルを1つの一覧で取得する口は設けず、
+   * プロファイル指定を必須にしている。プロファイルを跨いで検索する画面も、プロファイルごとに呼ぶ。
    */
   static getByProfileId(profileId: string): Shortcut[] {
     const db = getMainDbAdapter();
@@ -602,11 +605,21 @@ export class ShortcutMapper {
   }
 
   /**
+   * ショートカット総数を取得
+   * @returns 全プロファイル合計のショートカット数（複数プロファイルに紐づくものも1件と数える）
+   */
+  static count(): number {
+    const db = getMainDbAdapter();
+    const result = db.get<{ count: number }>(ShortcutQueries.SELECT_COUNT);
+    return result?.count || 0;
+  }
+
+  /**
    * 指定プロファイルから見えるショートカット数を取得
    * @param profileId - 表示中のプロファイルID
    * @returns ショートカット数（紐づくもの＋0件で全プロファイル向けのもの）
    */
-  static count(profileId: string): number {
+  static countByProfile(profileId: string): number {
     const db = getMainDbAdapter();
     const result = db.get<{ count: number }>(
       ShortcutQueries.SELECT_COUNT_BY_PROFILE,

@@ -152,9 +152,6 @@ enum L10n {
 
     /// ショートカット関連の翻訳
     enum Shortcut {
-        /// "ショートカット" / "Shortcuts"
-        static let title = localized("shortcut.title")
-
         /// "ショートカットがありません" / "No shortcuts available"
         static let empty = localized("shortcut.empty")
 
@@ -305,9 +302,6 @@ enum L10n {
         ///
         /// 定型文／ショートカットのトグルがショートカットを表示しているときのラベル。
         static let showSnippetsButton = localized("accessibility.show_snippets_button")
-
-        /// "戻るボタン" / "Back button"
-        static let backButton = localized("accessibility.back_button")
     }
 
     // MARK: - Sort (ソート関連)
@@ -417,7 +411,6 @@ enum L10n {
         case "snippet.close": return isJapanese ? "閉じる" : "Close"
 
         // Shortcut
-        case "shortcut.title": return isJapanese ? "ショートカット" : "Shortcuts"
         case "shortcut.empty": return isJapanese ? "ショートカットがありません" : "No shortcuts available"
         case "shortcut.empty_hint": return isJapanese ? "メインアプリでショートカットを作成してください" : "Create shortcuts in the main app"
 
@@ -468,7 +461,6 @@ enum L10n {
         case "accessibility.insert_title_button": return isJapanese ? "タイトル挿入ボタン" : "Insert title button"
         case "accessibility.show_shortcuts_button": return isJapanese ? "ショートカットを表示" : "Show shortcuts"
         case "accessibility.show_snippets_button": return isJapanese ? "定型文を表示" : "Show snippets"
-        case "accessibility.back_button": return isJapanese ? "戻るボタン" : "Back button"
 
         // Sort
         case "sort.label": return isJapanese ? "並順" : "Sort"

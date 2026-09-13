@@ -1,0 +1,452 @@
+TestID,PatternID,StepNo,Action,Result,Expected,Actual,Evidence,ExecutedAt
+TC-0355,P-F02-048,1,ASSERT_DB,PASS,snippetsテーブルが49件である,"""49""",,2026-09-13T14:28:58.109Z
+TC-0355,P-F02-048,2,TAP,PASS,ホームの追加アイコンのタップが受け付けられる,"tap 1624,187 hold=60ms",,2026-09-13T14:29:00.353Z
+TC-0355,P-F02-048,3,ASSERT_SCREEN,PASS,上限案内が出ずに定型文作成画面が表示される,SC-SNIPPET-CREATE を確認,,2026-09-13T14:29:01.805Z
+TC-0355,P-F02-048,4,ASSERT_SCREEN_LACKS,PASS,定型文の上限メッセージが表示されない,無い,,2026-09-13T14:29:03.186Z
+TC-0355,P-F02-048,5,TAP,PASS,タイトル欄のタップが受け付けられる,"tap 1478,248 hold=60ms",,2026-09-13T14:29:04.968Z
+TC-0355,P-F02-048,6,ASSERT_SCREEN,PASS,タイトル入力画面が表示される,SC-SNIPPET-TITLE-INPUT を確認,,2026-09-13T14:29:06.309Z
+TC-0355,P-F02-048,7,PASTE_RAW,PASS,入力欄へ 上限テスト が入力される,pasted: 上限テスト,,2026-09-13T14:29:07.913Z
+TC-0355,P-F02-048,8,TAP,PASS,完了ボタンのタップが受け付けられる,"tap 1623,198 hold=60ms",,2026-09-13T14:29:09.649Z
+TC-0355,P-F02-048,9,TAP,PASS,本文欄のタップが受け付けられる,"tap 1478,318 hold=60ms",,2026-09-13T14:29:11.332Z
+TC-0355,P-F02-048,10,ASSERT_SCREEN,PASS,内容入力画面が表示される,SC-SNIPPET-CONTENT-INPUT を確認,,2026-09-13T14:29:12.715Z
+TC-0355,P-F02-048,11,PASTE_RAW,PASS,入力欄へ 上限テスト本文 が入力される,pasted: 上限テスト本文,,2026-09-13T14:29:14.292Z
+TC-0355,P-F02-048,12,TAP,PASS,完了ボタンのタップが受け付けられる,"tap 1623,198 hold=60ms",,2026-09-13T14:29:16.017Z
+TC-0355,P-F02-048,13,TAP,PASS,保存ボタンのタップが受け付けられる,"tap 1623,189 hold=60ms",,2026-09-13T14:29:17.744Z
+TC-0355,P-F02-048,14,ASSERT_SCREEN,PASS,ホーム画面へ戻る,SC-HOME を確認,,2026-09-13T14:29:19.279Z
+TC-0355,P-F02-048,15,ASSERT_DB,PASS,snippetsテーブルが50件になる,"""50""",,2026-09-13T14:29:20.063Z
+TC-0355,P-F02-048,16,ASSERT_DB,PASS,入力したタイトルと本文の定型文が1件保存されている,"""1""",,2026-09-13T14:29:20.847Z
+TC-0355,P-F02-048,17,ASSERT_VISIBLE,PASS,作成日時が最も新しい 上限テスト がホーム一覧に表示される,見えている（1478 115）,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-0355-17-snippet-limit-49-saved.png,2026-09-13T14:29:22.768Z
+TC-0356,P-F02-049,1,ASSERT_DB,PASS,snippetsテーブルが50件である,"""50""",,2026-09-13T14:29:37.257Z
+TC-0356,P-F02-049,2,TAP,PASS,ホームの追加アイコンのタップが受け付けられる,"tap 1624,187 hold=60ms",,2026-09-13T14:29:39.360Z
+TC-0356,P-F02-049,3,ASSERT_SCREEN_HAS,PASS,定型文の上限メッセージが表示される,含む,,2026-09-13T14:29:40.649Z
+TC-0356,P-F02-049,4,TAP,PASS,OKのタップが受け付けられる,"tap 1544,555 hold=60ms",,2026-09-13T14:29:42.232Z
+TC-0356,P-F02-049,5,ASSERT_SCREEN,PASS,Paywall画面が表示される,SC-SUBSCRIPTION-PAYWALL を確認,,2026-09-13T14:29:44.534Z
+TC-0356,P-F02-049,6,ASSERT_DB,PASS,snippetsテーブルは50件のままである,"""50""",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-0356-6-paywall-from-snippet-limit.png,2026-09-13T14:29:45.591Z
+TC-0357,P-F02-050,1,ASSERT_DB,PASS,snippetsテーブルが50件である,"""50""",,2026-09-13T14:30:01.099Z
+TC-0357,P-F02-050,2,TAP,PASS,ホームの追加アイコンのタップが受け付けられる,"tap 1624,187 hold=60ms",,2026-09-13T14:30:03.247Z
+TC-0357,P-F02-050,3,ASSERT_SCREEN_HAS,PASS,定型文の上限メッセージが表示される,含む,,2026-09-13T14:30:04.525Z
+TC-0357,P-F02-050,4,TAP,PASS,キャンセルのタップが受け付けられる,"tap 1413,555 hold=60ms",,2026-09-13T14:30:06.058Z
+TC-0357,P-F02-050,5,ASSERT_SCREEN,PASS,ホーム画面に留まる,SC-HOME を確認,,2026-09-13T14:30:07.617Z
+TC-0357,P-F02-050,6,ASSERT_NOT_VISIBLE,PASS,定型文作成画面の見出しが表示されない,見えていない,,2026-09-13T14:30:09.202Z
+TC-0357,P-F02-050,7,ASSERT_SCREEN_LACKS,PASS,Paywallの見出しが表示されない,無い,,2026-09-13T14:30:10.733Z
+TC-0357,P-F02-050,8,ASSERT_DB,PASS,snippetsテーブルは50件のままである,"""50""",,2026-09-13T14:30:11.489Z
+TC-0358,P-F02-051,1,ASSERT_DB,PASS,snippetsテーブルが200件である,"""200""",,2026-09-13T14:30:26.638Z
+TC-0358,P-F02-051,2,TAP,PASS,ホームの追加アイコンのタップが受け付けられる,"tap 1624,187 hold=60ms",,2026-09-13T14:30:28.871Z
+TC-0358,P-F02-051,3,ASSERT_SCREEN_HAS,PASS,総数200件でも定型文の上限メッセージが表示される,含む,,2026-09-13T14:30:30.146Z
+TC-0358,P-F02-051,4,TAP,PASS,キャンセルのタップが受け付けられる,"tap 1413,555 hold=60ms",,2026-09-13T14:30:31.707Z
+TC-0358,P-F02-051,5,ASSERT_SCREEN,PASS,ホーム画面に留まる,SC-HOME を確認,,2026-09-13T14:30:33.324Z
+TC-0358,P-F02-051,6,ASSERT_NOT_VISIBLE,PASS,定型文作成画面の見出しが表示されない,見えていない,,2026-09-13T14:30:34.951Z
+TC-0358,P-F02-051,7,ASSERT_DB,PASS,snippetsテーブルは200件のままである,"""200""",,2026-09-13T14:30:35.738Z
+TC-0359,P-F02-052,1,ASSERT_DB,PASS,snippetsテーブルが50件である,"""50""",,2026-09-13T14:30:50.362Z
+TC-0359,P-F02-052,2,ASSERT_DB,PASS,アクティブなMainに関連する定型文と全プロファイル向けの定型文が計10件である,"""10""",,2026-09-13T14:30:51.140Z
+TC-0359,P-F02-052,3,ASSERT_VISIBLE,PASS,Mainに関連する定型文 Main定型文05 がホーム一覧に表示される,見えている（1478 285）,,2026-09-13T14:30:52.768Z
+TC-0359,P-F02-052,4,ASSERT_SCREEN_LACKS,PASS,A社用にだけ関連する定型文がホーム一覧に表示されない,無い,,2026-09-13T14:30:54.401Z
+TC-0359,P-F02-052,5,TAP,PASS,ホームの追加アイコンのタップが受け付けられる,"tap 1624,187 hold=60ms",,2026-09-13T14:30:56.642Z
+TC-0359,P-F02-052,6,ASSERT_SCREEN_HAS,PASS,一覧の表示件数ではなく総数50件で判定され定型文の上限メッセージが表示される,含む,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-0359-6-snippet-limit-hidden-profiles.png,2026-09-13T14:30:58.284Z
+TC-0359,P-F02-052,7,TAP,PASS,キャンセルのタップが受け付けられる,"tap 1413,555 hold=60ms",,2026-09-13T14:30:59.929Z
+TC-0359,P-F02-052,8,ASSERT_DB,PASS,snippetsテーブルは50件のままである,"""50""",,2026-09-13T14:31:00.694Z
+TC-0363,P-F02-060,1,ASSERT_CLIPBOARD,PASS,クリップボードの初期値が INITIAL である,"""INITIAL""",,2026-09-13T14:33:11.013Z
+TC-0363,P-F02-060,2,ASSERT_SCREEN,PASS,ホーム画面が表示されている,SC-HOME を確認,,2026-09-13T14:33:12.659Z
+TC-0363,P-F02-060,3,ASSERT_SCREEN_LACKS,PASS,ホーム一覧に「無効」の表示が無い,無い,,2026-09-13T14:33:14.267Z
+TC-0363,P-F02-060,4,ASSERT_VISIBLE,PASS,使用回数が最も多い 定型文200（200件目に作成）が一覧に表示される,見えている（1478 285）,,2026-09-13T14:33:15.879Z
+TC-0363,P-F02-060,5,TAP,PASS,先頭カード（定型文200）のコピーボタンのタップが受け付けられる,"tap 1617,406 hold=60ms",,2026-09-13T14:33:18.144Z
+TC-0363,P-F02-060,6,WAIT,PASS,コピー処理の完了を待つ,waited 800ms,,2026-09-13T14:33:19.553Z
+TC-0363,P-F02-060,7,ASSERT_CLIPBOARD_CONTAINS,PASS,クリップボードに定型文200の本文 本文200 が含まれる,"""本文200 {{client_name}}""",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-0363-7-clipboard.png,2026-09-13T14:33:20.794Z
+TC-0364,P-F02-061,1,TAP,PASS,ホームの検索アイコンのタップが受け付けられる,"tap 1581,187 hold=60ms",,2026-09-13T14:33:37.225Z
+TC-0364,P-F02-061,2,ASSERT_SCREEN,PASS,検索画面が表示される,SC-SEARCH を確認,,2026-09-13T14:33:38.884Z
+TC-0364,P-F02-061,3,TYPE,PASS,検索欄に 定型文200 が入力される,pasted: 定型文200,,2026-09-13T14:33:42.373Z
+TC-0364,P-F02-061,4,WAIT,PASS,デバウンス満了まで待つ,waited 800ms,,2026-09-13T14:33:43.781Z
+TC-0364,P-F02-061,5,ASSERT_VISIBLE,PASS,検索結果に 定型文200 が表示される,見えている（1478 249）,,2026-09-13T14:33:45.145Z
+TC-0364,P-F02-061,6,ASSERT_NOT_VISIBLE,PASS,検索語に一致しない 定型文001 が表示されない,見えていない,,2026-09-13T14:33:46.518Z
+TC-0364,P-F02-061,7,TAP,PASS,検索結果カードのコピーボタンのタップが受け付けられる,"tap 1617,371 hold=60ms",,2026-09-13T14:33:48.246Z
+TC-0364,P-F02-061,8,WAIT,PASS,コピー処理の完了を待つ,waited 800ms,,2026-09-13T14:33:49.657Z
+TC-0364,P-F02-061,9,ASSERT_CLIPBOARD_CONTAINS,PASS,クリップボードに定型文200の本文 本文200 が含まれる,"""本文200 {{client_name}}""",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-0364-9-clipboard.png,2026-09-13T14:33:51.031Z
+TC-0365,P-F02-062,1,ASSERT_DB,PASS,snippetsテーブルが200件である,"""200""",,2026-09-13T14:34:05.527Z
+TC-0365,P-F02-062,2,ASSERT_VISIBLE,PASS,先頭カードに 定型文001 が表示される,見えている（1478 285）,,2026-09-13T14:34:07.202Z
+TC-0365,P-F02-062,3,TAP,PASS,先頭カードの削除アイコンのタップが受け付けられる,"tap 1536,406 hold=60ms",,2026-09-13T14:34:09.464Z
+TC-0365,P-F02-062,4,ASSERT_SCREEN_HAS,PASS,削除確認メッセージが表示される,含む,,2026-09-13T14:34:10.769Z
+TC-0365,P-F02-062,5,TAP,PASS,OKのタップが受け付けられる,"tap 1544,526 hold=60ms",,2026-09-13T14:34:12.384Z
+TC-0365,P-F02-062,6,ASSERT_DB,PASS,snippetsテーブルが199件になる,"""199""",,2026-09-13T14:34:13.161Z
+TC-0365,P-F02-062,7,ASSERT_DB,PASS,削除した sn_001 の行が無くなる,"""0""",,2026-09-13T14:34:13.911Z
+TC-0365,P-F02-062,8,ASSERT_NOT_VISIBLE,PASS,削除した 定型文001 がホーム一覧から消える,見えていない,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-0365-8-snippet-delete-over-limit.png,2026-09-13T14:34:15.893Z
+TC-0366,P-F02-063,1,ASSERT_DB,PASS,snippetsテーブルが50件である,"""50""",,2026-09-13T14:34:30.229Z
+TC-0366,P-F02-063,2,TAP,PASS,先頭カードの削除アイコンのタップが受け付けられる,"tap 1536,406 hold=60ms",,2026-09-13T14:34:32.293Z
+TC-0366,P-F02-063,3,ASSERT_SCREEN_HAS,PASS,削除確認メッセージが表示される,含む,,2026-09-13T14:34:33.612Z
+TC-0366,P-F02-063,4,TAP,PASS,OKのタップが受け付けられる,"tap 1544,526 hold=60ms",,2026-09-13T14:34:35.214Z
+TC-0366,P-F02-063,5,ASSERT_DB,PASS,snippetsテーブルが49件になる,"""49""",,2026-09-13T14:34:35.964Z
+TC-0366,P-F02-063,6,TAP,PASS,ホームの追加アイコンのタップが受け付けられる,"tap 1624,187 hold=60ms",,2026-09-13T14:34:38.189Z
+TC-0366,P-F02-063,7,ASSERT_SCREEN,PASS,上限案内が出ずに定型文作成画面が表示される,SC-SNIPPET-CREATE を確認,,2026-09-13T14:34:39.567Z
+TC-0366,P-F02-063,8,ASSERT_SCREEN_LACKS,PASS,定型文の上限メッセージが表示されない,無い,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-0366-8-snippet-limit-after-delete.png,2026-09-13T14:34:41.206Z
+TC-0367,P-F24-001,1,ASSERT_DB,PASS,shortcutsテーブルが9件である,"""9""",,2026-09-13T14:34:55.626Z
+TC-0367,P-F24-001,2,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T14:34:57.363Z
+TC-0367,P-F24-001,3,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T14:34:58.910Z
+TC-0367,P-F24-001,4,TAP,PASS,ホームの追加アイコンのタップが受け付けられる,"tap 1624,187 hold=60ms",,2026-09-13T14:35:00.900Z
+TC-0367,P-F24-001,5,ASSERT_SCREEN,PASS,上限案内が出ずにショートカット作成画面が表示される,SC-SHORTCUT-EDIT を確認,,2026-09-13T14:35:02.322Z
+TC-0367,P-F24-001,6,ASSERT_SCREEN_LACKS,PASS,ショートカットの上限メッセージが表示されない,無い,,2026-09-13T14:35:03.677Z
+TC-0367,P-F24-001,7,TYPE,PASS,ショートカット名に 上限テスト が入力される,pasted: 上限テスト,,2026-09-13T14:35:06.669Z
+TC-0367,P-F24-001,8,TAP,PASS,値を追加のタップが受け付けられる,"tap 1478,550 hold=60ms",,2026-09-13T14:35:08.329Z
+TC-0367,P-F24-001,9,ASSERT_SCREEN,PASS,上限案内が出ずにショートカット値編集画面が表示される,SC-SHORTCUT-VALUE-EDIT を確認,,2026-09-13T14:35:09.663Z
+TC-0367,P-F24-001,10,PASTE_RAW,PASS,値名に 値名テスト が入力される,pasted: 値名テスト,,2026-09-13T14:35:11.243Z
+TC-0367,P-F24-001,11,TAP,PASS,値の入力欄のタップが受け付けられる,"tap 1478,369 hold=60ms",,2026-09-13T14:35:12.981Z
+TC-0367,P-F24-001,12,ASSERT_SCREEN,PASS,ショートカットの値入力画面が表示される,SC-SHORTCUT-VALUE-TEXT-EDIT を確認,,2026-09-13T14:35:15.734Z
+TC-0367,P-F24-001,13,PASTE_RAW,PASS,値に 上限テスト値 が入力される,pasted: 上限テスト値,,2026-09-13T14:35:17.290Z
+TC-0367,P-F24-001,14,TAP,PASS,値入力画面の完了ボタンのタップが受け付けられる,"tap 1623,198 hold=60ms",,2026-09-13T14:35:18.906Z
+TC-0367,P-F24-001,15,TAP,PASS,値編集画面の完了ボタンのタップが受け付けられる,"tap 1623,198 hold=60ms",,2026-09-13T14:35:20.590Z
+TC-0367,P-F24-001,16,ASSERT_VISIBLE,PASS,値の一覧に 値名テスト の行が表示される,見えている（1478 563）,,2026-09-13T14:35:21.964Z
+TC-0367,P-F24-001,17,TAP,PASS,保存ボタンのタップが受け付けられる,"tap 1623,189 hold=60ms",,2026-09-13T14:35:23.680Z
+TC-0367,P-F24-001,18,ASSERT_SCREEN,PASS,ホーム画面へ戻る,SC-HOME を確認,,2026-09-13T14:35:25.161Z
+TC-0367,P-F24-001,19,ASSERT_DB,PASS,shortcutsテーブルが10件になる,"""10""",,2026-09-13T14:35:25.913Z
+TC-0367,P-F24-001,20,ASSERT_DB,PASS,入力した値名と値で値が1件保存されている,"""値名テスト|上限テスト値""",,2026-09-13T14:35:26.650Z
+TC-0367,P-F24-001,21,ASSERT_VISIBLE,PASS,ショートカット一覧に 上限テスト が表示される,見えている（1478 139）,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-0367-21-shortcut-limit-9-saved.png,2026-09-13T14:35:28.429Z
+TC-0368,P-F24-002,1,ASSERT_DB,PASS,shortcutsテーブルが10件である,"""10""",,2026-09-13T14:35:43.446Z
+TC-0368,P-F24-002,2,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T14:35:45.158Z
+TC-0368,P-F24-002,3,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T14:35:46.620Z
+TC-0368,P-F24-002,4,TAP,PASS,ホームの追加アイコンのタップが受け付けられる,"tap 1624,187 hold=60ms",,2026-09-13T14:35:48.596Z
+TC-0368,P-F24-002,5,ASSERT_SCREEN_HAS,PASS,ショートカットの上限メッセージが表示される,含む,,2026-09-13T14:35:49.938Z
+TC-0368,P-F24-002,6,TAP,PASS,OKのタップが受け付けられる,"tap 1544,555 hold=60ms",,2026-09-13T14:35:51.607Z
+TC-0368,P-F24-002,7,ASSERT_SCREEN,PASS,Paywall画面が表示される,SC-SUBSCRIPTION-PAYWALL を確認,,2026-09-13T14:35:53.883Z
+TC-0368,P-F24-002,8,ASSERT_DB,PASS,shortcutsテーブルは10件のままである,"""10""",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-0368-8-paywall-from-shortcut-limit.png,2026-09-13T14:35:54.931Z
+TC-0369,P-F24-003,1,ASSERT_DB,PASS,shortcutsテーブルが10件である,"""10""",,2026-09-13T14:36:09.152Z
+TC-0369,P-F24-003,2,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T14:36:10.960Z
+TC-0369,P-F24-003,3,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T14:36:12.433Z
+TC-0369,P-F24-003,4,TAP,PASS,ホームの追加アイコンのタップが受け付けられる,"tap 1624,187 hold=60ms",,2026-09-13T14:36:14.342Z
+TC-0369,P-F24-003,5,ASSERT_SCREEN_HAS,PASS,ショートカットの上限メッセージが表示される,含む,,2026-09-13T14:36:15.647Z
+TC-0369,P-F24-003,6,TAP,PASS,キャンセルのタップが受け付けられる,"tap 1413,555 hold=60ms",,2026-09-13T14:36:17.245Z
+TC-0369,P-F24-003,7,ASSERT_SCREEN,PASS,ホーム画面に留まる,SC-HOME を確認,,2026-09-13T14:36:18.726Z
+TC-0369,P-F24-003,8,ASSERT_VISIBLE,PASS,ショートカット表示のまま切替トグルのラベルが 定型文を表示 である,見えている（1491 187）,,2026-09-13T14:36:20.212Z
+TC-0369,P-F24-003,9,ASSERT_NOT_VISIBLE,PASS,ショートカット作成画面の見出しが表示されない,見えていない,,2026-09-13T14:36:21.716Z
+TC-0369,P-F24-003,10,ASSERT_SCREEN_LACKS,PASS,Paywallの見出しが表示されない,無い,,2026-09-13T14:36:23.176Z
+TC-0369,P-F24-003,11,ASSERT_DB,PASS,shortcutsテーブルは10件のままである,"""10""",,2026-09-13T14:36:24.041Z
+TC-0370,P-F24-004,1,ASSERT_DB,PASS,shortcutsテーブルが60件である,"""60""",,2026-09-13T14:36:38.166Z
+TC-0370,P-F24-004,2,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T14:36:39.971Z
+TC-0370,P-F24-004,3,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T14:36:41.581Z
+TC-0370,P-F24-004,4,TAP,PASS,ホームの追加アイコンのタップが受け付けられる,"tap 1624,187 hold=60ms",,2026-09-13T14:36:43.695Z
+TC-0370,P-F24-004,5,ASSERT_SCREEN_HAS,PASS,総数60件でもショートカットの上限メッセージが表示される,含む,,2026-09-13T14:36:45.038Z
+TC-0370,P-F24-004,6,TAP,PASS,キャンセルのタップが受け付けられる,"tap 1413,555 hold=60ms",,2026-09-13T14:36:46.602Z
+TC-0370,P-F24-004,7,ASSERT_NOT_VISIBLE,PASS,ショートカット作成画面の見出しが表示されない,見えていない,,2026-09-13T14:36:48.168Z
+TC-0370,P-F24-004,8,ASSERT_DB,PASS,shortcutsテーブルは60件のままである,"""60""",,2026-09-13T14:36:48.940Z
+TC-0371,P-F24-005,1,ASSERT_DB,PASS,shortcutsテーブルが10件である,"""10""",,2026-09-13T14:37:02.741Z
+TC-0371,P-F24-005,2,ASSERT_DB,PASS,アクティブなMainに関連するショートカットと全プロファイル向けのショートカットが計4件である,"""4""",,2026-09-13T14:37:03.515Z
+TC-0371,P-F24-005,3,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T14:37:05.340Z
+TC-0371,P-F24-005,4,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T14:37:06.785Z
+TC-0371,P-F24-005,5,ASSERT_VISIBLE,PASS,Mainに関連する Mainショートカット02 がショートカット一覧に表示される,見えている（1478 285）,,2026-09-13T14:37:08.223Z
+TC-0371,P-F24-005,6,ASSERT_SCREEN_LACKS,PASS,A社用にだけ関連するショートカットが一覧に表示されない,無い,,2026-09-13T14:37:09.714Z
+TC-0371,P-F24-005,7,TAP,PASS,ホームの追加アイコンのタップが受け付けられる,"tap 1624,187 hold=60ms",,2026-09-13T14:37:11.681Z
+TC-0371,P-F24-005,8,ASSERT_SCREEN_HAS,PASS,一覧の表示件数ではなく総数10件で判定されショートカットの上限メッセージが表示される,含む,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-0371-8-shortcut-limit-hidden-profiles.png,2026-09-13T14:37:13.350Z
+TC-0371,P-F24-005,9,TAP,PASS,キャンセルのタップが受け付けられる,"tap 1413,555 hold=60ms",,2026-09-13T14:37:15.014Z
+TC-0371,P-F24-005,10,ASSERT_DB,PASS,shortcutsテーブルは10件のままである,"""10""",,2026-09-13T14:37:15.790Z
+TC-0372,P-F24-006,1,ASSERT_DB,PASS,shortcutsテーブルが9件である,"""9""",,2026-09-13T14:37:30.084Z
+TC-0372,P-F24-006,2,ASSERT_DB,PASS,shortcut_profilesテーブルが13件である,"""13""",,2026-09-13T14:37:30.864Z
+TC-0372,P-F24-006,3,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T14:37:32.688Z
+TC-0372,P-F24-006,4,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T14:37:34.235Z
+TC-0372,P-F24-006,5,TAP,PASS,ホームの追加アイコンのタップが受け付けられる,"tap 1624,187 hold=60ms",,2026-09-13T14:37:36.295Z
+TC-0372,P-F24-006,6,ASSERT_SCREEN,PASS,上限案内が出ずにショートカット作成画面が表示される,SC-SHORTCUT-EDIT を確認,,2026-09-13T14:37:37.701Z
+TC-0372,P-F24-006,7,ASSERT_SCREEN_LACKS,PASS,ショートカットの上限メッセージが表示されない,無い,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-0372-7-shortcut-limit-counts-rows.png,2026-09-13T14:37:39.389Z
+TC-0373,P-F24-007,1,WAIT,PASS,起動時のプラン確定と有効フラグ再計算が終わるまで待つ,waited 2000ms,,2026-09-13T14:37:55.378Z
+TC-0373,P-F24-007,2,ASSERT_DB,PASS,C社用がvalid=0（無効）である,"""0""",,2026-09-13T14:37:56.155Z
+TC-0373,P-F24-007,3,ASSERT_DB,PASS,有効なプロファイルに1件も関連しないショートカットが2件である,"""2""",,2026-09-13T14:37:56.937Z
+TC-0373,P-F24-007,4,ASSERT_DB,PASS,shortcutsテーブルが10件である（その2件を除くと8件）,"""10""",,2026-09-13T14:37:57.717Z
+TC-0373,P-F24-007,5,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T14:37:59.499Z
+TC-0373,P-F24-007,6,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T14:38:01.012Z
+TC-0373,P-F24-007,7,TAP,PASS,ホームの追加アイコンのタップが受け付けられる,"tap 1624,187 hold=60ms",,2026-09-13T14:38:03.039Z
+TC-0373,P-F24-007,8,ASSERT_SCREEN_HAS,PASS,無効なプロファイルにだけ関連するショートカットも含めた総数10件で判定され上限メッセージが表示される,含む,,2026-09-13T14:38:04.386Z
+TC-0373,P-F24-007,9,TAP,PASS,キャンセルのタップが受け付けられる,"tap 1413,555 hold=60ms",,2026-09-13T14:38:06.031Z
+TC-0373,P-F24-007,10,ASSERT_DB,PASS,shortcutsテーブルは10件のままである,"""10""",,2026-09-13T14:38:06.776Z
+TC-0374,P-F24-008,1,ASSERT_DB,PASS,shortcutsテーブルが60件である,"""60""",,2026-09-13T14:38:21.179Z
+TC-0374,P-F24-008,2,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T14:38:22.994Z
+TC-0374,P-F24-008,3,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T14:38:24.604Z
+TC-0374,P-F24-008,4,TAP,PASS,ホームの追加アイコンのタップが受け付けられる,"tap 1624,187 hold=60ms",,2026-09-13T14:38:26.742Z
+TC-0374,P-F24-008,5,ASSERT_SCREEN,PASS,上限案内が出ずにショートカット作成画面が表示される,SC-SHORTCUT-EDIT を確認,,2026-09-13T14:38:28.202Z
+TC-0374,P-F24-008,6,ASSERT_SCREEN_LACKS,PASS,ショートカットの上限メッセージが表示されない,無い,,2026-09-13T14:38:29.581Z
+TC-0374,P-F24-008,7,TYPE,PASS,ショートカット名に 上限超過テスト が入力される,pasted: 上限超過テスト,,2026-09-13T14:38:33.073Z
+TC-0374,P-F24-008,8,TAP,PASS,値を追加のタップが受け付けられる,"tap 1478,550 hold=60ms",,2026-09-13T14:38:34.846Z
+TC-0374,P-F24-008,9,ASSERT_SCREEN,PASS,上限案内が出ずにショートカット値編集画面が表示される,SC-SHORTCUT-VALUE-EDIT を確認,,2026-09-13T14:38:36.267Z
+TC-0374,P-F24-008,10,PASTE_RAW,PASS,値名に 値名超過 が入力される,pasted: 値名超過,,2026-09-13T14:38:37.866Z
+TC-0374,P-F24-008,11,TAP,PASS,値の入力欄のタップが受け付けられる,"tap 1478,369 hold=60ms",,2026-09-13T14:38:39.547Z
+TC-0374,P-F24-008,12,ASSERT_SCREEN,PASS,ショートカットの値入力画面が表示される,SC-SHORTCUT-VALUE-TEXT-EDIT を確認,,2026-09-13T14:38:42.382Z
+TC-0374,P-F24-008,13,PASTE_RAW,PASS,値に 上限超過値 が入力される,pasted: 上限超過値,,2026-09-13T14:38:43.977Z
+TC-0374,P-F24-008,14,TAP,PASS,値入力画面の完了ボタンのタップが受け付けられる,"tap 1623,198 hold=60ms",,2026-09-13T14:38:45.608Z
+TC-0374,P-F24-008,15,TAP,PASS,値編集画面の完了ボタンのタップが受け付けられる,"tap 1623,198 hold=60ms",,2026-09-13T14:38:47.351Z
+TC-0374,P-F24-008,16,ASSERT_VISIBLE,PASS,値の一覧に 値名超過 の行が表示される,見えている（1478 563）,,2026-09-13T14:38:48.735Z
+TC-0374,P-F24-008,17,TAP,PASS,保存ボタンのタップが受け付けられる,"tap 1623,189 hold=60ms",,2026-09-13T14:38:50.499Z
+TC-0374,P-F24-008,18,ASSERT_SCREEN,PASS,ホーム画面へ戻る,SC-HOME を確認,,2026-09-13T14:38:52.081Z
+TC-0374,P-F24-008,19,ASSERT_DB,PASS,shortcutsテーブルが61件になる,"""61""",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-0374-19-pro-shortcut-61.png,2026-09-13T14:38:53.142Z
+TC-0375,P-F24-014,1,ASSERT_DB,PASS,shortcutsテーブルが60件である,"""60""",,2026-09-13T14:39:07.098Z
+TC-0375,P-F24-014,2,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T14:39:08.917Z
+TC-0375,P-F24-014,3,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T14:39:10.423Z
+TC-0375,P-F24-014,4,TAP_NEAR,PASS,ショートカット60の編集アイコンのタップが受け付けられる,"tap 1617,409 hold=60ms",,2026-09-13T14:39:14.682Z
+TC-0375,P-F24-014,5,ASSERT_SCREEN,PASS,ショートカット作成・編集画面が表示される,SC-SHORTCUT-EDIT を確認,,2026-09-13T14:39:16.103Z
+TC-0375,P-F24-014,6,ASSERT_VISIBLE,PASS,見出しが ショートカットを編集 である,見えている（1477 189）,,2026-09-13T14:39:17.428Z
+TC-0375,P-F24-014,7,CLEAR_TEXT,PASS,ショートカット名の入力欄が空になる,deleted x30,,2026-09-13T14:39:24.630Z
+TC-0375,P-F24-014,8,PASTE_RAW,PASS,ショートカット名に 名前変更テスト が入力される,pasted: 名前変更テスト,,2026-09-13T14:39:26.309Z
+TC-0375,P-F24-014,9,TAP,PASS,保存ボタンのタップが受け付けられる,"tap 1623,189 hold=60ms",,2026-09-13T14:39:28.061Z
+TC-0375,P-F24-014,10,ASSERT_SCREEN,PASS,ホーム画面へ戻る,SC-HOME を確認,,2026-09-13T14:39:29.615Z
+TC-0375,P-F24-014,11,ASSERT_SCREEN_LACKS,PASS,ショートカットの上限メッセージが表示されない,無い,,2026-09-13T14:39:31.148Z
+TC-0375,P-F24-014,12,ASSERT_DB,PASS,shortcutsテーブルは60件のままである,"""60""",,2026-09-13T14:39:31.934Z
+TC-0375,P-F24-014,13,ASSERT_DB,PASS,sc_60_60の名前が 名前変更テスト に更新されている,"""名前変更テスト""",,2026-09-13T14:39:32.708Z
+TC-0375,P-F24-014,14,ASSERT_VISIBLE,PASS,ショートカット一覧に 名前変更テスト が表示される,見えている（1478 285）,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-0375-14-shortcut-edit-over-limit.png,2026-09-13T14:39:34.592Z
+TC-0376,P-F24-015,1,ASSERT_CLIPBOARD,PASS,クリップボードの初期値が INITIAL である,"""INITIAL""",,2026-09-13T14:39:49.025Z
+TC-0376,P-F24-015,2,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T14:39:50.814Z
+TC-0376,P-F24-015,3,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T14:39:52.406Z
+TC-0376,P-F24-015,4,ASSERT_SCREEN_LACKS,PASS,ショートカット一覧に「無効」の表示が無い,無い,,2026-09-13T14:39:53.996Z
+TC-0376,P-F24-015,5,ASSERT_VISIBLE,PASS,60件目に作成した ショートカット60 が一覧に表示される,見えている（1478 285）,,2026-09-13T14:39:55.576Z
+TC-0376,P-F24-015,6,TAP,PASS,ショートカット60の値 値名60 のタップが受け付けられる,"tap 1478,353 hold=60ms",,2026-09-13T14:39:57.527Z
+TC-0376,P-F24-015,7,WAIT,PASS,コピー処理の完了を待つ,waited 800ms,,2026-09-13T14:39:58.938Z
+TC-0376,P-F24-015,8,ASSERT_CLIPBOARD,PASS,クリップボードが 値60 と完全一致する,"""値60""",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-0376-8-clipboard.png,2026-09-13T14:40:00.100Z
+TC-0377,P-F24-016,1,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T14:40:16.036Z
+TC-0377,P-F24-016,2,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T14:40:17.649Z
+TC-0377,P-F24-016,3,TAP,PASS,ホームの検索アイコンのタップが受け付けられる,"tap 1581,187 hold=60ms",,2026-09-13T14:40:19.744Z
+TC-0377,P-F24-016,4,ASSERT_SCREEN,PASS,検索画面が表示される,SC-SEARCH を確認,,2026-09-13T14:40:21.315Z
+TC-0377,P-F24-016,5,TYPE,PASS,検索欄に ショートカット60 が入力される,pasted: ショートカット60,,2026-09-13T14:40:24.867Z
+TC-0377,P-F24-016,6,WAIT,PASS,デバウンス満了まで待つ,waited 800ms,,2026-09-13T14:40:26.277Z
+TC-0377,P-F24-016,7,ASSERT_VISIBLE,PASS,検索結果に ショートカット60 が表示される,見えている（1478 288）,,2026-09-13T14:40:27.674Z
+TC-0377,P-F24-016,8,ASSERT_NOT_VISIBLE,PASS,検索語に一致しない ショートカット01 が表示されない,見えていない,,2026-09-13T14:40:29.122Z
+TC-0377,P-F24-016,9,TAP,PASS,検索結果の値 値名60 のタップが受け付けられる,"tap 1478,357 hold=60ms",,2026-09-13T14:40:30.843Z
+TC-0377,P-F24-016,10,WAIT,PASS,コピー処理の完了を待つ,waited 800ms,,2026-09-13T14:40:32.249Z
+TC-0377,P-F24-016,11,ASSERT_CLIPBOARD,PASS,クリップボードが 値60 と完全一致する,"""値60""",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-0377-11-clipboard.png,2026-09-13T14:40:33.384Z
+TC-0378,P-F24-017,1,ASSERT_DB,PASS,shortcutsテーブルが60件である,"""60""",,2026-09-13T14:40:47.626Z
+TC-0378,P-F24-017,2,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T14:40:49.463Z
+TC-0378,P-F24-017,3,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T14:40:51.061Z
+TC-0378,P-F24-017,4,TAP_NEAR,PASS,ショートカット60の削除アイコンのタップが受け付けられる,"tap 1576,409 hold=60ms",,2026-09-13T14:40:55.315Z
+TC-0378,P-F24-017,5,ASSERT_SCREEN_HAS,PASS,削除確認メッセージが表示される,含む,,2026-09-13T14:40:56.583Z
+TC-0378,P-F24-017,6,TAP,PASS,OKのタップが受け付けられる,"tap 1544,564 hold=60ms",,2026-09-13T14:40:58.161Z
+TC-0378,P-F24-017,7,ASSERT_DB,PASS,shortcutsテーブルが59件になる,"""59""",,2026-09-13T14:40:58.945Z
+TC-0378,P-F24-017,8,ASSERT_DB,PASS,削除したショートカットの値も削除される,"""0""",,2026-09-13T14:40:59.721Z
+TC-0378,P-F24-017,9,ASSERT_NOT_VISIBLE,PASS,削除した ショートカット60 が一覧から消える,見えていない,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-0378-9-shortcut-delete-over-limit.png,2026-09-13T14:41:01.605Z
+TC-0379,P-F24-018,1,ASSERT_DB,PASS,shortcutsテーブルが10件である,"""10""",,2026-09-13T14:41:16.120Z
+TC-0379,P-F24-018,2,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T14:41:17.791Z
+TC-0379,P-F24-018,3,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T14:41:19.285Z
+TC-0379,P-F24-018,4,TAP_NEAR,PASS,Mainショートカット02の削除アイコンのタップが受け付けられる,"tap 1576,409 hold=60ms",,2026-09-13T14:41:23.258Z
+TC-0379,P-F24-018,5,ASSERT_SCREEN_HAS,PASS,削除確認メッセージが表示される,含む,,2026-09-13T14:41:24.564Z
+TC-0379,P-F24-018,6,TAP,PASS,OKのタップが受け付けられる,"tap 1544,564 hold=60ms",,2026-09-13T14:41:26.111Z
+TC-0379,P-F24-018,7,ASSERT_DB,PASS,shortcutsテーブルが9件になる,"""9""",,2026-09-13T14:41:26.885Z
+TC-0379,P-F24-018,8,TAP,PASS,ホームの追加アイコンのタップが受け付けられる,"tap 1624,187 hold=60ms",,2026-09-13T14:41:28.764Z
+TC-0379,P-F24-018,9,ASSERT_SCREEN,PASS,上限案内が出ずにショートカット作成画面が表示される,SC-SHORTCUT-EDIT を確認,,2026-09-13T14:41:30.161Z
+TC-0379,P-F24-018,10,ASSERT_SCREEN_LACKS,PASS,ショートカットの上限メッセージが表示されない,無い,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-0379-10-shortcut-limit-after-delete.png,2026-09-13T14:41:31.830Z
+TC-0380,P-F24-020,1,ASSERT_DB,PASS,shortcutsテーブルが2件である,"""2""",,2026-09-13T14:41:46.141Z
+TC-0380,P-F24-020,2,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T14:41:47.939Z
+TC-0380,P-F24-020,3,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T14:41:49.410Z
+TC-0380,P-F24-020,4,TAP,PASS,ホームの追加アイコンのタップが受け付けられる,"tap 1624,187 hold=60ms",,2026-09-13T14:41:51.132Z
+TC-0380,P-F24-020,5,ASSERT_SCREEN,PASS,ショートカット作成画面が表示される,SC-SHORTCUT-EDIT を確認,,2026-09-13T14:41:52.526Z
+TC-0380,P-F24-020,6,TYPE,PASS,ショートカット名に 値上限テスト が入力される,pasted: 値上限テスト,,2026-09-13T14:41:55.552Z
+TC-0380,P-F24-020,7,TAP,PASS,値を追加のタップが受け付けられる,"tap 1478,550 hold=60ms",,2026-09-13T14:41:57.325Z
+TC-0380,P-F24-020,8,ASSERT_SCREEN,PASS,上限案内が出ずにショートカット値編集画面が表示される,SC-SHORTCUT-VALUE-EDIT を確認,,2026-09-13T14:41:58.744Z
+TC-0380,P-F24-020,9,PASTE_RAW,PASS,値名に 値名1 が入力される,pasted: 値名1,,2026-09-13T14:42:00.332Z
+TC-0380,P-F24-020,10,TAP,PASS,値の入力欄のタップが受け付けられる,"tap 1478,369 hold=60ms",,2026-09-13T14:42:02.079Z
+TC-0380,P-F24-020,11,ASSERT_SCREEN,PASS,ショートカットの値入力画面が表示される,SC-SHORTCUT-VALUE-TEXT-EDIT を確認,,2026-09-13T14:42:04.794Z
+TC-0380,P-F24-020,12,PASTE_RAW,PASS,値に 値1 が入力される,pasted: 値1,,2026-09-13T14:42:06.399Z
+TC-0380,P-F24-020,13,TAP,PASS,値入力画面の完了ボタンのタップが受け付けられる,"tap 1623,198 hold=60ms",,2026-09-13T14:42:08.073Z
+TC-0380,P-F24-020,14,TAP,PASS,値編集画面の完了ボタンのタップが受け付けられる,"tap 1623,198 hold=60ms",,2026-09-13T14:42:09.819Z
+TC-0380,P-F24-020,15,ASSERT_VISIBLE,PASS,値の一覧に 値名1 の行が表示される,見えている（1478 563）,,2026-09-13T14:42:11.191Z
+TC-0380,P-F24-020,16,TAP,PASS,値を追加のタップが受け付けられる,"tap 1478,615 hold=60ms",,2026-09-13T14:42:12.944Z
+TC-0380,P-F24-020,17,ASSERT_SCREEN,PASS,上限案内が出ずにショートカット値編集画面が表示される,SC-SHORTCUT-VALUE-EDIT を確認,,2026-09-13T14:42:14.264Z
+TC-0380,P-F24-020,18,PASTE_RAW,PASS,値名に 値名2 が入力される,pasted: 値名2,,2026-09-13T14:42:15.843Z
+TC-0380,P-F24-020,19,TAP,PASS,値の入力欄のタップが受け付けられる,"tap 1478,369 hold=60ms",,2026-09-13T14:42:17.560Z
+TC-0380,P-F24-020,20,ASSERT_SCREEN,PASS,ショートカットの値入力画面が表示される,SC-SHORTCUT-VALUE-TEXT-EDIT を確認,,2026-09-13T14:42:20.378Z
+TC-0380,P-F24-020,21,PASTE_RAW,PASS,値に 値2 が入力される,pasted: 値2,,2026-09-13T14:42:21.974Z
+TC-0380,P-F24-020,22,TAP,PASS,値入力画面の完了ボタンのタップが受け付けられる,"tap 1623,198 hold=60ms",,2026-09-13T14:42:23.643Z
+TC-0380,P-F24-020,23,TAP,PASS,値編集画面の完了ボタンのタップが受け付けられる,"tap 1623,198 hold=60ms",,2026-09-13T14:42:25.373Z
+TC-0380,P-F24-020,24,ASSERT_VISIBLE,PASS,値の一覧に 値名2 の行が表示される,見えている（1478 628）,,2026-09-13T14:42:26.771Z
+TC-0380,P-F24-020,25,ASSERT_SCREEN_LACKS,PASS,値の上限メッセージが表示されない,無い,,2026-09-13T14:42:28.137Z
+TC-0380,P-F24-020,26,TAP,PASS,保存ボタンのタップが受け付けられる,"tap 1623,189 hold=60ms",,2026-09-13T14:42:29.875Z
+TC-0380,P-F24-020,27,ASSERT_SCREEN,PASS,ホーム画面へ戻る,SC-HOME を確認,,2026-09-13T14:42:31.372Z
+TC-0380,P-F24-020,28,ASSERT_DB,PASS,値上限テストの値が2件保存されている,"""2""",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-0380-28-shortcut-values-2-saved.png,2026-09-13T14:42:32.438Z
+TC-0381,P-F24-021,1,ASSERT_DB,PASS,値2件ショートカットの値が2件である,"""2""",,2026-09-13T14:42:46.694Z
+TC-0381,P-F24-021,2,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T14:42:48.498Z
+TC-0381,P-F24-021,3,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T14:42:49.945Z
+TC-0381,P-F24-021,4,TAP_NEAR,PASS,値2件ショートカットの編集アイコンのタップが受け付けられる,"tap 1617,693 hold=60ms",,2026-09-13T14:42:54.003Z
+TC-0381,P-F24-021,5,ASSERT_SCREEN,PASS,ショートカット作成・編集画面が表示される,SC-SHORTCUT-EDIT を確認,,2026-09-13T14:42:55.429Z
+TC-0381,P-F24-021,6,TAP,PASS,値を追加のタップが受け付けられる,"tap 1478,681 hold=60ms",,2026-09-13T14:42:57.195Z
+TC-0381,P-F24-021,7,ASSERT_SCREEN_HAS,PASS,値の上限メッセージが表示される,含む,,2026-09-13T14:42:58.510Z
+TC-0381,P-F24-021,8,TAP,PASS,OKのタップが受け付けられる,"tap 1544,555 hold=60ms",,2026-09-13T14:43:00.157Z
+TC-0381,P-F24-021,9,ASSERT_SCREEN,PASS,Paywall画面が表示される,SC-SUBSCRIPTION-PAYWALL を確認,,2026-09-13T14:43:02.452Z
+TC-0381,P-F24-021,10,ASSERT_DB,PASS,値2件ショートカットの値は2件のままである,"""2""",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-0381-10-paywall-from-shortcut-value-limit.png,2026-09-13T14:43:03.599Z
+TC-0382,P-F24-022,1,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T14:43:19.407Z
+TC-0382,P-F24-022,2,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T14:43:20.813Z
+TC-0382,P-F24-022,3,TAP_NEAR,PASS,値2件ショートカットの編集アイコンのタップが受け付けられる,"tap 1617,693 hold=60ms",,2026-09-13T14:43:24.794Z
+TC-0382,P-F24-022,4,ASSERT_SCREEN,PASS,ショートカット作成・編集画面が表示される,SC-SHORTCUT-EDIT を確認,,2026-09-13T14:43:26.189Z
+TC-0382,P-F24-022,5,TAP,PASS,値を追加のタップが受け付けられる,"tap 1478,681 hold=60ms",,2026-09-13T14:43:27.943Z
+TC-0382,P-F24-022,6,ASSERT_SCREEN_HAS,PASS,値の上限メッセージが表示される,含む,,2026-09-13T14:43:29.304Z
+TC-0382,P-F24-022,7,TAP,PASS,キャンセルのタップが受け付けられる,"tap 1413,555 hold=60ms",,2026-09-13T14:43:30.934Z
+TC-0382,P-F24-022,8,ASSERT_SCREEN,PASS,ショートカット作成・編集画面に留まる,SC-SHORTCUT-EDIT を確認,,2026-09-13T14:43:32.353Z
+TC-0382,P-F24-022,9,ASSERT_NOT_VISIBLE,PASS,ショートカット値編集画面の値名欄が表示されない,見えていない,,2026-09-13T14:43:33.771Z
+TC-0382,P-F24-022,10,ASSERT_SCREEN_LACKS,PASS,Paywallの見出しが表示されない,無い,,2026-09-13T14:43:35.153Z
+TC-0382,P-F24-022,11,ASSERT_DB,PASS,値2件ショートカットの値は2件のままである,"""2""",,2026-09-13T14:43:35.992Z
+TC-0383,P-F24-023,1,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T14:43:51.326Z
+TC-0383,P-F24-023,2,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T14:43:52.818Z
+TC-0383,P-F24-023,3,TAP_NEAR,PASS,値2件ショートカットの編集アイコンのタップが受け付けられる,"tap 1617,693 hold=60ms",,2026-09-13T14:43:56.741Z
+TC-0383,P-F24-023,4,ASSERT_SCREEN,PASS,ショートカット作成・編集画面が表示される,SC-SHORTCUT-EDIT を確認,,2026-09-13T14:43:58.124Z
+TC-0383,P-F24-023,5,TAP,PASS,値を追加のタップが受け付けられる,"tap 1478,681 hold=60ms",,2026-09-13T14:43:59.807Z
+TC-0383,P-F24-023,6,ASSERT_SCREEN,PASS,上限案内が出ずにショートカット値編集画面が表示される,SC-SHORTCUT-VALUE-EDIT を確認,,2026-09-13T14:44:01.168Z
+TC-0383,P-F24-023,7,PASTE_RAW,PASS,値名に 値名A3 が入力される,pasted: 値名A3,,2026-09-13T14:44:02.988Z
+TC-0383,P-F24-023,8,TAP,PASS,値の入力欄のタップが受け付けられる,"tap 1478,369 hold=60ms",,2026-09-13T14:44:04.759Z
+TC-0383,P-F24-023,9,ASSERT_SCREEN,PASS,ショートカットの値入力画面が表示される,SC-SHORTCUT-VALUE-TEXT-EDIT を確認,,2026-09-13T14:44:07.464Z
+TC-0383,P-F24-023,10,PASTE_RAW,PASS,値に 値A3 が入力される,pasted: 値A3,,2026-09-13T14:44:09.046Z
+TC-0383,P-F24-023,11,TAP,PASS,値入力画面の完了ボタンのタップが受け付けられる,"tap 1623,198 hold=60ms",,2026-09-13T14:44:10.721Z
+TC-0383,P-F24-023,12,TAP,PASS,値編集画面の完了ボタンのタップが受け付けられる,"tap 1623,198 hold=60ms",,2026-09-13T14:44:12.440Z
+TC-0383,P-F24-023,13,ASSERT_VISIBLE,PASS,値の一覧に 値名A3 の行が表示される,見えている（1478 695）,,2026-09-13T14:44:13.815Z
+TC-0383,P-F24-023,14,ASSERT_SCREEN_LACKS,PASS,値の上限メッセージが表示されない,無い,,2026-09-13T14:44:15.214Z
+TC-0383,P-F24-023,15,TAP,PASS,保存ボタンのタップが受け付けられる,"tap 1623,189 hold=60ms",,2026-09-13T14:44:16.880Z
+TC-0383,P-F24-023,16,ASSERT_SCREEN,PASS,ホーム画面へ戻る,SC-HOME を確認,,2026-09-13T14:44:18.307Z
+TC-0383,P-F24-023,17,ASSERT_DB,PASS,値2件ショートカットの値が3件になる,"""3""",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-0383-17-pro-shortcut-values-3.png,2026-09-13T14:44:19.373Z
+TC-0384,P-F24-024,1,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T14:44:34.178Z
+TC-0384,P-F24-024,2,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T14:44:35.636Z
+TC-0384,P-F24-024,3,TAP_NEAR,PASS,値3件ショートカットの編集アイコンのタップが受け付けられる,"tap 1617,464 hold=60ms",,2026-09-13T14:44:39.527Z
+TC-0384,P-F24-024,4,ASSERT_SCREEN,PASS,ショートカット作成・編集画面が表示される,SC-SHORTCUT-EDIT を確認,,2026-09-13T14:44:40.968Z
+TC-0384,P-F24-024,5,CLEAR_TEXT,PASS,ショートカット名の入力欄が空になる,deleted x30,,2026-09-13T14:44:48.275Z
+TC-0384,P-F24-024,6,PASTE_RAW,PASS,ショートカット名に 値3件名前変更 が入力される,pasted: 値3件名前変更,,2026-09-13T14:44:49.951Z
+TC-0384,P-F24-024,7,TAP,PASS,保存ボタンのタップが受け付けられる,"tap 1623,189 hold=60ms",,2026-09-13T14:44:51.762Z
+TC-0384,P-F24-024,8,ASSERT_SCREEN,PASS,ホーム画面へ戻る,SC-HOME を確認,,2026-09-13T14:44:53.190Z
+TC-0384,P-F24-024,9,ASSERT_SCREEN_LACKS,PASS,値の上限メッセージが表示されない,無い,,2026-09-13T14:44:54.646Z
+TC-0384,P-F24-024,10,ASSERT_DB,PASS,sc_v3の名前が 値3件名前変更 に更新されている,"""値3件名前変更""",,2026-09-13T14:44:55.416Z
+TC-0384,P-F24-024,11,ASSERT_DB,PASS,sc_v3の値は3件のままである,"""3""",,2026-09-13T14:44:56.152Z
+TC-0384,P-F24-024,12,ASSERT_VISIBLE,PASS,ショートカット一覧に 値3件名前変更 が表示される,見えている（1478 285）,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-0384-12-shortcut-values-over-limit-edit.png,2026-09-13T14:44:57.913Z
+TC-0385,P-F24-025,1,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T14:45:13.045Z
+TC-0385,P-F24-025,2,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T14:45:14.512Z
+TC-0385,P-F24-025,3,TAP_NEAR,PASS,値3件ショートカットの編集アイコンのタップが受け付けられる,"tap 1617,464 hold=60ms",,2026-09-13T14:45:18.473Z
+TC-0385,P-F24-025,4,ASSERT_SCREEN,PASS,ショートカット作成・編集画面が表示される,SC-SHORTCUT-EDIT を確認,,2026-09-13T14:45:19.914Z
+TC-0385,P-F24-025,5,TAP,PASS,値を追加のタップが受け付けられる,"tap 1478,746 hold=60ms",,2026-09-13T14:45:21.692Z
+TC-0385,P-F24-025,6,ASSERT_SCREEN_HAS,PASS,上限を超えて値を持つショートカットでも値の上限メッセージが表示される,含む,,2026-09-13T14:45:23.027Z
+TC-0385,P-F24-025,7,TAP,PASS,キャンセルのタップが受け付けられる,"tap 1413,555 hold=60ms",,2026-09-13T14:45:24.675Z
+TC-0385,P-F24-025,8,ASSERT_NOT_VISIBLE,PASS,ショートカット値編集画面の値名欄が表示されない,見えていない,,2026-09-13T14:45:26.087Z
+TC-0385,P-F24-025,9,ASSERT_DB,PASS,sc_v3の値は3件のままである,"""3""",,2026-09-13T14:45:26.870Z
+TC-0386,P-F24-026,1,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T14:45:42.309Z
+TC-0386,P-F24-026,2,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T14:45:43.784Z
+TC-0386,P-F24-026,3,TAP_NEAR,PASS,値3件ショートカットの編集アイコンのタップが受け付けられる,"tap 1617,464 hold=60ms",,2026-09-13T14:45:47.810Z
+TC-0386,P-F24-026,4,ASSERT_SCREEN,PASS,ショートカット作成・編集画面が表示される,SC-SHORTCUT-EDIT を確認,,2026-09-13T14:45:49.219Z
+TC-0386,P-F24-026,5,TAP_IN,PASS,値名B3の行の右端にある削除アイコンが押される,"tap 1624,694 hold=60ms",,2026-09-13T14:45:51.026Z
+TC-0386,P-F24-026,6,ASSERT_SCREEN_HAS,PASS,値の削除確認メッセージが表示される,含む,,2026-09-13T14:45:52.329Z
+TC-0386,P-F24-026,7,TAP,PASS,OKのタップが受け付けられる,"tap 1544,526 hold=60ms",,2026-09-13T14:45:53.971Z
+TC-0386,P-F24-026,8,ASSERT_NOT_VISIBLE,PASS,値の一覧から 値名B3 の行が消える,見えていない,,2026-09-13T14:45:55.391Z
+TC-0386,P-F24-026,9,TAP,PASS,保存ボタンのタップが受け付けられる,"tap 1623,189 hold=60ms",,2026-09-13T14:45:57.162Z
+TC-0386,P-F24-026,10,ASSERT_SCREEN,PASS,ホーム画面へ戻る,SC-HOME を確認,,2026-09-13T14:45:58.561Z
+TC-0386,P-F24-026,11,ASSERT_SCREEN_LACKS,PASS,値の上限メッセージが表示されない,無い,,2026-09-13T14:45:59.986Z
+TC-0386,P-F24-026,12,ASSERT_DB,PASS,sc_v3の値が2件になる,"""2""",,2026-09-13T14:46:00.838Z
+TC-0386,P-F24-026,13,ASSERT_DB,PASS,削除した値名B3の行が無くなる,"""0""",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-0386-13-shortcut-values-over-limit-delete.png,2026-09-13T14:46:01.895Z
+TC-0387,P-F24-027,1,ASSERT_CLIPBOARD,PASS,クリップボードの初期値が INITIAL である,"""INITIAL""",,2026-09-13T14:46:16.387Z
+TC-0387,P-F24-027,2,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T14:46:18.194Z
+TC-0387,P-F24-027,3,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T14:46:19.646Z
+TC-0387,P-F24-027,4,ASSERT_SCREEN_LACKS,PASS,ショートカット一覧に「無効」の表示が無い,無い,,2026-09-13T14:46:21.071Z
+TC-0387,P-F24-027,5,ASSERT_VISIBLE,PASS,値3件ショートカットの2件目の値が表示される,見えている（1478 408）,,2026-09-13T14:46:22.529Z
+TC-0387,P-F24-027,6,ASSERT_NOT_VISIBLE,PASS,畳まれた3件目の値は表示されない,見えていない,,2026-09-13T14:46:23.991Z
+TC-0387,P-F24-027,7,TAP_NEAR,PASS,値3件ショートカットの展開ボタンのタップが受け付けられる,"tap 1340,464 hold=60ms",,2026-09-13T14:46:28.010Z
+TC-0387,P-F24-027,8,ASSERT_VISIBLE,PASS,展開すると3件目の値が表示される,見えている（1478 464）,,2026-09-13T14:46:29.395Z
+TC-0387,P-F24-027,9,TAP,PASS,3件目の値 値名B3 のタップが受け付けられる,"tap 1478,464 hold=60ms",,2026-09-13T14:46:31.274Z
+TC-0387,P-F24-027,10,WAIT,PASS,コピー処理の完了を待つ,waited 800ms,,2026-09-13T14:46:32.684Z
+TC-0387,P-F24-027,11,ASSERT_CLIPBOARD,PASS,クリップボードが 値B3 と完全一致する,"""値B3""",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-0387-11-clipboard.png,2026-09-13T14:46:33.837Z
+TC-3432,P-F18-153,1,WAIT,PASS,起動時のプラン確定と有効フラグ再計算が終わるまで待つ,waited 2000ms,,2026-09-13T14:46:49.740Z
+TC-3432,P-F18-153,2,ASSERT_DB,PASS,snippetsテーブルは200件のままである,"""200""",,2026-09-13T14:46:50.499Z
+TC-3432,P-F18-153,3,ASSERT_SCREEN_LACKS,PASS,ホーム一覧に「無効」の表示が無い,無い,,2026-09-13T14:46:52.157Z
+TC-3432,P-F18-153,4,ASSERT_VISIBLE,PASS,ホーム一覧に 定型文001 が表示される,見えている（1478 285）,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-3432-4-snippets-kept-free-launch.png,2026-09-13T14:46:54.162Z
+TC-3433,P-F18-154,1,WAIT,PASS,起動時のプラン確定と有効フラグ再計算が終わるまで待つ,waited 2000ms,,2026-09-13T14:47:10.848Z
+TC-3433,P-F18-154,2,ASSERT_DB,PASS,切替前のsnippetsテーブルが200件である,"""200""",,2026-09-13T14:47:11.623Z
+TC-3433,P-F18-154,3,TAP,PASS,ホームヘッダの設定アイコンが押される,"tap 1540,187 hold=60ms",,2026-09-13T14:47:13.883Z
+TC-3433,P-F18-154,4,SCROLL_TO,PASS,開発者メニューが安全域に入る,safe after 1 scroll(s),,2026-09-13T14:47:18.005Z
+TC-3433,P-F18-154,5,TAP,PASS,Subscription Overrideが押される,"tap 1478,683 hold=60ms",,2026-09-13T14:47:19.870Z
+TC-3433,P-F18-154,6,TAP,PASS,プラン「Free」が選ばれる,"tap 1478,497 hold=60ms",,2026-09-13T14:47:21.623Z
+TC-3433,P-F18-154,7,TAP,PASS,切替完了ダイアログのOKが押される,"tap 1478,555 hold=60ms",,2026-09-13T14:47:23.252Z
+TC-3433,P-F18-154,8,WAIT,PASS,有効フラグの再計算が終わるまで待つ,waited 2000ms,,2026-09-13T14:47:25.862Z
+TC-3433,P-F18-154,9,ASSERT_DB,PASS,Freeへ戻した後もsnippetsテーブルは200件のままである,"""200""",,2026-09-13T14:47:26.744Z
+TC-3433,P-F18-154,10,TAP,PASS,設定の戻るアイコンが押される,"tap 1333,179 hold=60ms",,2026-09-13T14:47:28.641Z
+TC-3433,P-F18-154,11,ASSERT_SCREEN,PASS,ホーム画面が表示される,SC-HOME を確認,,2026-09-13T14:47:30.270Z
+TC-3433,P-F18-154,12,ASSERT_SCREEN_LACKS,PASS,ホーム一覧に「無効」の表示が無い,無い,,2026-09-13T14:47:31.952Z
+TC-3433,P-F18-154,13,ASSERT_VISIBLE,PASS,ホーム一覧に 定型文001 が表示される,見えている（1478 285）,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-3433-13-snippets-kept-pro-to-free.png,2026-09-13T14:47:33.918Z
+TC-3436,P-F18-157,1,WAIT,PASS,起動時のプラン確定と有効フラグ再計算が終わるまで待つ,waited 2000ms,,2026-09-13T14:47:51.180Z
+TC-3436,P-F18-157,2,ASSERT_DB,PASS,snippetsテーブルが50件である,"""50""",,2026-09-13T14:47:51.957Z
+TC-3436,P-F18-157,3,ASSERT_DB,PASS,B社用に関連する定型文が5件である,"""5""",,2026-09-13T14:47:52.734Z
+TC-3436,P-F18-157,4,TAP,PASS,ホームヘッダの設定アイコンが押される,"tap 1540,187 hold=60ms",,2026-09-13T14:47:54.988Z
+TC-3436,P-F18-157,5,TAP,PASS,設定の「プロファイル」行が押される,"tap 1478,242 hold=60ms",,2026-09-13T14:47:56.874Z
+TC-3436,P-F18-157,6,ASSERT_SCREEN,PASS,プロファイル管理画面が表示される,SC-SETTINGS-PROFILES を確認,,2026-09-13T14:47:59.763Z
+TC-3436,P-F18-157,7,TAP_IN,PASS,行の右端にある削除ボタンが押される,"tap 1630,324 hold=60ms",,2026-09-13T14:48:01.392Z
+TC-3436,P-F18-157,8,ASSERT_SCREEN_HAS,PASS,削除確認メッセージが表示される,含む,,2026-09-13T14:48:02.739Z
+TC-3436,P-F18-157,9,TAP,PASS,削除確認のOKが押される,"tap 1544,584 hold=60ms",,2026-09-13T14:48:04.385Z
+TC-3436,P-F18-157,10,WAIT,PASS,削除と再計算のトランザクションが確定するまで待つ,waited 1500ms,,2026-09-13T14:48:06.496Z
+TC-3436,P-F18-157,11,ASSERT_DB,PASS,B社用のプロファイルが削除される,"""0""",,2026-09-13T14:48:07.282Z
+TC-3436,P-F18-157,12,ASSERT_DB,PASS,snippetsテーブルは50件のままである,"""50""",,2026-09-13T14:48:08.056Z
+TC-3436,P-F18-157,13,ASSERT_DB,PASS,B社用にだけ関連していた5件の関連が0件（全プロファイル向け）になる,"""0""",,2026-09-13T14:48:08.832Z
+TC-3436,P-F18-157,14,TAP,PASS,プロファイル管理の戻るアイコンが押される,"tap 1333,179 hold=60ms",,2026-09-13T14:48:10.541Z
+TC-3436,P-F18-157,15,TAP,PASS,設定の戻るアイコンが押される,"tap 1333,179 hold=60ms",,2026-09-13T14:48:12.371Z
+TC-3436,P-F18-157,16,ASSERT_SCREEN,PASS,ホーム画面が表示される,SC-HOME を確認,,2026-09-13T14:48:13.966Z
+TC-3436,P-F18-157,17,ASSERT_SCREEN_HAS,PASS,全プロファイル向けになった B社定型文 がMainのホーム一覧に現れる,含む,,2026-09-13T14:48:15.607Z
+TC-3436,P-F18-157,18,TAP,PASS,ホームの追加アイコンのタップが受け付けられる,"tap 1624,187 hold=60ms",,2026-09-13T14:48:17.859Z
+TC-3436,P-F18-157,19,ASSERT_SCREEN_HAS,PASS,総数50件のまま定型文の上限メッセージが表示される,含む,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-3436-19-snippet-limit-after-profile-delete.png,2026-09-13T14:48:19.498Z
+TC-3434,P-F18-155,1,WAIT,PASS,起動時のプラン確定と有効フラグ再計算が終わるまで待つ,waited 2000ms,,2026-09-13T14:48:35.482Z
+TC-3434,P-F18-155,2,ASSERT_DB,PASS,shortcutsテーブルは60件のままである,"""60""",,2026-09-13T14:48:36.373Z
+TC-3434,P-F18-155,3,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T14:48:38.115Z
+TC-3434,P-F18-155,4,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T14:48:39.724Z
+TC-3434,P-F18-155,5,ASSERT_SCREEN_LACKS,PASS,ショートカット一覧に「無効」の表示が無い,無い,,2026-09-13T14:48:41.319Z
+TC-3434,P-F18-155,6,ASSERT_VISIBLE,PASS,60件目に作成した ショートカット60 が一覧に表示される,見えている（1478 285）,,2026-09-13T14:48:42.820Z
+TC-3434,P-F18-155,7,ASSERT_VISIBLE,PASS,ショートカット60の値 値名60 が一覧に表示される,見えている（1478 353）,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-3434-7-shortcuts-kept-free-launch.png,2026-09-13T14:48:44.730Z
+TC-3435,P-F18-156,1,WAIT,PASS,起動時のプラン確定と有効フラグ再計算が終わるまで待つ,waited 2000ms,,2026-09-13T14:49:00.955Z
+TC-3435,P-F18-156,2,ASSERT_DB,PASS,切替前のshortcutsテーブルが60件である,"""60""",,2026-09-13T14:49:01.729Z
+TC-3435,P-F18-156,3,TAP,PASS,ホームヘッダの設定アイコンが押される,"tap 1540,187 hold=60ms",,2026-09-13T14:49:03.480Z
+TC-3435,P-F18-156,4,SCROLL_TO,PASS,開発者メニューが安全域に入る,safe after 1 scroll(s),,2026-09-13T14:49:07.619Z
+TC-3435,P-F18-156,5,TAP,PASS,Subscription Overrideが押される,"tap 1478,683 hold=60ms",,2026-09-13T14:49:09.495Z
+TC-3435,P-F18-156,6,TAP,PASS,プラン「Free」が選ばれる,"tap 1478,497 hold=60ms",,2026-09-13T14:49:11.167Z
+TC-3435,P-F18-156,7,TAP,PASS,切替完了ダイアログのOKが押される,"tap 1478,555 hold=60ms",,2026-09-13T14:49:12.845Z
+TC-3435,P-F18-156,8,WAIT,PASS,有効フラグの再計算が終わるまで待つ,waited 2000ms,,2026-09-13T14:49:15.456Z
+TC-3435,P-F18-156,9,ASSERT_DB,PASS,Freeへ戻した後もshortcutsテーブルは60件のままである,"""60""",,2026-09-13T14:49:16.234Z
+TC-3435,P-F18-156,10,TAP,PASS,設定の戻るアイコンが押される,"tap 1333,179 hold=60ms",,2026-09-13T14:49:18.119Z
+TC-3435,P-F18-156,11,ASSERT_SCREEN,PASS,ホーム画面が表示される,SC-HOME を確認,,2026-09-13T14:49:19.493Z
+TC-3435,P-F18-156,12,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T14:49:21.286Z
+TC-3435,P-F18-156,13,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T14:49:22.893Z
+TC-3435,P-F18-156,14,ASSERT_SCREEN_LACKS,PASS,ショートカット一覧に「無効」の表示が無い,無い,,2026-09-13T14:49:24.412Z
+TC-3435,P-F18-156,15,ASSERT_VISIBLE,PASS,60件目に作成した ショートカット60 が一覧に表示される,見えている（1478 285）,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-3435-15-shortcuts-kept-pro-to-free.png,2026-09-13T14:49:26.318Z
+TC-3437,P-F18-158,1,WAIT,PASS,起動時のプラン確定と有効フラグ再計算が終わるまで待つ,waited 2000ms,,2026-09-13T14:49:44.003Z
+TC-3437,P-F18-158,2,ASSERT_DB,PASS,shortcutsテーブルが10件である,"""10""",,2026-09-13T14:49:44.765Z
+TC-3437,P-F18-158,3,ASSERT_DB,PASS,B社用に関連するショートカットが2件である,"""2""",,2026-09-13T14:49:45.541Z
+TC-3437,P-F18-158,4,TAP,PASS,ホームヘッダの設定アイコンが押される,"tap 1540,187 hold=60ms",,2026-09-13T14:49:47.368Z
+TC-3437,P-F18-158,5,TAP,PASS,設定の「プロファイル」行が押される,"tap 1478,242 hold=60ms",,2026-09-13T14:49:49.254Z
+TC-3437,P-F18-158,6,ASSERT_SCREEN,PASS,プロファイル管理画面が表示される,SC-SETTINGS-PROFILES を確認,,2026-09-13T14:49:52.145Z
+TC-3437,P-F18-158,7,TAP_IN,PASS,行の右端にある削除ボタンが押される,"tap 1630,324 hold=60ms",,2026-09-13T14:49:53.799Z
+TC-3437,P-F18-158,8,ASSERT_SCREEN_HAS,PASS,削除確認メッセージが表示される,含む,,2026-09-13T14:49:55.141Z
+TC-3437,P-F18-158,9,TAP,PASS,削除確認のOKが押される,"tap 1544,584 hold=60ms",,2026-09-13T14:49:56.787Z
+TC-3437,P-F18-158,10,WAIT,PASS,削除と再計算のトランザクションが確定するまで待つ,waited 1500ms,,2026-09-13T14:49:58.898Z
+TC-3437,P-F18-158,11,ASSERT_DB,PASS,B社用のプロファイルが削除される,"""0""",,2026-09-13T14:49:59.674Z
+TC-3437,P-F18-158,12,ASSERT_DB,PASS,B社用にだけ関連していた2件が削除されshortcutsテーブルが8件になる,"""8""",,2026-09-13T14:50:00.448Z
+TC-3437,P-F18-158,13,ASSERT_DB,PASS,削除したショートカットの値も削除される,"""0""",,2026-09-13T14:50:01.223Z
+TC-3437,P-F18-158,14,TAP,PASS,プロファイル管理の戻るアイコンが押される,"tap 1333,179 hold=60ms",,2026-09-13T14:50:02.913Z
+TC-3437,P-F18-158,15,TAP,PASS,設定の戻るアイコンが押される,"tap 1333,179 hold=60ms",,2026-09-13T14:50:04.633Z
+TC-3437,P-F18-158,16,ASSERT_SCREEN,PASS,ホーム画面が表示される,SC-HOME を確認,,2026-09-13T14:50:05.972Z
+TC-3437,P-F18-158,17,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T14:50:07.746Z
+TC-3437,P-F18-158,18,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T14:50:09.270Z
+TC-3437,P-F18-158,19,TAP,PASS,ホームの追加アイコンのタップが受け付けられる,"tap 1624,187 hold=60ms",,2026-09-13T14:50:11.253Z
+TC-3437,P-F18-158,20,ASSERT_SCREEN,PASS,上限案内が出ずにショートカット作成画面が表示される,SC-SHORTCUT-EDIT を確認,,2026-09-13T14:50:12.669Z
+TC-3437,P-F18-158,21,ASSERT_SCREEN_LACKS,PASS,ショートカットの上限メッセージが表示されない,無い,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-3437-21-shortcut-limit-after-profile-delete.png,2026-09-13T14:50:14.293Z
+TC-0360,P-F02-053,1,WAIT,PASS,起動時のプラン確定と有効フラグ再計算が終わるまで待つ,waited 2000ms,,2026-09-13T14:50:52.707Z
+TC-0360,P-F02-053,2,ASSERT_DB,PASS,C社用がvalid=0（無効）である,"""0""",,2026-09-13T14:50:53.533Z
+TC-0360,P-F02-053,3,ASSERT_DB,PASS,有効なプロファイルに1件も関連しない定型文が5件である,"""5""",,2026-09-13T14:50:54.307Z
+TC-0360,P-F02-053,4,ASSERT_DB,PASS,snippetsテーブルが50件である（その5件を除くと45件）,"""50""",,2026-09-13T14:50:55.056Z
+TC-0360,P-F02-053,5,TAP,PASS,ホームの追加アイコンのタップが受け付けられる,"tap 1624,187 hold=60ms",,2026-09-13T14:50:57.297Z
+TC-0360,P-F02-053,6,ASSERT_SCREEN_HAS,PASS,無効なプロファイルにだけ関連する定型文も含めた総数50件で判定され定型文の上限メッセージが表示される,含む,,2026-09-13T14:50:58.607Z
+TC-0360,P-F02-053,7,TAP,PASS,キャンセルのタップが受け付けられる,"tap 1413,555 hold=60ms",,2026-09-13T14:51:00.260Z
+TC-0360,P-F02-053,8,ASSERT_DB,PASS,snippetsテーブルは50件のままである,"""50""",,2026-09-13T14:51:01.036Z
+TC-0361,P-F02-054,1,ASSERT_DB,PASS,snippetsテーブルが200件である,"""200""",,2026-09-13T14:51:16.492Z
+TC-0361,P-F02-054,2,TAP,PASS,ホームの追加アイコンのタップが受け付けられる,"tap 1624,187 hold=60ms",,2026-09-13T14:51:18.808Z
+TC-0361,P-F02-054,3,ASSERT_SCREEN,PASS,上限案内が出ずに定型文作成画面が表示される,SC-SNIPPET-CREATE を確認,,2026-09-13T14:51:20.227Z
+TC-0361,P-F02-054,4,ASSERT_SCREEN_LACKS,PASS,定型文の上限メッセージが表示されない,無い,,2026-09-13T14:51:21.628Z
+TC-0361,P-F02-054,5,TAP,PASS,タイトル欄のタップが受け付けられる,"tap 1478,248 hold=60ms",,2026-09-13T14:51:23.401Z
+TC-0361,P-F02-054,6,ASSERT_SCREEN,PASS,タイトル入力画面が表示される,SC-SNIPPET-TITLE-INPUT を確認,,2026-09-13T14:51:24.828Z
+TC-0361,P-F02-054,7,PASTE_RAW,PASS,入力欄へ 上限超過テスト が入力される,pasted: 上限超過テスト,,2026-09-13T14:51:26.609Z
+TC-0361,P-F02-054,8,TAP,PASS,完了ボタンのタップが受け付けられる,"tap 1623,198 hold=60ms",,2026-09-13T14:51:28.393Z
+TC-0361,P-F02-054,9,TAP,PASS,本文欄のタップが受け付けられる,"tap 1478,318 hold=60ms",,2026-09-13T14:51:30.155Z
+TC-0361,P-F02-054,10,ASSERT_SCREEN,PASS,内容入力画面が表示される,SC-SNIPPET-CONTENT-INPUT を確認,,2026-09-13T14:51:31.582Z
+TC-0361,P-F02-054,11,PASTE_RAW,PASS,入力欄へ 上限超過テスト本文 が入力される,pasted: 上限超過テスト本文,,2026-09-13T14:51:33.185Z
+TC-0361,P-F02-054,12,TAP,PASS,完了ボタンのタップが受け付けられる,"tap 1623,198 hold=60ms",,2026-09-13T14:51:34.907Z
+TC-0361,P-F02-054,13,TAP,PASS,保存ボタンのタップが受け付けられる,"tap 1623,189 hold=60ms",,2026-09-13T14:51:36.613Z
+TC-0361,P-F02-054,14,ASSERT_SCREEN,PASS,ホーム画面へ戻る,SC-HOME を確認,,2026-09-13T14:51:38.232Z
+TC-0361,P-F02-054,15,ASSERT_DB,PASS,snippetsテーブルが201件になる,"""201""",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-0361-15-pro-snippet-201.png,2026-09-13T14:51:39.287Z
+TC-0362,P-F02-059,1,ASSERT_DB,PASS,snippetsテーブルが200件である,"""200""",,2026-09-13T14:51:53.062Z
+TC-0362,P-F02-059,2,TAP,PASS,2番目のカード（定型文002）の編集アイコンのタップが受け付けられる,"tap 1576,576 hold=60ms",,2026-09-13T14:51:55.372Z
+TC-0362,P-F02-059,3,ASSERT_SCREEN,PASS,定型文編集画面が表示される,SC-SNIPPET-EDIT を確認,,2026-09-13T14:51:56.809Z
+TC-0362,P-F02-059,4,TAP,PASS,タイトル欄のタップが受け付けられる,"tap 1478,248 hold=60ms",,2026-09-13T14:51:58.594Z
+TC-0362,P-F02-059,5,ASSERT_SCREEN,PASS,タイトル入力画面が表示される,SC-SNIPPET-TITLE-INPUT を確認,,2026-09-13T14:52:00.011Z
+TC-0362,P-F02-059,6,CLEAR_TEXT,PASS,タイトル入力欄が空になる,deleted x20,,2026-09-13T14:52:05.791Z
+TC-0362,P-F02-059,7,PASTE_RAW,PASS,入力欄へ 定型文002改訂 が入力される,pasted: 定型文002改訂,,2026-09-13T14:52:07.452Z
+TC-0362,P-F02-059,8,TAP,PASS,完了ボタンのタップが受け付けられる,"tap 1623,198 hold=60ms",,2026-09-13T14:52:09.141Z
+TC-0362,P-F02-059,9,TAP,PASS,保存ボタンのタップが受け付けられる,"tap 1623,189 hold=60ms",,2026-09-13T14:52:10.876Z
+TC-0362,P-F02-059,10,ASSERT_SCREEN,PASS,ホーム画面へ戻る,SC-HOME を確認,,2026-09-13T14:52:12.583Z
+TC-0362,P-F02-059,11,ASSERT_SCREEN_LACKS,PASS,定型文の上限メッセージが表示されない,無い,,2026-09-13T14:52:14.210Z
+TC-0362,P-F02-059,12,ASSERT_DB,PASS,snippetsテーブルは200件のままである,"""200""",,2026-09-13T14:52:14.989Z
+TC-0362,P-F02-059,13,ASSERT_DB,PASS,sn_002のタイトルが 定型文002改訂 に更新されている,"""定型文002改訂""",,2026-09-13T14:52:15.768Z
+TC-0362,P-F02-059,14,ASSERT_VISIBLE,PASS,ホーム一覧に 定型文002改訂 が表示される,見えている（1478 454）,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260913-item-limit-v2/evidence/TC-0362-14-snippet-edit-over-limit.png,2026-09-13T14:52:17.762Z
