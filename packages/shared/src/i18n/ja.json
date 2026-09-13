@@ -37,17 +37,16 @@
     "no_snippets": "定型文がありません",
     "title_placeholder": "タイトル",
     "title_input": "タイトルを入力",
+    "content_input": "本文を入力",
     "title_input_placeholder": "タイトルを入力...",
+    "content_input_placeholder": "本文を入力...",
     "content": "内容",
     "content_placeholder": "内容を入力してください",
     "search_placeholder": "定型文を検索...",
     "category": "カテゴリ",
     "select_category": "カテゴリを選択",
     "select_profile": "プロファイルを選択（全てのプロファイル）",
-    "profiles_selected": "{{count}}個のプロファイルを選択中",
-    "select_profiles_title": "プロファイルを選択",
     "select_profiles_description": "この定型文を使用するプロファイルを選択してください（複数選択可）",
-    "all_profiles": "全てのプロファイル",
     "copy_with_title": "タイトルもコピーする",
     "copy_with_title_description": "オフの場合は内容のみをコピーします",
     "system_variables": "システム変数",
@@ -149,7 +148,7 @@
     "title": "プロファイル",
     "create": "プロファイルを作成",
     "edit": "プロファイルを編集",
-    "delete_confirm": "プロファイル「{{name}}」を削除しますか？\n\nこのプロファイルに登録されているすべての変数とショートカットも削除されます。",
+    "delete_confirm": "プロファイル「{{name}}」を削除しますか？\n\nこのプロファイルの変数の値と、このプロファイルだけに登録されているショートカットも削除されます。",
     "no_profiles": "プロファイルがありません",
     "add_hint": "右上の + ボタンからプロファイルを追加できます",
     "name": "プロファイル名",
@@ -161,14 +160,18 @@
     "set_default_confirm": "プロファイル「{{name}}」を標準にしますか？\n\n変数の既定値がこのプロファイルの値に切り替わります。",
     "delete_default_error": "標準のプロファイルは削除できません",
     "limit_message": "無料版では{{limit}}個までプロファイルを登録できます。無制限に登録するにはProプランにアップグレードしてください。",
-    "disabled_message": "このプロファイルは無料版では使用できません。Proプランにアップグレードすると、すべてのプロファイルを無制限に使用できます。"
+    "disabled_message": "このプロファイルは無料版では使用できません。Proプランにアップグレードすると、すべてのプロファイルを無制限に使用できます。",
+    "select_profiles_title": "プロファイルを選択",
+    "all_profiles": "全てのプロファイル",
+    "profiles_selected": "{{count}}個のプロファイルを選択中"
   },
   "sort": {
     "title": "並べ替え",
     "created": "作成日時",
     "updated": "更新日時",
     "usage": "使用頻度",
-    "title_sort": "タイトル"
+    "title_sort": "タイトル",
+    "name": "名前"
   },
   "backup": {
     "import_success": "インポートしました",
@@ -351,7 +354,6 @@
     "format_changed": "書式を変更しました"
   },
   "shortcut": {
-    "title": "ショートカット",
     "empty": "ショートカットがありません",
     "empty_hint": "右上の + ボタンからショートカットを追加できます",
     "create": "ショートカットを作成",
@@ -359,8 +361,10 @@
     "name": "ショートカット名",
     "name_placeholder": "例: 電話番号",
     "profile": "プロファイル",
+    "select_profile": "プロファイルを選択（全てのプロファイル）",
+    "select_profiles_description": "このショートカットを使用するプロファイルを選択してください（複数選択可）",
+    "category": "カテゴリ",
     "values": "値",
-    "value_count": "{{count}}件",
     "value_create": "値を追加",
     "value_edit": "値を編集",
     "value_name": "値名",
@@ -369,6 +373,13 @@
     "value_value_placeholder": "例: 080-0000-0000",
     "delete_confirm": "ショートカット「{{name}}」を削除しますか？\n\nこのショートカットに登録されているすべての値も削除されます。",
     "delete_value_confirm": "値「{{name}}」を削除しますか？",
-    "register": "登録"
+    "show_shortcuts": "ショートカットを表示",
+    "show_snippets": "定型文を表示",
+    "search_placeholder": "ショートカットを検索...",
+    "variable_reference_link": "カスタム変数を参照する",
+    "variable_reference_clear": "解除",
+    "variable_reference_title": "カスタム変数を選択",
+    "variable_reference_description": "参照した変数は、選択中のプロファイルの値になります。値が未設定のときは標準プロファイルの値を使います。",
+    "variable_reference_empty": "参照できるカスタム変数がありません"
   }
 }

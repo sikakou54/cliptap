@@ -20,7 +20,7 @@ import {
   ActivityIndicator,
   Pressable
 } from 'react-native';
-import { useTranslation } from '@cliptap/shared';
+import { getSelectionTabLabel, useTranslation } from '@cliptap/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import { type ImportTabType } from '@cliptap/shared';
@@ -105,7 +105,7 @@ export default function SelectImportDataScreen() {
               styles.tabText,
               { color: activeTab === tab ? colors.primary : colors.textSecondary }
             ]}>
-              {t(`backup.tab_${tab}`)}
+              {getSelectionTabLabel(tab, t)}
             </Text>
             <Text style={[
               styles.tabCount,

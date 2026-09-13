@@ -44,8 +44,9 @@ describe('migrateImportTempDb', () => {
     }
     if (version >= 8) {
       await db.exec(`
-        CREATE TABLE shortcuts (id TEXT PRIMARY KEY, profileId TEXT NOT NULL, name TEXT NOT NULL, sortOrder INTEGER DEFAULT 0, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL, FOREIGN KEY (profileId) REFERENCES profiles(id) ON DELETE CASCADE, UNIQUE(profileId, name));
-        CREATE TABLE shortcut_values (id TEXT PRIMARY KEY, shortcutId TEXT NOT NULL, name TEXT NOT NULL, value TEXT NOT NULL, useCount INTEGER DEFAULT 0, sortOrder INTEGER DEFAULT 0, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL, FOREIGN KEY (shortcutId) REFERENCES shortcuts(id) ON DELETE CASCADE);
+        CREATE TABLE shortcuts (id TEXT PRIMARY KEY, categoryId TEXT, name TEXT NOT NULL, sortOrder INTEGER DEFAULT 0, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL, FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE SET NULL);
+        CREATE TABLE shortcut_profiles (shortcutId TEXT NOT NULL, profileId TEXT NOT NULL, PRIMARY KEY (shortcutId, profileId), FOREIGN KEY (shortcutId) REFERENCES shortcuts(id) ON DELETE CASCADE, FOREIGN KEY (profileId) REFERENCES profiles(id) ON DELETE CASCADE);
+        CREATE TABLE shortcut_values (id TEXT PRIMARY KEY, shortcutId TEXT NOT NULL, name TEXT NOT NULL, value TEXT NOT NULL, variableId TEXT, useCount INTEGER DEFAULT 0, sortOrder INTEGER DEFAULT 0, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL, FOREIGN KEY (shortcutId) REFERENCES shortcuts(id) ON DELETE CASCADE, FOREIGN KEY (variableId) REFERENCES variables(id) ON DELETE SET NULL);
       `);
     }
     await db.exec(`
@@ -284,7 +285,13 @@ describe('migrateImportTempDb', () => {
       db
         .all<{ name: string }>("SELECT name FROM pragma_table_info('shortcuts')")
         .map((c) => c.name)
-    ).toEqual(['id', 'profileId', 'name', 'sortOrder', 'createdAt', 'updatedAt']);
+    ).toEqual(['id', 'categoryId', 'name', 'sortOrder', 'createdAt', 'updatedAt']);
+    /* 所属プロファイルは中間テーブルが持つ */
+    expect(
+      db
+        .all<{ name: string }>("SELECT name FROM pragma_table_info('shortcut_profiles')")
+        .map((c) => c.name)
+    ).toEqual(['shortcutId', 'profileId']);
     expect(
       db
         .all<{ name: string }>("SELECT name FROM pragma_table_info('shortcut_values')")
@@ -294,6 +301,7 @@ describe('migrateImportTempDb', () => {
       'shortcutId',
       'name',
       'value',
+      'variableId',
       'useCount',
       'sortOrder',
       'createdAt',
@@ -305,10 +313,11 @@ describe('migrateImportTempDb', () => {
   it('keeps existing rows when the shortcut tables already exist', async () => {
     const db = await createVersion(8);
     db.run(
-      "INSERT INTO shortcuts VALUES ('sc1', 'p1', 'Phone', 0, 'created', 'updated')"
+      "INSERT INTO shortcuts VALUES ('sc1', NULL, 'Phone', 0, 'created', 'updated')"
     );
+    db.run("INSERT INTO shortcut_profiles VALUES ('sc1', 'p1')");
     db.run(
-      "INSERT INTO shortcut_values VALUES ('sv1', 'sc1', 'Mother', '080-0000-0000', 3, 0, 'created', 'updated')"
+      "INSERT INTO shortcut_values VALUES ('sv1', 'sc1', 'Mother', '080-0000-0000', NULL, 3, 0, 'created', 'updated')"
     );
 
     await migrateV7ToV8(db);
@@ -316,7 +325,7 @@ describe('migrateImportTempDb', () => {
     expect(db.all('SELECT * FROM shortcuts')).toEqual([
       {
         id: 'sc1',
-        profileId: 'p1',
+        categoryId: null,
         name: 'Phone',
         sortOrder: 0,
         createdAt: 'created',
@@ -329,6 +338,7 @@ describe('migrateImportTempDb', () => {
         shortcutId: 'sc1',
         name: 'Mother',
         value: '080-0000-0000',
+        variableId: null,
         useCount: 3,
         sortOrder: 0,
         createdAt: 'created',

@@ -14,17 +14,17 @@ import com.sikakou.cliptap.models.ShortcutValue
  * ショートカット管理サービス
  *
  * 【目的】
- * ショートカット（値の候補をまとめたグループ）の取得、候補推測、挿入を管理するビジネスロジック層。
+ * ショートカット（値の候補をまとめたグループ）の取得、並べ替え、挿入を管理するビジネスロジック層。
  *
  * 【役割】
  * - ショートカットの取得
- * - 入力中の内容からの候補推測（ショートカット・値の並べ替え）
+ * - ショートカット一覧と値一覧の並べ替え
  * - テキストフィールドへの値の挿入
  * - 振動フィードバックと使用回数の記録
  *
- * 【候補推測の正本】
- * packages/shared/src/shortcuts/candidates.ts と
- * packages/shared/tests/shortcuts/candidates.test.ts が規則の正本。
+ * 【並べ替えの正本】
+ * packages/shared/src/shortcuts/sort.ts の sortShortcuts() と
+ * packages/shared/tests/shortcuts/sortShortcuts.test.ts が規則の正本。
  * このクラスはその規則を写したものなので、正本を変更するときは必ずここも同じ変更を行うこと。
  *
  * 【定型文との違い】
@@ -44,25 +44,6 @@ class ShortcutService private constructor(private val context: Context) {
         /** 挿入時の振動の長さ（ミリ秒）。定型文とショートカットで手応えを揃える */
         private const val VIBRATION_DURATION_MS = 50L
 
-        /**
-         * 入力中の内容として参照する文字数
-         *
-         * 【この長さにする理由】
-         * カーソル直前のすべてを見ると、離れた位置に出た語で候補が動き続けて落ち着かない。
-         * 「電話番号は」程度の直前の手掛かりだけを見る。
-         * 正本 packages/shared/src/shortcuts/candidates.ts の SHORTCUT_CONTEXT_LENGTH と同じ値。
-         */
-        const val SHORTCUT_CONTEXT_LENGTH = 40
-
-        /** ショートカット名が入力中の内容に現れたときの一致度 */
-        private const val SCORE_NAME_MATCH = 2
-
-        /** 値名が入力中の内容に現れたときの一致度 */
-        private const val SCORE_VALUE_NAME_MATCH = 1
-
-        /** 手掛かりが無いときの一致度 */
-        private const val SCORE_NONE = 0
-
         @Volatile
         private var INSTANCE: ShortcutService? = null
 
@@ -76,101 +57,68 @@ class ShortcutService private constructor(private val context: Context) {
     }
 
     /**
-     * 並べ替えの途中経過（ショートカット）
-     *
-     * 【元の位置を持つ理由】
-     * 一致度もsortOrderも同じときに並びが揺れないよう、最後は元の位置で決める。
-     */
-    private data class ScoredShortcut(
-        val shortcut: Shortcut,
-        val index: Int,
-        val score: Int
-    )
-
-    /**
-     * 並べ替えの途中経過（ショートカット値）
-     */
-    private data class ScoredValue(
-        val value: ShortcutValue,
-        val index: Int,
-        val score: Int
-    )
-
-    /**
-     * 指定プロファイルのショートカットを値付きで取得
+     * 指定プロファイル・カテゴリのショートカットを値付きで取得
      *
      * @param profileId 対象プロファイルのID
+     * @param categoryId 対象カテゴリのID（nullは「すべて」＝カテゴリで絞らない）
      * @return ショートカット一覧（sortOrder順、値もsortOrder順）
      */
-    fun getAll(profileId: String): List<Shortcut> {
-        return shortcutMapper.getAll(profileId)
+    fun getAll(profileId: String, categoryId: String?): List<Shortcut> {
+        return shortcutMapper.getAll(profileId, categoryId)
     }
 
     /**
-     * 指定プロファイルのショートカット一覧を表示順に並べ替えて取得
+     * 指定プロファイル・カテゴリのショートカット一覧を表示順に並べ替えて取得
      *
      * 【何をするか】
-     * 1. 保存順（sortOrder順）のショートカットを、そのプロファイルの分だけ取得
-     * 2. 一致度の降順 → sortOrderの昇順 → 元の位置 で並べ替える
+     * 1. 保存順（sortOrder順）のショートカットを、そのプロファイルとカテゴリの分だけ取得
+     * 2. 利用者が選んだ並べ替えの基準で並べ替える
      *
      * 【プロファイルで絞る理由】
-     * ショートカットはプロファイル（環境）に属する。
+     * ショートカットは選択中のプロファイル（環境）に紐づくものと、全環境向け（紐づけ0件）のものだけを出す。
      * 絞らずに全件を出すと、選んでいる環境と関係のない値を挿入できてしまう。
      *
-     * 【使用回数を使わない理由】
-     * 利用者が決めた登録順が入力内容と無関係に入れ替わると、目で追う位置が毎回変わってしまう。
-     * 使用回数は値の並べ替え（rankedValues）でのみ使う。
+     * 【カテゴリで絞る理由】
+     * ショートカットは定型文と同じカテゴリを持つ。
+     * 選んでいるカテゴリと、一覧に出るショートカットが食い違うと、
+     * 絞り込んだつもりの利用者に関係のない候補を見せることになる。
      *
-     * 【引数名をinputContextにした理由】
-     * このクラスはAndroidのContextをcontextという名前で保持しているため、
-     * 同名の引数を置くと関数内で意味が入れ替わり、取り違えの原因になる。
+     * 【絞り込みを取得段で行う理由】
+     * 並べ替えは取得した一覧に対して行うものなので、絞り込みを取得の後に置くと、
+     * 並べ替えの規則を絞り込みの都合で書き換えることになる。
+     * 取得段で絞れば、正本（sort.ts）と同じ規則のままで済む。
      *
      * @param profileId 対象プロファイルのID
-     * @param inputContext カーソル直前の入力内容
+     * @param categoryId 対象カテゴリのID（nullは「すべて」＝カテゴリで絞らない）
+     * @param sortBy 並べ替えの基準（"created", "updated", "title", "usage"）
      * @return 表示順に並べ替えたショートカット一覧
      */
-    fun rankedShortcuts(profileId: String, inputContext: String): List<Shortcut> {
-        return rankShortcuts(getAll(profileId), inputContext)
+    fun rankedShortcuts(profileId: String, categoryId: String?, sortBy: String): List<Shortcut> {
+        return sortShortcuts(getAll(profileId, categoryId), sortBy)
     }
 
     /**
      * ショートカット値の一覧を表示順に並べ替える
      *
      * 【何をするか】
-     * 値名が入力中の内容に現れたものを先頭に、次に使用回数の多い順、
-     * 最後にsortOrderの昇順 → 元の位置 で並べ替える。
+     * 使用回数の多い順 → sortOrderの昇順 で並べ替える。
      *
      * 【並びの意味】
-     * 使用回数がすべて0で手掛かりも無い場合は登録順のまま（通常順）になる。
+     * 使用回数がすべて0の場合は登録順のまま（通常順）になる。
+     *
+     * 【一覧の並べ替え（rankedShortcuts）に従わない理由】
+     * 値が持つのは名前と使用回数だけで、作成日時・更新日時に当たるものが無い。
+     * 4種の基準のうち2種で並びが変わらないなら、利用者から見て選択が効いたのか分からない。
      *
      * @param values 保存順（sortOrder順）の値一覧
-     * @param inputContext カーソル直前の入力内容
      * @return 表示順に並べ替えた値一覧
      */
-    fun rankedValues(values: List<ShortcutValue>, inputContext: String): List<ShortcutValue> {
-        val normalizedContext = normalizeContext(inputContext)
-
-        val scored = values.mapIndexed { index, value ->
-            ScoredValue(
-                value = value,
-                index = index,
-                score = if (contains(normalizedContext, value.name)) {
-                    SCORE_VALUE_NAME_MATCH
-                } else {
-                    SCORE_NONE
-                }
-            )
-        }
-
-        return scored
-            .sortedWith(
-                compareByDescending<ScoredValue> { it.score }
-                    .thenByDescending { it.value.useCount }
-                    .thenBy { it.value.sortOrder }
-                    /* sortOrderが同値でも並びが揺れないよう、元の位置で決める */
-                    .thenBy { it.index }
-            )
-            .map { it.value }
+    fun rankedValues(values: List<ShortcutValue>): List<ShortcutValue> {
+        /* sortedWithは安定ソートのため、使用回数もsortOrderも同値なら元の位置のまま並びが揺れない */
+        return values.sortedWith(
+            compareByDescending<ShortcutValue> { it.useCount }
+                .thenBy { it.sortOrder }
+        )
     }
 
     /**
@@ -202,92 +150,56 @@ class ShortcutService private constructor(private val context: Context) {
         /* 振動フィードバック */
         performHapticFeedback()
 
-        /* 使用回数を加算（値単位の候補推測に反映するため） */
+        /* 使用回数を加算（値一覧の並びと、使用頻度順のショートカット一覧に反映するため） */
         shortcutMapper.incrementUseCount(value.id, value.shortcutId)
     }
 
     /**
-     * ショートカット一覧を表示順に並べ替える
+     * ショートカット一覧を並べ替える
+     *
+     * 【同順位の決着まで揃える理由】
+     * 定型文（SnippetMapper.orderClause）と同じ考え方に揃えてあり、
+     * 決着の付け方が違うと同じ「作成日時」でも定型文とショートカットで並びの理屈が変わって見える。
+     *
+     * 【名前を自然順で比べる理由】
+     * 定型文はSQLの title ASC（コードポイント順）で並ぶため、同じ規則で比べないと
+     * 同じ「名前順」でも定型文とショートカットで並びが食い違って見える。
+     *
+     * 【日時を文字列のまま比べる理由】
+     * 保存しているのはISO8601の文字列で桁が揃っているため、日付に直さなくても大小が一致する。
+     *
+     * 【未知の基準を作成日時に倒す理由】
+     * 設定は端末に文字列で残るため、将来基準を減らしたときに古い値が読み込まれても
+     * 既定の並びで表示できるようにする。
      *
      * @param shortcuts 保存順（sortOrder順）のショートカット一覧
-     * @param inputContext カーソル直前の入力内容
-     * @return 表示順に並べ替えたショートカット一覧
+     * @param sortBy 並べ替えの基準（"created", "updated", "title", "usage"）
+     * @return 並べ替えたショートカット一覧
      */
-    private fun rankShortcuts(
-        shortcuts: List<Shortcut>,
-        inputContext: String
-    ): List<Shortcut> {
-        val normalizedContext = normalizeContext(inputContext)
-
-        val scored = shortcuts.mapIndexed { index, shortcut ->
-            ScoredShortcut(
-                shortcut = shortcut,
-                index = index,
-                score = scoreShortcut(shortcut, normalizedContext)
-            )
+    private fun sortShortcuts(shortcuts: List<Shortcut>, sortBy: String): List<Shortcut> {
+        val comparator = when (sortBy) {
+            "updated" -> compareByDescending<Shortcut> { it.updatedAt }.thenBy { it.name }
+            "title" -> compareBy<Shortcut> { it.name }.thenByDescending { it.createdAt }
+            "usage" -> compareByDescending<Shortcut> { totalUseCount(it) }
+                .thenByDescending { it.createdAt }
+            else -> compareByDescending<Shortcut> { it.createdAt }.thenBy { it.name }
         }
 
-        return scored
-            .sortedWith(
-                compareByDescending<ScoredShortcut> { it.score }
-                    .thenBy { it.shortcut.sortOrder }
-                    /* sortOrderが同値でも並びが揺れないよう、元の位置で決める */
-                    .thenBy { it.index }
-            )
-            .map { it.shortcut }
+        return shortcuts.sortedWith(comparator)
     }
 
     /**
-     * ショートカットの一致度を求める
+     * ショートカットの使用回数を求める
      *
-     * 【ショートカット名を強く見る理由】
-     * 「電話番号は」と入力中なら、値名が一致しているだけの別のショートカットより
-     * 「電話番号」そのものを上に出したいため。
+     * 【最大値ではなく合計にする理由】
+     * 使用回数は値ごとに持つため、ショートカット単位の使用頻度は合計で表す。
+     * 「よく使う値が1つあるショートカット」と「満遍なく使うショートカット」のどちらも上位に来る。
      *
      * @param shortcut 対象のショートカット
-     * @param normalizedContext 正規化済みの入力内容
-     * @return 一致度（大きいほど上位）
+     * @return 値ごとの使用回数の合計
      */
-    private fun scoreShortcut(shortcut: Shortcut, normalizedContext: String): Int {
-        if (contains(normalizedContext, shortcut.name)) return SCORE_NAME_MATCH
-        if (shortcut.values.any { contains(normalizedContext, it.name) }) {
-            return SCORE_VALUE_NAME_MATCH
-        }
-        return SCORE_NONE
-    }
-
-    /**
-     * 入力中の内容を突き合わせ用に正規化する
-     *
-     * 【何をするか】
-     * 末尾のSHORTCUT_CONTEXT_LENGTH文字だけを切り出し、小文字化する。
-     *
-     * 【小文字化する理由】
-     * 英字は大小を区別せずに突き合わせるため。日本語はこの正規化の影響を受けない。
-     * lowercase()は端末のロケールに依存しない（トルコ語のIなどで結果が変わらない）。
-     *
-     * @param inputContext カーソル直前の入力内容
-     * @return 正規化した文字列
-     */
-    private fun normalizeContext(inputContext: String): String {
-        return inputContext.takeLast(SHORTCUT_CONTEXT_LENGTH).lowercase()
-    }
-
-    /**
-     * 入力中の内容にその語が含まれるか判定する
-     *
-     * 【空文字を対象外にする理由】
-     * 空文字はどの文字列にも含まれると判定されてしまい、名前が未入力のデータが
-     * 常に最上位に出てしまうため。
-     *
-     * @param normalizedContext 正規化済みの入力内容
-     * @param term 突き合わせる語（ショートカット名または値名）
-     * @return 含まれる場合はtrue
-     */
-    private fun contains(normalizedContext: String, term: String): Boolean {
-        val trimmed = term.trim().lowercase()
-        if (trimmed.isEmpty()) return false
-        return normalizedContext.contains(trimmed)
+    private fun totalUseCount(shortcut: Shortcut): Int {
+        return shortcut.values.sumOf { it.useCount }
     }
 
     /**

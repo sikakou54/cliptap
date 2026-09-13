@@ -11,7 +11,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import { useTranslation } from '@cliptap/shared';
+import { getSelectionTabLabel, useTranslation } from '@cliptap/shared';
 import { Dialog } from '@headlessui/react';
 import {
   useProfiles,        /* プロファイル一覧取得フック */
@@ -316,7 +316,7 @@ export function ExportSelectionModal({
                       : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                   }`}
                 >
-                  <span>{t(`backup.tab_${tab}`)}</span>
+                  <span>{getSelectionTabLabel(tab, t)}</span>
                   <span className="text-xs mt-0.5">
                     ({tab === 'snippets'
                       ? selectedSnippetIds.size
@@ -340,7 +340,7 @@ export function ExportSelectionModal({
                     /* プロファイル名の配列（空の場合は「全てのプロファイル」） */
                     const filteredProfileNames = selectedProfiles.map((p) => p.profileName).filter(Boolean) as string[];
                     const profileNames = item.profiles.length === 0 || filteredProfileNames.length === 0
-                      ? [t('snippet.all_profiles')]
+                      ? [t('profile.all_profiles')]
                       : filteredProfileNames;
 
                     /* カテゴリが選択されているかチェック（選択されていない場合は未分類として表示） */

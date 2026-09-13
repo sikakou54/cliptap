@@ -89,6 +89,7 @@
 "sort.created" = "Created";
 "sort.updated" = "Updated";
 "sort.title" = "Title";
+"sort.name" = "Name";
 "sort.usage" = "Frequency";
 
 /* Settings related */

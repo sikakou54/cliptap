@@ -124,26 +124,53 @@ export const CREATE_TABLES = {
    * ショートカットテーブル
    *
    * @remarks
-   * 1件のショートカットは必ず1件のプロファイルに属する。
-   * 名前の一意性はプロファイル内に限るため、列単位のUNIQUEではなく複合UNIQUEで表す。
-   * 実行時に外部キーを強制していないため、プロファイル削除時のカスケードは
-   * ProfileMapperが明示的に行う（profile_variablesと同じ扱い）。
+   * 紐づくプロファイルは shortcut_profiles で表す。定型文と同じ中間テーブルの形にしてある。
+   * 1件のショートカットにつき紐づけは0件以上。0件は全プロファイル向け（snippet_profiles と同じ）。
+   *
+   * 名前の一意性は紐づくプロファイル内に限るが、紐づけがこのテーブルに無いため複合UNIQUEでは表せない。
+   * 重複の判定は ShortcutService が、保存先のいずれかのプロファイルで同名が見えるか
+   * （0件のものは全プロファイルから見える）で行う。
+   *
+   * カテゴリは定型文と同じcategoriesテーブルを共用し、未選択（未分類）を許すためNULL可とする。
+   * カテゴリ削除時のNULL化は外部キー宣言では効かないため、CategoryMapperが明示的に行う。
    */
   shortcuts: `
     CREATE TABLE IF NOT EXISTS shortcuts (
       id TEXT PRIMARY KEY,
-      profileId TEXT NOT NULL,
+      categoryId TEXT,
       name TEXT NOT NULL,
       sortOrder INTEGER DEFAULT 0,
       createdAt TEXT NOT NULL,
       updatedAt TEXT NOT NULL,
-      FOREIGN KEY (profileId) REFERENCES profiles(id) ON DELETE CASCADE,
-      UNIQUE(profileId, name)
+      FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE SET NULL
+    );
+  `,
+
+  /**
+   * ショートカットとプロファイルの関連テーブル
+   *
+   * @remarks
+   * 定型文の snippet_profiles と同じ形にしている。
+   * 1件のショートカットにつき0件以上。0件は全プロファイル向け（snippet_profiles と同じ）。
+   * 実行時に外部キーを強制していないため、削除時のカスケードは各Mapperが明示的に行う。
+   */
+  shortcutProfiles: `
+    CREATE TABLE IF NOT EXISTS shortcut_profiles (
+      shortcutId TEXT NOT NULL,
+      profileId TEXT NOT NULL,
+      PRIMARY KEY (shortcutId, profileId),
+      FOREIGN KEY (shortcutId) REFERENCES shortcuts(id) ON DELETE CASCADE,
+      FOREIGN KEY (profileId) REFERENCES profiles(id) ON DELETE CASCADE
     );
   `,
 
   /**
    * ショートカット値テーブル
+   *
+   * @remarks
+   * valueは挿入する文字列そのもの。variableIdを設定した値は、valueではなく
+   * そのカスタム変数をアクティブなプロファイルで解決した結果を挿入する。
+   * 参照中もvalueは消さずに残し、参照を外したときに元の文字列へ戻せるようにする。
    */
   shortcutValues: `
     CREATE TABLE IF NOT EXISTS shortcut_values (
@@ -151,11 +178,13 @@ export const CREATE_TABLES = {
       shortcutId TEXT NOT NULL,
       name TEXT NOT NULL,
       value TEXT NOT NULL,
+      variableId TEXT,
       useCount INTEGER DEFAULT 0,
       sortOrder INTEGER DEFAULT 0,
       createdAt TEXT NOT NULL,
       updatedAt TEXT NOT NULL,
-      FOREIGN KEY (shortcutId) REFERENCES shortcuts(id) ON DELETE CASCADE
+      FOREIGN KEY (shortcutId) REFERENCES shortcuts(id) ON DELETE CASCADE,
+      FOREIGN KEY (variableId) REFERENCES variables(id) ON DELETE SET NULL
     );
   `,
 };
@@ -197,17 +226,33 @@ export const CREATE_INDEXES = {
     ON snippet_profiles(profileId);
   `,
   /**
-   * ショートカットの所属プロファイルのindex
+   * ショートカットに紐づくプロファイルのindex
    *
    * @remarks
    * 一覧はプロファイルで絞って取得するため実際に使われる。
-   * 併せて、移行・取込の後に `profileId` 列が存在することを確かめる経路でもある。
-   * `finalizeLatestSchema` はテーブル名しか確認しないため、この列が欠けたまま
+   * 併せて、移行・取込の後に `shortcut_profiles` の列が存在することを確かめる経路でもある。
+   * `finalizeLatestSchema` はテーブル名しか確認しないため、列が欠けたまま
    * 最新スキーマとして通ってしまうのを防いでいる。参照するクエリが無いと誤解して消さないこと。
    */
-  shortcutsProfile: `
-    CREATE INDEX IF NOT EXISTS idx_shortcuts_profile
-    ON shortcuts(profileId);
+  shortcutProfilesProfile: `
+    CREATE INDEX IF NOT EXISTS idx_shortcut_profiles_profile
+    ON shortcut_profiles(profileId);
+  `,
+  shortcutProfilesShortcut: `
+    CREATE INDEX IF NOT EXISTS idx_shortcut_profiles_shortcut
+    ON shortcut_profiles(shortcutId);
+  `,
+  /**
+   * ショートカットの所属カテゴリのindex
+   *
+   * @remarks
+   * 一覧はカテゴリで絞り込めるため実際に使われる。
+   * shortcutProfilesProfileと同じく、移行・取込の後に `categoryId` 列が存在することを
+   * 確かめる経路でもある。参照するクエリが無いと誤解して消さないこと。
+   */
+  shortcutsCategory: `
+    CREATE INDEX IF NOT EXISTS idx_shortcuts_category
+    ON shortcuts(categoryId);
   `,
   shortcutValuesShortcut: `
     CREATE INDEX IF NOT EXISTS idx_shortcut_values_shortcut
@@ -227,6 +272,19 @@ export const CREATE_INDEXES = {
     CREATE INDEX IF NOT EXISTS idx_shortcut_values_use_count
     ON shortcut_values(useCount DESC);
   `,
+  /**
+   * ショートカット値が参照するカスタム変数のindex
+   *
+   * @remarks
+   * 変数を削除したときに、その変数を参照している値を引くために使う（§8.5）。
+   * 移行・取込の後に `variableId` 列が存在することを確かめる経路でもある。
+   * 列が欠けても参照が常に無いものとして静かに動くため、参照するクエリが少ないことを
+   * 理由に消さないこと。
+   */
+  shortcutValuesVariable: `
+    CREATE INDEX IF NOT EXISTS idx_shortcut_values_variable
+    ON shortcut_values(variableId);
+  `,
 };
 
 /**
@@ -234,6 +292,7 @@ export const CREATE_INDEXES = {
  */
 export const DROP_TABLES = {
   shortcutValues: 'DROP TABLE IF EXISTS shortcut_values;',
+  shortcutProfiles: 'DROP TABLE IF EXISTS shortcut_profiles;',
   shortcuts: 'DROP TABLE IF EXISTS shortcuts;',
   systemVariableFormats: 'DROP TABLE IF EXISTS system_variable_formats;',
   snippetProfiles: 'DROP TABLE IF EXISTS snippet_profiles;',

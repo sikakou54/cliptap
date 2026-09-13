@@ -41,45 +41,121 @@ class ShortcutMapper private constructor(context: Context) : BaseMapper(context)
          * minSdkは24のため、Instant等（API 26以降）はそのままでは使えない。
          */
         private const val ISO_8601_UTC = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+
+        /**
+         * 選択中のプロファイルで表示するショートカットの条件（?は選択中のプロファイルID 1個）
+         *
+         * 【何を出すか】
+         * 選択中のプロファイルに紐づくもの（shortcut_profilesに行がある）と、
+         * 紐づけが0件のもの（全プロファイル向け）の両方を出す。定型文のsnippet_profilesと同じ扱い。
+         *
+         * 【紐づけテーブルと結合せず副問い合わせで判定する理由】
+         * 1件のショートカットは0件以上のプロファイルに紐づく。紐づけテーブルと結合すると、
+         * 0件のものは結合で漏れ、複数に紐づくものは行（と値）が重複する。
+         * 副問い合わせならshortcuts 1行につき判定は1回で、行は増えも減りもしない。
+         *
+         * 【外側の括弧を外さない理由】
+         * 後ろにカテゴリの条件（AND s.categoryId = ?）を続けるため。括弧が無いと AND が OR より先に結び付き
+         * 「紐づく OR (紐づけ0件 AND カテゴリ一致)」と解釈され、選択中のプロファイルに紐づくものが
+         * カテゴリの絞り込みをすり抜けて出る。例外にならないため気付けない。
+         *
+         * 【文字列を変えるとき】
+         * TypeScript版 ShortcutMapper.ts・iOS版 ShortcutMapper.swift の表示条件と1文字違わず同じにしている
+         * （共有パッケージのテストが3実装のソースの一致を検査する）。変えるときは3か所を同時に直す。
+         */
+        private const val VISIBLE_IN_PROFILE_CONDITION = "(s.id IN (SELECT sp.shortcutId FROM shortcut_profiles sp WHERE sp.profileId = ?) OR NOT EXISTS (SELECT 1 FROM shortcut_profiles sp2 WHERE sp2.shortcutId = s.id))"
     }
 
     /**
-     * 指定プロファイルのショートカットを値付きで取得
+     * 指定プロファイル・カテゴリのショートカットを値付きで取得
      *
      * 【何をするか】
-     * 1. shortcut_valuesを親のprofileIdで絞り、1回のクエリでまとめて取得
-     * 2. shortcutsを同じprofileIdで絞り、sortOrder昇順で取得
+     * 1. shortcut_valuesを親の表示条件（選択中のプロファイルに紐づくもの＋全プロファイル向け）とカテゴリで絞り、
+     *    参照の解決込みで1回のクエリでまとめて取得
+     * 2. shortcutsを同じ条件で絞り、sortOrder昇順で取得
      * 3. shortcutIdごとに値を振り分けて組み立てる
      *
      * 【値をショートカットごとに引かない理由】
      * ショートカットの件数だけクエリを発行すると、行の描画前にSQLiteへ何度も往復することになる。
      * 拡張キーボードは表示までの速さが体験に直結するため、2回のクエリに固定する。
      *
-     * 【値の絞り込みをJOINで行う理由】
-     * shortcut_valuesはprofileIdを持たず、所属プロファイルは親のshortcutsにしかない。
-     * 別プロファイルの値まで読み込むと、同じidのショートカットが無いまま捨てられる無駄が出るうえ、
+     * 【値の絞り込みを親との結合で行う理由】
+     * shortcut_valuesは紐づくプロファイルもカテゴリも持たない。紐づけはshortcut_profiles、
+     * カテゴリは親のshortcutsにしかない。
+     * 表示しないショートカットの値まで読み込むと、同じidのショートカットが無いまま捨てられる無駄が出るうえ、
      * 将来の実装変更で他プロファイルの値が紛れ込む余地を残すため、SQLの時点で親と突き合わせる。
+     * カテゴリの絞り込みも同じ理由で、値と親の両方へ同じ条件を掛ける。
+     *
+     * 【紐づけを表示条件で絞る理由】
+     * 1件のショートカットは0件以上のプロファイルに紐づく（0件は全プロファイル向け）。
+     * 紐づけテーブルと結合すると0件のものが漏れ、複数に紐づくものが重複するため、
+     * 表示条件（companion objectの定数）の副問い合わせで判定する（TypeScript版 ShortcutMapper.ts と同じ条件）。
+     *
+     * 【カテゴリ未指定を全件にする理由】
+     * カテゴリ選択の「すべて」に対応する。カテゴリはあとから付けられるもので、
+     * 未分類（categoryIdがNULL）のショートカットも「すべて」では出す必要があるため、
+     * 未指定のときは条件そのものを足さない。未分類だけを選ぶ絞り込みは設けていない。
      *
      * 【全件取得の口を残さない理由】
-     * ショートカットはプロファイルに属するため、プロファイルを指定しない取得は
-     * 「どの環境のものか分からない一覧」になり、拡張キーボードでは使い道がない。
+     * プロファイルを指定しない取得は「どの環境のものか分からない一覧」になり、
+     * 拡張キーボードでは使い道がない。
      *
      * @param profileId 対象プロファイルのID
+     * @param categoryId 対象カテゴリのID（nullは「すべて」＝カテゴリで絞らない）
      * @return ショートカット一覧（sortOrder順、値もsortOrder順）
      */
-    fun getAll(profileId: String): List<Shortcut> {
+    fun getAll(profileId: String, categoryId: String?): List<Shortcut> {
+        /* 2つのクエリへ同じ条件を掛けるため、条件と引数はここで1度だけ組み立てる。
+           WHERE句の?は表示条件の1個（profileId）→カテゴリ（categoryId）の順で、両クエリで揃っている。
+           片方だけ絞ると、一覧に出ないショートカットの値まで読み込むことになる */
+        val categoryCondition = if (categoryId != null) "AND s.categoryId = ?" else ""
+        val queryArgs = if (categoryId != null) arrayOf(profileId, categoryId) else arrayOf(profileId)
+
+        /* 挿入する中身は shortcut_values の value が1つの文字列として持つ。
+           カスタム変数を参照している値（variableId が非NULL）だけは自前の value を使わず、
+           profile_variables 側の値を見る。
+           解決の順序は「選択中のプロファイルの非空値 → 標準プロファイルの非空値 → 空文字」で、
+           カスタム変数の展開（仕様書 §8.6）および TypeScript版 shortcuts/resolveValue.ts と同じ。
+
+           空文字を未設定として読み飛ばすために NULLIF を挟む。値を入力せずに保存すると
+           空文字が保存され得るため、NULLのままでは «設定済みの空» と区別できない。
+
+           参照中は自前の中身を見ない。両方を見にいくと、どちらが挿入されるのか利用者が判断できない。
+           参照先の変数が削除されると variableId は NULL へ戻される（§8.5）ため、
+           消えた変数を指したままの値はここへ現れない。 */
+        val defaultProfileId = defaultProfileId() ?: ""
+        val resolvedValue = """
+            CASE WHEN v.variableId IS NULL THEN v.value
+            ELSE
+              COALESCE(
+                NULLIF((SELECT pv.value FROM profile_variables pv
+                         WHERE pv.variableId = v.variableId AND pv.profileId = ?), ''),
+                NULLIF((SELECT pv.value FROM profile_variables pv
+                         WHERE pv.variableId = v.variableId AND pv.profileId = ?), ''),
+                ''
+              )
+            END
+        """
+
         /* 値を先に読み、shortcutIdごとにまとめておく */
         val valuesByShortcut = mutableMapOf<String, MutableList<ShortcutValue>>()
 
+        /* SELECTの列の並びは変えていないため、下の getString(添字) はそのまま使える。
+           中身を解決する式を4列目に置き、元の `v.value` と同じ位置に保っている */
         val valueQuery = """
-            SELECT v.id, v.shortcutId, v.name, v.value, v.useCount, v.sortOrder, v.createdAt, v.updatedAt
+            SELECT v.id, v.shortcutId, v.name, $resolvedValue AS value,
+                   v.useCount, v.sortOrder, v.createdAt, v.updatedAt
             FROM shortcut_values v
             INNER JOIN shortcuts s ON s.id = v.shortcutId
-            WHERE s.profileId = ?
+            WHERE $VISIBLE_IN_PROFILE_CONDITION $categoryCondition
             ORDER BY v.shortcutId ASC, v.sortOrder ASC
         """
 
-        val valueCursor = executeQuery(valueQuery, arrayOf(profileId))
+        /* 解決の?（SELECT句: 選択中→標準の順）はWHERE句の?より前に現れるため、先頭へ並べる。
+           SQLiteは出現順に束縛するので、この順序を崩すと中身と絞り込みが入れ替わる */
+        val valueArgs = arrayOf(profileId, defaultProfileId) + queryArgs
+
+        val valueCursor = executeQuery(valueQuery, valueArgs)
         valueCursor.use {
             while (it.moveToNext()) {
                 val value = ShortcutValue(
@@ -98,41 +174,67 @@ class ShortcutMapper private constructor(context: Context) : BaseMapper(context)
 
         val shortcuts = mutableListOf<Shortcut>()
 
+        /* SELECTの列順は iOS版 ShortcutMapper.swift の shortcutQuery と一致させている。
+           3実装の並びを揃えておくと、以降の改修は2ファイルの見比べで済む。
+           添字は下の読み出しと1対1で対応する（0:id, 1:name, 2:sortOrder, 3:createdAt,
+           4:updatedAt, 5:categoryId）。列を足し引きすると以降の添字がすべてずれ、
+           ずれてもコンパイルは通り名前の欄に別の値が出るだけで例外にならない。
+           SELECTの列順はテーブル定義の列順と一致している必要はない */
         val query = """
-            SELECT id, profileId, name, sortOrder, createdAt, updatedAt
-            FROM shortcuts
-            WHERE profileId = ?
-            ORDER BY sortOrder ASC
+            SELECT s.id, s.name, s.sortOrder, s.createdAt, s.updatedAt, s.categoryId
+            FROM shortcuts s
+            WHERE $VISIBLE_IN_PROFILE_CONDITION $categoryCondition
+            ORDER BY s.sortOrder ASC
         """
 
-        val cursor = executeQuery(query, arrayOf(profileId))
+        val cursor = executeQuery(query, queryArgs)
         cursor.use {
             while (it.moveToNext()) {
                 val id = it.getString(0)
                 shortcuts.add(
                     Shortcut(
                         id = id,
-                        profileId = it.getString(1),
-                        name = it.getString(2),
+                        categoryId = it.getStringOrNull(5),
+                        name = it.getString(1),
                         /* 値を持たないショートカットでも一覧の取得は落とさない */
                         values = valuesByShortcut[id] ?: emptyList(),
-                        sortOrder = it.getInt(3),
-                        createdAt = it.getString(4),
-                        updatedAt = it.getString(5)
+                        sortOrder = it.getInt(2),
+                        createdAt = it.getString(3),
+                        updatedAt = it.getString(4)
                     )
                 )
             }
         }
 
-        if (com.sikakou.cliptap.BuildConfig.DEBUG) Log.d(TAG, "Loaded ${shortcuts.size} shortcuts")
+        if (com.sikakou.cliptap.BuildConfig.DEBUG) Log.d(TAG, "Loaded ${shortcuts.size} shortcuts (profileId: $profileId, categoryId: $categoryId)")
         return shortcuts
+    }
+
+    /**
+     * 標準プロファイルのIDを取得する
+     *
+     * 【使いみち】
+     * カスタム変数を参照しているショートカット値は、選択中のプロファイルに非空の値が無ければ
+     * 標準プロファイルの値へ落とす。カスタム変数の展開（仕様書 §8.6）と同じ順序に揃えるためのフォールバック先。
+     * 参照していない値は自前の文字列をそのまま使うため、標準プロファイルは関与しない。
+     *
+     * @return 標準プロファイルのID（確定できない場合はnull）
+     */
+    private fun defaultProfileId(): String? {
+        val cursor = executeQuery("SELECT id FROM profiles WHERE isDefault = 1 LIMIT 1", emptyArray())
+        cursor.use {
+            if (it.moveToNext()) {
+                return it.getString(0)
+            }
+        }
+        return null
     }
 
     /**
      * ショートカット値の使用回数を1加算し、親ショートカットの更新日時を進める
      *
      * 【目的】
-     * 拡張キーボードから値を挿入したことを記録し、値単位の候補推測（useCount降順）へ反映します。
+     * 拡張キーボードから値を挿入したことを記録し、値一覧の並び（useCount降順）へ反映します。
      *
      * 【親の更新日時も進める理由】
      * メインアプリの一覧は更新日時で並べ替えられるため、使われたショートカットが

@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { useTranslation } from '@cliptap/shared';
+import { getSelectionTabLabel, useTranslation } from '@cliptap/shared';
 import { Dialog } from '@headlessui/react';
 import {
   useProfiles,
@@ -185,7 +185,7 @@ export function ImportSelectionModal({
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                 }`}
               >
-                {t(`backup.tab_${tab}`)} ({selectedCounts[tab]})
+                {getSelectionTabLabel(tab, t)} ({selectedCounts[tab]})
               </button>
             ))}
           </div>
@@ -207,7 +207,7 @@ export function ImportSelectionModal({
                   });
                   const filteredProfileNames = displayProfiles.map((p) => p.profileName).filter(Boolean) as string[];
                   const profileNames = item.profiles.length === 0 || filteredProfileNames.length === 0
-                    ? [t('snippet.all_profiles')]
+                    ? [t('profile.all_profiles')]
                     : filteredProfileNames;
 
                   /**

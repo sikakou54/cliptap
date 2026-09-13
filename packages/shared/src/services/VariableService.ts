@@ -10,6 +10,7 @@
 
 import { VariableMapper } from '../mappers/VariableMapper';
 import { ProfileVariableMapper } from '../mappers/ProfileMapper';
+import { ShortcutMapper } from '../mappers/ShortcutMapper';
 import type { Variable, CreateVariableInput, UpdateVariableInput } from '../schema';
 import type { VariableResolver } from '../variables/parser';
 import { hasVariables, replaceVariables, VARIABLE_TOKEN_PATTERN } from '../variables/parser';
@@ -177,6 +178,11 @@ export class VariableService {
 
     /* 手動カスケード削除: 変数に紐づく全プロファイル値を先に削除（参照整合性維持） */
     ProfileVariableMapper.deleteByVariableId(id);
+    /* この変数を参照しているショートカット値の参照を外す。
+       実行時に外部キーを強制しないため、宣言した ON DELETE SET NULL は働かない。
+       参照が残ると、存在しない変数を指したまま解決を試み続けることになる。
+       カテゴリ削除でcategoryIdをNULLへ戻すのと同じ扱いで、ショートカット値自体は消さない（§8.24） */
+    ShortcutMapper.clearVariableReferences(id);
     /* 変数本体を削除 */
     VariableMapper.delete(id);
   }

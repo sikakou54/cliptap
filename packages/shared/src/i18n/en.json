@@ -37,17 +37,16 @@
     "no_snippets": "No templates",
     "title_placeholder": "Title",
     "title_input": "Enter Title",
+    "content_input": "Enter Content",
     "title_input_placeholder": "Enter title...",
+    "content_input_placeholder": "Enter content...",
     "content": "Content",
     "content_placeholder": "Enter content...",
     "search_placeholder": "Search templates...",
     "category": "Category",
     "select_category": "Select category",
     "select_profile": "Select Profile (All Profiles)",
-    "profiles_selected": "{{count}} profile(s) selected",
-    "select_profiles_title": "Select Profiles",
     "select_profiles_description": "Select profiles to use this template (multiple selection allowed)",
-    "all_profiles": "All Profiles",
     "copy_with_title": "Copy Title Too",
     "copy_with_title_description": "When OFF, copy content only",
     "system_variables": "System Variables",
@@ -149,7 +148,7 @@
     "title": "Profiles",
     "create": "Create Profile",
     "edit": "Edit Profile",
-    "delete_confirm": "Delete profile \"{{name}}\"?\n\nAll variables and shortcuts in this profile will also be deleted.",
+    "delete_confirm": "Delete profile \"{{name}}\"?\n\nThis profile's variable values and the shortcuts registered only to this profile will also be deleted.",
     "no_profiles": "No profiles",
     "add_hint": "Tap the + button to add a profile",
     "name": "Profile Name",
@@ -161,14 +160,18 @@
     "set_default_confirm": "Set \"{{name}}\" as the default profile?\n\nDefault variable values will switch to this profile's values.",
     "delete_default_error": "Cannot delete default profile",
     "limit_message": "Free plan allows up to {{limit}} profiles. Upgrade to Pro for unlimited profiles.",
-    "disabled_message": "This profile is not available in the free plan. Upgrade to Pro to use unlimited profiles."
+    "disabled_message": "This profile is not available in the free plan. Upgrade to Pro to use unlimited profiles.",
+    "select_profiles_title": "Select Profiles",
+    "all_profiles": "All Profiles",
+    "profiles_selected": "{{count}} profile(s) selected"
   },
   "sort": {
     "title": "Sort by",
     "created": "Created",
     "updated": "Updated",
     "usage": "Most Used",
-    "title_sort": "Title"
+    "title_sort": "Title",
+    "name": "Name"
   },
   "backup": {
     "import_success": "Imported successfully",
@@ -351,7 +354,6 @@
     "format_changed": "Format updated"
   },
   "shortcut": {
-    "title": "Shortcuts",
     "empty": "No shortcuts",
     "empty_hint": "Add a shortcut with the + button at the top right",
     "create": "Create Shortcut",
@@ -359,8 +361,10 @@
     "name": "Shortcut name",
     "name_placeholder": "e.g. Phone number",
     "profile": "Profile",
+    "select_profile": "Select Profile (All Profiles)",
+    "select_profiles_description": "Select profiles to use this shortcut (multiple selection allowed)",
+    "category": "Category",
     "values": "Values",
-    "value_count": "{{count}} value(s)",
     "value_create": "Add Value",
     "value_edit": "Edit Value",
     "value_name": "Value name",
@@ -369,6 +373,13 @@
     "value_value_placeholder": "e.g. 080-0000-0000",
     "delete_confirm": "Delete shortcut \"{{name}}\"?\n\nAll values registered in this shortcut will also be deleted.",
     "delete_value_confirm": "Delete value \"{{name}}\"?",
-    "register": "Save"
+    "show_shortcuts": "Show shortcuts",
+    "show_snippets": "Show snippets",
+    "search_placeholder": "Search shortcuts...",
+    "variable_reference_link": "Reference a custom variable",
+    "variable_reference_clear": "Remove",
+    "variable_reference_title": "Select Custom Variable",
+    "variable_reference_description": "A referenced variable resolves to the value of the selected profile. If it is not set, the default profile value is used.",
+    "variable_reference_empty": "No custom variables available to reference"
   }
 }

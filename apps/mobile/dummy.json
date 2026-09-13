@@ -1,12 +1,25 @@
 {
   "categories": [
-    { "name": "仕事", "color": "#3B82F6" },
-    { "name": "SNS", "color": "#10B981" },
-    { "name": "プロンプト", "color": "#3B82F6" }
+    {
+      "name": "仕事",
+      "color": "#3B82F6"
+    },
+    {
+      "name": "SNS",
+      "color": "#10B981"
+    },
+    {
+      "name": "プロンプト",
+      "color": "#3B82F6"
+    }
   ],
   "profiles": [
-    { "name": "A社用" },
-    { "name": "B社用" }
+    {
+      "name": "A社用"
+    },
+    {
+      "name": "B社用"
+    }
   ],
   "custom_variables": [
     {
@@ -71,6 +84,164 @@
       "title": "要約プロンプト",
       "body": "以下を要約してください。\n\n# 対象\n- \n\n# 出力条件\n- 結論から先に書く\n- 箇条書きで3点以内にまとめる\n- 原文にない情報は補わない",
       "copyWithTitle": false
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "電話番号",
+      "profiles": [],
+      "category": null,
+      "values": [
+        {
+          "name": "自分",
+          "value": "090-1234-5678",
+          "variable": ""
+        },
+        {
+          "name": "自宅",
+          "value": "03-1234-5678",
+          "variable": ""
+        },
+        {
+          "name": "会社",
+          "value": "03-9876-5432",
+          "variable": ""
+        }
+      ]
+    },
+    {
+      "name": "メールアドレス",
+      "profiles": [
+        "Main"
+      ],
+      "category": "仕事",
+      "values": [
+        {
+          "name": "会社",
+          "value": "yamada@example.co.jp",
+          "variable": ""
+        },
+        {
+          "name": "個人",
+          "value": "yamada.private@example.com",
+          "variable": ""
+        }
+      ]
+    },
+    {
+      "name": "住所",
+      "profiles": [
+        "Main"
+      ],
+      "category": null,
+      "values": [
+        {
+          "name": "自宅",
+          "value": "〒150-0001 東京都渋谷区神宮前1-2-3 サンプルマンション401",
+          "variable": ""
+        },
+        {
+          "name": "会社",
+          "value": "〒100-0005 東京都千代田区丸の内1-1-1 サンプルビル10F",
+          "variable": ""
+        }
+      ]
+    },
+    {
+      "name": "社員番号",
+      "profiles": [
+        "Main"
+      ],
+      "category": "仕事",
+      "values": [
+        {
+          "name": "自分",
+          "value": "EMP-004821",
+          "variable": ""
+        }
+      ]
+    },
+    {
+      "name": "請求先",
+      "profiles": [
+        "A社用"
+      ],
+      "category": "仕事",
+      "values": [
+        {
+          "name": "経理部",
+          "value": "株式会社A商事 経理部\n〒101-0021 東京都千代田区外神田2-3-4",
+          "variable": ""
+        },
+        {
+          "name": "担当者",
+          "value": "田中 太郎（tanaka@a-shoji.example.jp）",
+          "variable": ""
+        }
+      ]
+    },
+    {
+      "name": "SNSアカウント",
+      "profiles": [
+        "A社用"
+      ],
+      "category": "SNS",
+      "values": [
+        {
+          "name": "X",
+          "value": "@sample_a_official",
+          "variable": ""
+        },
+        {
+          "name": "Instagram",
+          "value": "@sample_a_gram",
+          "variable": ""
+        }
+      ]
+    },
+    {
+      "name": "請求先",
+      "profiles": [
+        "B社用"
+      ],
+      "category": "仕事",
+      "values": [
+        {
+          "name": "経理部",
+          "value": "株式会社B商事 経理部\n〒060-0001 北海道札幌市中央区北一条西5-6",
+          "variable": ""
+        },
+        {
+          "name": "担当者",
+          "value": "鈴木 花子（suzuki@b-shoji.example.jp）",
+          "variable": ""
+        }
+      ]
+    },
+    {
+      "name": "定型フレーズ",
+      "profiles": [
+        "A社用",
+        "B社用"
+      ],
+      "category": "プロンプト",
+      "values": [
+        {
+          "name": "承知",
+          "value": "承知いたしました。対応いたします。",
+          "variable": ""
+        },
+        {
+          "name": "確認中",
+          "value": "確認のうえ、改めてご連絡いたします。",
+          "variable": ""
+        },
+        {
+          "name": "御礼",
+          "value": "ご対応いただきありがとうございました。",
+          "variable": "client_name"
+        }
+      ]
     }
   ]
 }

@@ -30,8 +30,9 @@ import type {
   Category,
   Profile,
   ProfileVariable,
+  ShortcutProfile,
   ShortcutRow,
-  ShortcutValue,
+  ShortcutValueRow,
   Snippet,
   SnippetProfile,
   Variable,
@@ -47,7 +48,8 @@ export interface FullRestoreData {
   snippetProfiles: SnippetProfile[];
   systemVariableFormats: SystemVariableFormatRow[];
   shortcuts: ShortcutRow[];
-  shortcutValues: ShortcutValue[];
+  shortcutProfiles: ShortcutProfile[];
+  shortcutValues: ShortcutValueRow[];
 }
 
 /**
@@ -158,9 +160,14 @@ export class ImportMapper {
    */
   getFullRestoreData(): FullRestoreData {
     const hasFormats = tableExists(this.adapter, 'system_variable_formats');
-    /* V7以前のエクスポートを一時DBへ移行せず読む経路のために、テーブルの有無を確認する */
+    /* 一時DBはprepareImportDatabaseでmigrateImportTempDbの移行と必須テーブル検証を
+       通過済みのため、通常は下の3テーブルとも存在する。
+       有無の確認は、その経路を通さず直接呼ばれた場合の保険として残している */
     const hasShortcuts = tableExists(this.adapter, 'shortcuts');
+    const hasShortcutProfiles = tableExists(this.adapter, 'shortcut_profiles');
     const hasShortcutValues = tableExists(this.adapter, 'shortcut_values');
+    /* 本体・紐づけ・値は、本体と紐づけの両テーブルがそろっているときだけ読む（理由は下の読み込み箇所） */
+    const canRestoreShortcuts = hasShortcuts && hasShortcutProfiles;
 
     return {
       categories: this.adapter.all<Category>('SELECT * FROM categories'),
@@ -172,12 +179,20 @@ export class ImportMapper {
       systemVariableFormats: hasFormats
         ? this.adapter.all<SystemVariableFormatRow>('SELECT * FROM system_variable_formats')
         : [],
-      shortcuts: hasShortcuts
+      /* 本体と紐づけは別々の行として逐語で読む（定型文のsnippets / snippet_profilesと同じ分け方）。
+         保険のガードに掛かって本体か紐づけのテーブルが無い場合は、本体・紐づけ・値のいずれも読まない。
+         紐づけテーブルが無いと限定の区別が失われ、本体だけ戻すと全件が全プロファイル向けに広がるため。
+         本体が無いのに紐づけや値だけ戻しても、参照先の無い行になるだけなので同じ条件で揃える */
+      shortcuts: canRestoreShortcuts
         ? this.adapter.all<ShortcutRow>('SELECT * FROM shortcuts')
         : [],
-      shortcutValues: hasShortcutValues
-        ? this.adapter.all<ShortcutValue>('SELECT * FROM shortcut_values')
+      shortcutProfiles: canRestoreShortcuts
+        ? this.adapter.all<ShortcutProfile>('SELECT * FROM shortcut_profiles')
         : [],
+      shortcutValues:
+        canRestoreShortcuts && hasShortcutValues
+          ? this.adapter.all<ShortcutValueRow>('SELECT * FROM shortcut_values')
+          : [],
     };
   }
 

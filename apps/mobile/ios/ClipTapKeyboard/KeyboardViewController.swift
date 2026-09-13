@@ -130,21 +130,30 @@ class KeyboardViewController: UIInputViewController {
     /// ユーザーがスニペットをタップすると、このプロパティに保存されます
     private var selectedSnippet: Snippet?
 
-    /// ショートカット画面に表示中のショートカット一覧（候補推測で並べ替え済み）
-    private var rankedShortcuts: [Shortcut] = []
+    /// ショートカット画面に表示中のショートカット一覧（選んだ基準で並べ替え済み）
+    private var sortedShortcuts: [Shortcut] = []
 
     /// 値一覧を表示しているショートカット
     private var selectedShortcut: Shortcut?
 
-    /// 値一覧に表示中のショートカット値（候補推測で並べ替え済み）
-    private var rankedShortcutValues: [ShortcutValue] = []
+    /// 値一覧に表示中のショートカット値（使用回数の多い順に並べ替え済み）
+    private var sortedShortcutValues: [ShortcutValue] = []
 
     /// ショートカット画面の表示モード（一覧 or 値一覧）
     private var shortcutScreenMode: ShortcutScreenMode = .list
 
-    /// 現在のソート順
+    /// 定型文一覧の現在のソート順
     /// 値: "created" | "updated" | "title" | "usage"
-    private var currentSortBy: String = "created"
+    private var currentSnippetSortBy: String = KeyboardViewController.defaultSortBy
+
+    /**
+     * ショートカット一覧の現在のソート順
+     *
+     * 【定型文と別に持つ理由】
+     * 「使用頻度」が指すものが、定型文はコピー回数、ショートカットは値の挿入回数の合計で別物。
+     * 1つの設定を共有すると、表示を切り替えるたびに前の一覧の都合で並びが変わってしまう。
+     */
+    private var currentShortcutSortBy: String = KeyboardViewController.defaultSortBy
 
     /// 現在表示している画面
     private var screenState: ScreenState = .list
@@ -165,8 +174,14 @@ class KeyboardViewController: UIInputViewController {
      */
     private var screenStateBeforeSettings: ScreenState = .list
 
-    /// ソート設定を保存するUserDefaultsキー
-    private let sortPreferenceKey = "keyboard_snippet_sort_by"
+    /// 並べ替えの既定値（この値のときはバッジを出さない）
+    private static let defaultSortBy = "created"
+
+    /// 定型文のソート設定を保存するUserDefaultsキー
+    private let snippetSortPreferenceKey = "keyboard_snippet_sort_by"
+
+    /// ショートカットのソート設定を保存するUserDefaultsキー
+    private let shortcutSortPreferenceKey = "keyboard_shortcut_sort_by"
 
     /// フルアクセス状態を共有するApp GroupのUserDefaultsキー
     private let fullAccessStateKey = "keyboardHasFullAccess"
@@ -730,9 +745,11 @@ class KeyboardViewController: UIInputViewController {
 
         /* ソート設定を初期読み込み（setupUIより前に実行する必要あり） */
         /* 使用頻度順は読み取りだけで成立するため、フルアクセスの有無で制限しない */
-        currentSortBy = loadSortPreference()
+        currentSnippetSortBy = loadSortPreference(forKey: snippetSortPreferenceKey)
+        currentShortcutSortBy = loadSortPreference(forKey: shortcutSortPreferenceKey)
 
-        KeyboardLog.debug("🔄 [Sort] Initial sort preference loaded: %@", currentSortBy)
+        KeyboardLog.debug("🔄 [Sort] Initial sort preference loaded: snippet=%@ shortcut=%@",
+                          currentSnippetSortBy, currentShortcutSortBy)
 
         setupUI()  // UI部品を画面に配置（即座に表示）
 
@@ -902,6 +919,17 @@ class KeyboardViewController: UIInputViewController {
             if categoriesChanged {
                 KeyboardLog.debug("📝 [Refresh] Categories changed: %d → %d", categories.count, newCategories.count)
                 categories = newCategories
+
+                /* 選択中のカテゴリがメインアプリで削除されていたら「すべて」へ戻す。
+                   残したままだと、存在しないIDで絞り込み続けて一覧が常に0件になり、
+                   ドロップダウンには消えたカテゴリ名が出たままなので原因に気付けない
+                   （プロファイルをresolveCurrentProfileで解決し直すのと同じ理由） */
+                if let selectedId = currentCategory?.id,
+                   !categories.contains(where: { $0.id == selectedId }) {
+                    KeyboardLog.debug("📝 [Refresh] Selected category is gone - falling back to all")
+                    currentCategory = nil
+                }
+
                 setupCategoryDropdown()
             } else {
                 KeyboardLog.debug("✓ [Refresh] Categories unchanged: %d categories", categories.count)
@@ -1543,6 +1571,13 @@ class KeyboardViewController: UIInputViewController {
         currentCategory = category
         updateCategoryDropdownTitle()
         updateCategoryDropdownMenu()  // メニューの選択状態を更新
+
+        /* ショートカットもカテゴリに属するため、表示中なら切り替えたカテゴリのものへ読み直す。
+           値一覧を開いていた場合も一覧へ戻る（切り替え前のカテゴリの値をそのまま残さない） */
+        if screenState == .shortcutList {
+            reloadShortcutList()
+        }
+
         reloadSnippets()
     }
 
@@ -1582,7 +1617,7 @@ class KeyboardViewController: UIInputViewController {
         systemVariableFormats = SystemVariableFormatMapper.shared.getAll()
         KeyboardLog.debug("✅ [KeyboardViewController] Reloaded %d variables for profile: %@", variablesMap.count, profile.name)
 
-        /* ショートカットも環境に属するため、表示中なら切り替えた環境のものへ読み直す。
+        /* ショートカットも環境によって出るものと参照値の中身が変わるため、表示中なら切り替えた環境のものへ読み直す。
            値一覧を開いていた場合も一覧へ戻る（切り替え前の環境の値をそのまま残さない） */
         if screenState == .shortcutList {
             reloadShortcutList()
@@ -1627,14 +1662,14 @@ class KeyboardViewController: UIInputViewController {
         // プロファイルとカテゴリの両方でフィルタリングされ、SQLのORDER BYでソート済み
         if let categoryId = currentCategory?.id {
             // カテゴリが選択されている場合
-            os_log("🔍 Loading snippets for category: %@ with profile: %@ sortBy: %@", log: keyboardLog, type: .info, categoryId, profileId, currentSortBy)
-            KeyboardLog.debug("🔍 [reloadSnippets] Loading snippets for category: %@ with profile: %@ sortBy: %@", categoryId, profileId, currentSortBy)
-            allSnippets = SnippetMapper.shared.getByCategoryId(categoryId, filterByProfileId: profileId, sortBy: currentSortBy)
+            os_log("🔍 Loading snippets for category: %@ with profile: %@ sortBy: %@", log: keyboardLog, type: .info, categoryId, profileId, currentSnippetSortBy)
+            KeyboardLog.debug("🔍 [reloadSnippets] Loading snippets for category: %@ with profile: %@ sortBy: %@", categoryId, profileId, currentSnippetSortBy)
+            allSnippets = SnippetMapper.shared.getByCategoryId(categoryId, filterByProfileId: profileId, sortBy: currentSnippetSortBy)
         } else {
             // 「すべて」が選択されている場合（カテゴリフィルタなし）
-            os_log("🔍 Loading all snippets with profile: %@ sortBy: %@", log: keyboardLog, type: .info, profileId, currentSortBy)
-            KeyboardLog.debug("🔍 [reloadSnippets] Loading all snippets with profile: %@ sortBy: %@", profileId, currentSortBy)
-            allSnippets = SnippetMapper.shared.getAll(filterByProfileId: profileId, sortBy: currentSortBy)
+            os_log("🔍 Loading all snippets with profile: %@ sortBy: %@", log: keyboardLog, type: .info, profileId, currentSnippetSortBy)
+            KeyboardLog.debug("🔍 [reloadSnippets] Loading all snippets with profile: %@ sortBy: %@", profileId, currentSnippetSortBy)
+            allSnippets = SnippetMapper.shared.getAll(filterByProfileId: profileId, sortBy: currentSnippetSortBy)
         }
 
         os_log("✅ Loaded %d snippets", log: keyboardLog, type: .info, allSnippets.count)
@@ -1642,8 +1677,8 @@ class KeyboardViewController: UIInputViewController {
 
         // MapperでORDER BYを使ってソート済みなので、そのまま表示用にコピー
         filteredSnippets = allSnippets
-        os_log("✅ Loaded and sorted snippets: %d (sortBy: %@)", log: keyboardLog, type: .info, filteredSnippets.count, currentSortBy)
-        KeyboardLog.debug("✅ [reloadSnippets] Loaded and sorted snippets: %d (sortBy: %@)", filteredSnippets.count, currentSortBy)
+        os_log("✅ Loaded and sorted snippets: %d (sortBy: %@)", log: keyboardLog, type: .info, filteredSnippets.count, currentSnippetSortBy)
+        KeyboardLog.debug("✅ [reloadSnippets] Loaded and sorted snippets: %d (sortBy: %@)", filteredSnippets.count, currentSnippetSortBy)
 
         /* 表示内容が前回と同じなら再描画しない。
            キーボードは表示のたびに全件再取得するため、無条件にreloadDataすると
@@ -1708,14 +1743,9 @@ class KeyboardViewController: UIInputViewController {
         let isEmpty = filteredSnippets.isEmpty
 
         /* フィルター行は定型文とショートカットの共通の操作列。
-           ショートカット表示でも出したままにして、トグルと環境の切り替えを触れるようにする */
+           カテゴリの絞り込みも並べ替えもどちらの一覧にもある操作なので、行ごと出したままにして、
+           トグルと環境の切り替えを触れるようにする */
         filterContainerView.isHidden = !isList && !isShortcutList
-
-        /* カテゴリと並べ替えは定型文だけの絞り込み・並び替えなのでショートカット表示では隠す。
-           制約はそのまま生かす（隠したビューもAuto Layout上は場所を占める）ので、
-           トグルと設定ボタンはどちらの表示でも同じ位置に見え続ける */
-        categoryDropdownButton.isHidden = isShortcutList
-        sortButton.isHidden = isShortcutList
 
         /* トグルの見た目（アイコン・色・読み上げ）を表示中の一覧に合わせる */
         updateShortcutToggleAppearance(isShowingShortcuts: isShortcutList)
@@ -1969,29 +1999,36 @@ class KeyboardViewController: UIInputViewController {
     /// ソートボタンのメニューを設定
     /// iOS 14以降のUIMenuを使用して、タップ時にメニューを表示
     /// 4種類の並び順はいずれもDBの読み取りだけで成立するため、常に全項目を表示する
+    ///
+    /// 【表示中の一覧に合わせて組み直す理由】
+    /// 並べ替えの設定は定型文とショートカットで別に持つため、チェックマークの付く項目が一覧ごとに違う。
+    /// 名前順の項目名も、定型文は「タイトル」、ショートカットは「名前」と指すものが違う。
     private func setupSortButtonMenu() {
-        /* 注意: currentSortByは呼び出し元で設定済みのため、ここでは再読み込みしない
-           viewDidLoad時にloadSortPreference()で初期化される */
-        KeyboardLog.debug("🔄 [Sort] Building menu with sort preference: %@", currentSortBy)
+        /* 注意: 並べ替え設定は呼び出し元で設定済みのため、ここでは再読み込みしない
+           viewDidLoad時にloadSortPreference(forKey:)で初期化される */
+        let isShortcutList = screenState == .shortcutList
+        let selectedSortBy = isShortcutList ? currentShortcutSortBy : currentSnippetSortBy
+        KeyboardLog.debug("🔄 [Sort] Building menu with sort preference: %@ (shortcut list: %@)",
+                          selectedSortBy, isShortcutList ? "true" : "false")
 
         // メニュー項目を作成
         let createdAction = UIAction(
             title: L10n.Sort.created,
-            image: currentSortBy == "created" ? UIImage(systemName: "checkmark") : nil
+            image: selectedSortBy == "created" ? UIImage(systemName: "checkmark") : nil
         ) { [weak self] _ in
             self?.updateSortPreference("created")
         }
 
         let updatedAction = UIAction(
             title: L10n.Sort.updated,
-            image: currentSortBy == "updated" ? UIImage(systemName: "checkmark") : nil
+            image: selectedSortBy == "updated" ? UIImage(systemName: "checkmark") : nil
         ) { [weak self] _ in
             self?.updateSortPreference("updated")
         }
 
         let titleAction = UIAction(
-            title: L10n.Sort.title,
-            image: currentSortBy == "title" ? UIImage(systemName: "checkmark") : nil
+            title: isShortcutList ? L10n.Sort.name : L10n.Sort.title,
+            image: selectedSortBy == "title" ? UIImage(systemName: "checkmark") : nil
         ) { [weak self] _ in
             self?.updateSortPreference("title")
         }
@@ -2000,7 +2037,7 @@ class KeyboardViewController: UIInputViewController {
            （フルアクセスなしでもアプリ本体が記録した使用回数で並べ替えできる） */
         let usageAction = UIAction(
             title: L10n.Sort.usage,
-            image: currentSortBy == "usage" ? UIImage(systemName: "checkmark") : nil
+            image: selectedSortBy == "usage" ? UIImage(systemName: "checkmark") : nil
         ) { [weak self] _ in
             self?.updateSortPreference("usage")
         }
@@ -2015,11 +2052,26 @@ class KeyboardViewController: UIInputViewController {
         updateSortBadgeVisibility()
     }
 
-    /// ソート設定を更新
+    /// ソート設定を更新（表示中の一覧の設定だけを変える）
     private func updateSortPreference(_ sortBy: String) {
-        KeyboardLog.debug("🔄 [Sort] Updating sort preference: %@ → %@", currentSortBy, sortBy)
-        currentSortBy = sortBy
-        saveSortPreference(sortBy)
+        if screenState == .shortcutList {
+            KeyboardLog.debug("🔄 [Sort] Updating shortcut sort preference: %@ → %@", currentShortcutSortBy, sortBy)
+            currentShortcutSortBy = sortBy
+            saveSortPreference(sortBy, forKey: shortcutSortPreferenceKey)
+
+            // メニューを更新（チェックマークを更新）
+            setupSortButtonMenu()
+
+            /* ショートカット一覧を読み直す（先頭へのスクロールも読み直しに含まれる）。
+               値一覧を開いていた場合は一覧へ戻るが、並べ替えたのは一覧の並びなので、
+               結果が見える場所へ戻した方が操作と結果が結びつく */
+            reloadShortcutList()
+            return
+        }
+
+        KeyboardLog.debug("🔄 [Sort] Updating snippet sort preference: %@ → %@", currentSnippetSortBy, sortBy)
+        currentSnippetSortBy = sortBy
+        saveSortPreference(sortBy, forKey: snippetSortPreferenceKey)
 
         // メニューを更新（チェックマークを更新）
         setupSortButtonMenu()
@@ -2034,14 +2086,14 @@ class KeyboardViewController: UIInputViewController {
     }
 
     /// ソート設定を保存（UserDefaults）
-    private func saveSortPreference(_ sortBy: String) {
-        UserDefaults.standard.set(sortBy, forKey: sortPreferenceKey)
-        KeyboardLog.debug("💾 [Sort] Saved sort preference: %@", sortBy)
+    private func saveSortPreference(_ sortBy: String, forKey key: String) {
+        UserDefaults.standard.set(sortBy, forKey: key)
+        KeyboardLog.debug("💾 [Sort] Saved sort preference: %@ (key: %@)", sortBy, key)
     }
 
     /// ソート設定を読み込み（UserDefaults）
-    private func loadSortPreference() -> String {
-        let sortBy = UserDefaults.standard.string(forKey: sortPreferenceKey) ?? "created"
+    private func loadSortPreference(forKey key: String) -> String {
+        let sortBy = UserDefaults.standard.string(forKey: key) ?? KeyboardViewController.defaultSortBy
         return sortBy
     }
 
@@ -2058,9 +2110,12 @@ class KeyboardViewController: UIInputViewController {
 
     /// バッジの表示/非表示を更新
     /// デフォルト（created）以外の時にバッジを表示
+    ///
+    /// 【表示中の一覧の設定で判定する理由】
+    /// バッジはボタンを押すと出てくる選択肢の状態を示すもので、その選択肢は表示中の一覧の設定を指すため。
     private func updateSortBadgeVisibility() {
-        let isDefaultSort = currentSortBy == "created"
-        sortBadgeView.isHidden = isDefaultSort
+        let selectedSortBy = screenState == .shortcutList ? currentShortcutSortBy : currentSnippetSortBy
+        sortBadgeView.isHidden = selectedSortBy == KeyboardViewController.defaultSortBy
     }
 
     // MARK: - Settings（設定関連）
@@ -2136,6 +2191,13 @@ class KeyboardViewController: UIInputViewController {
         KeyboardLog.debug("⚡ [Shortcut] Toggle tapped (showing shortcuts: %@)",
                           screenState == .shortcutList ? "true" : "false")
 
+        /* 【カテゴリ選択を「すべて」へ戻す理由】
+           カテゴリは定型文とショートカットで共通だが、どちらに何件あるかは別々。
+           切り替え先にそのカテゴリのデータが1件も無いと、一覧だけが空になり
+           「作成していないのか、絞り込まれているのか」が読み取れない。
+           メインアプリのホーム（useHomeScreen.handleToggleListMode）と同じ判断に揃える */
+        selectCategory(nil)
+
         if screenState == .shortcutList {
             showSnippetList()
         } else {
@@ -2149,33 +2211,40 @@ class KeyboardViewController: UIInputViewController {
 
         screenState = .shortcutList
         applyScreenState()
+
+        /* 並べ替えの設定と項目名は一覧ごとに違うため、表示対象を変えたら組み直す。
+           表示中の一覧はscreenStateから判断するので、切り替えた後に呼ぶ */
+        setupSortButtonMenu()
     }
 
     /**
      * ショートカット一覧を読み直して表示する（表示モードも一覧へ戻す）
      *
      * 【毎回読み直す理由】
-     * 開いた時点のカーソル直前の入力内容で並べ替えるため、そのつど候補推測をやり直す必要がある。
-     * 直前の挿入で増えた使用回数も、読み直すことでそのまま値一覧の並びへ反映される。
+     * メインアプリでの追加・編集と、直前の挿入で増えた使用回数を開くたびに反映するため。
+     * 使用頻度順を選んでいるときは、増えた使用回数がそのまま一覧の並びにも効く。
      */
     private func reloadShortcutList() {
         shortcutScreenMode = .list
         selectedShortcut = nil
 
-        /* ショートカットは1件のプロファイルに属するため、選択中のプロファイルの分だけを出す。
-           プロファイルを決められないときは空にする。全件へ倒すと、別の環境向けの値を
-           それと分からないまま挿入できてしまうため（表示は空状態の案内になる） */
+        /* 選択中のプロファイルに紐づくショートカットと、全プロファイル向け（紐づけ0件）のショートカットだけを出す。
+           カスタム変数を参照している値の中身も選択中のプロファイルで解決するため、プロファイルを決められないときは空にする。
+           全件へ倒すと、別の環境向けの値をそれと分からないまま挿入できてしまうため
+           （表示は空状態の案内になる）。
+           カテゴリは「すべて」を選べる絞り込みなので、未選択（nil）はそのまま渡して全件を出す */
         if let profileId = currentProfile?.id {
-            rankedShortcuts = shortcutService.rankedShortcuts(
+            sortedShortcuts = shortcutService.sortedShortcuts(
                 profileId: profileId,
-                context: currentInputContext()
+                categoryId: currentCategory?.id,
+                sortBy: currentShortcutSortBy
             )
         } else {
             KeyboardLog.debug("⚠️ [Shortcut] No profile selected - clearing shortcuts")
-            rankedShortcuts = []
+            sortedShortcuts = []
         }
-        rankedShortcutValues = []
-        KeyboardLog.debug("⚡ [Shortcut] Loaded %d shortcuts", rankedShortcuts.count)
+        sortedShortcutValues = []
+        KeyboardLog.debug("⚡ [Shortcut] Loaded %d shortcuts", sortedShortcuts.count)
 
         /* 値一覧から戻ったときに前のショートカット名が残らないよう既定の見出しへ戻す
            （ヘッダー自体は次の行で畳むため、表示に出るのは値一覧へ進んだときだけ） */
@@ -2185,7 +2254,7 @@ class KeyboardViewController: UIInputViewController {
 
         applyShortcutRowHeight()
         shortcutTableView.reloadData()
-        /* 前に開いたときのスクロール位置が残ると、並べ替えた先頭の候補が画面外になるため先頭へ戻す */
+        /* 前に開いたときのスクロール位置が残ると、並べ替えた先頭が画面外になるため先頭へ戻す */
         shortcutTableView.setContentOffset(.zero, animated: false)
         updateShortcutEmptyState()
     }
@@ -2198,8 +2267,8 @@ class KeyboardViewController: UIInputViewController {
     private func showShortcutValues(_ shortcut: Shortcut) {
         selectedShortcut = shortcut
         shortcutScreenMode = .values
-        rankedShortcutValues = shortcutService.rankedValues(shortcut.values, context: currentInputContext())
-        KeyboardLog.debug("⚡ [Shortcut] Showing %d values for shortcut: %@", rankedShortcutValues.count, shortcut.name)
+        sortedShortcutValues = shortcutService.sortedValues(shortcut.values)
+        KeyboardLog.debug("⚡ [Shortcut] Showing %d values for shortcut: %@", sortedShortcutValues.count, shortcut.name)
 
         /* ヘッダーは「＜ <ショートカット名>」。＜は戻るボタン、名前はタイトルが担当する。
            1階層下がったことと戻り道を示すのは値一覧だけの役目なので、ここでだけ開く */
@@ -2217,18 +2286,14 @@ class KeyboardViewController: UIInputViewController {
      *
      * - Parameter shortcut: タップされたショートカット
      *
-     * 【値が1件のときに階層を挟まない理由】
-     * 選択肢が1つしかない一覧を見せても選ぶ余地がなく、操作が1回増えるだけのため、
-     * その値を直接挿入する。
+     * 【値の件数で動きを変えない理由】
+     * 挿入までの道筋が件数によって変わると、同じ行を押しても
+     * 値一覧が出る場合と即座に入力される場合があり、押す前に結果を予測できない。
+     * 件数にかかわらず「一覧 → 値一覧 → 挿入」に揃える。
      */
     private func selectShortcut(_ shortcut: Shortcut) {
         /* 階層移動も行の中身が入れ替わる操作のため、挿入と同じ窓で二度押しを塞ぐ */
         guard acceptShortcutTap() else { return }
-
-        if shortcut.values.count == 1, let value = shortcut.values.first {
-            insertShortcutValue(value, shouldReloadList: false)
-            return
-        }
 
         /* 値を持たないショートカットはメインアプリで作れない（作成時に1件以上を必須にしている）。
            万一そうしたデータが入っていても、選ぶものが無い一覧を見せないよう何もしない */
@@ -2249,27 +2314,18 @@ class KeyboardViewController: UIInputViewController {
      * 表示対象の切り替えはフィルター行のトグルが担うため、挿入を理由に勝手に切り替えない。
      * 続けて別のショートカットを挿す場面が多く、そのたびに切り替え直させると手数が増える。
      *
-     * 【値一覧からは一覧へ戻す理由】
+     * 【値一覧から一覧へ戻す理由】
      * 1つ選び終えた後に同じ値一覧へ留まる必要はない。
-     * 読み直すことで、挿入直後のカーソル直前の内容に合わせた並べ替えと、
-     * 増えた使用回数の反映も同時に行われる。
-     *
-     * 【一覧から直接挿したときは読み直さない理由】
-     * すでにショートカット一覧を見ているところで並べ替えと先頭スクロールが起きると、
-     * 次に押したい行が指の下で動く。候補推測は挿入した語を含む名前を上位へ繰り上げるため、
-     * まさに今押した行が移動しやすく、続けて押すと別のショートカットを挿してしまう。
-     *
-     * - Parameter shouldReloadList: 挿入後に一覧を読み直すか（値一覧から挿したときだけtrue）
+     * 読み直すことで、増えた使用回数が値一覧の並び（使用回数の降順）と、
+     * 使用頻度順を選んでいるときのショートカット一覧の並びへ反映される。
      */
-    private func insertShortcutValue(_ value: ShortcutValue, shouldReloadList: Bool) {
+    private func insertShortcutValue(_ value: ShortcutValue) {
         KeyboardLog.debug("⚡ [Shortcut] Inserting shortcut value: %@", value.id)
 
         /* 挿入・振動フィードバック・使用回数の記録はService側で実行する */
         shortcutService.insertValue(value, into: textDocumentProxy)
 
-        if shouldReloadList {
-            reloadShortcutList()
-        }
+        reloadShortcutList()
     }
 
     /**
@@ -2279,8 +2335,8 @@ class KeyboardViewController: UIInputViewController {
      * 2回目が差し替わった別の行に当たって、選んだ覚えのない値を挿入してしまう。
      * 行の中身が入れ替わる操作はすべて同じ窓で塞ぐ。
      *
-     * 判定は行のタップ1回につき1度だけ行う。挿入側にも置くと、値1件のショートカットで
-     * 同じタップが2回数えられ、2度目が必ず落ちて挿入できなくなる。
+     * 判定は行のタップ1回につき1度だけ行う。階層移動と挿入の両方に置くと、
+     * 同じタップが2回数えられ、2度目が必ず落ちてしまう。
      *
      * 単調増加の時計を使うのは、端末の時刻設定が変わっても判定が壊れないようにするため。
      *
@@ -2307,7 +2363,7 @@ class KeyboardViewController: UIInputViewController {
      * 表示中のショートカット画面を最新のデータで作り直す
      *
      * 【値一覧を開いたままにする条件】
-     * 開いていたショートカットが最新のデータにも残っていて、値が2件以上あるときだけ値一覧へ戻す。
+     * 開いていたショートカットが最新のデータにも残っていて、値が1件以上あるときだけ値一覧へ戻す。
      * メインアプリ側で削除・整理された場合にそのまま値一覧を残すと、
      * もう存在しない値を挿入できてしまうため、その場合は一覧に留まる。
      */
@@ -2319,9 +2375,9 @@ class KeyboardViewController: UIInputViewController {
 
         guard let shortcutId = reopeningShortcutId else { return }
 
-        guard let shortcut = rankedShortcuts.first(where: { $0.id == shortcutId }),
-              shortcut.values.count > 1 else {
-            KeyboardLog.debug("⚠️ [Shortcut] Reopened shortcut is gone or has a single value: %@", shortcutId)
+        guard let shortcut = sortedShortcuts.first(where: { $0.id == shortcutId }),
+              !shortcut.values.isEmpty else {
+            KeyboardLog.debug("⚠️ [Shortcut] Reopened shortcut is gone or has no values: %@", shortcutId)
             return
         }
 
@@ -2342,12 +2398,15 @@ class KeyboardViewController: UIInputViewController {
         /* 表示中だった値一覧の行をテーブルに残さない。
            次に開くときは必ずreloadShortcutList()が走るため表示には出ないが、
            モードと行数の食い違いを切り替えた時点で解消しておく */
-        rankedShortcutValues = []
+        sortedShortcutValues = []
         applyShortcutRowHeight()
         shortcutTableView.reloadData()
 
         screenState = .list
         applyScreenState()
+
+        /* showShortcutView()と同じ理由で、表示対象を戻したら並べ替えメニューも定型文のものへ戻す */
+        setupSortButtonMenu()
     }
 
     /**
@@ -2379,29 +2438,17 @@ class KeyboardViewController: UIInputViewController {
     /**
      * ショートカット画面の空状態を更新する
      *
-     * ショートカットが1件も無いときだけ案内を表示する。
-     * 値一覧は値が1件以下のショートカットでは開かないため、空になることはない。
+     * 選択中のプロファイルとカテゴリで1件も無いときに案内を表示する。
+     * 絞り込みで0件になった場合も同じ案内を出すのは、定型文側（一覧の空状態）と同じ扱いに揃えるため。
+     * 値一覧は値を持たないショートカットでは開かないため、空になることはない。
      */
     private func updateShortcutEmptyState() {
         let isEmpty = shortcutScreenMode == .values
-            ? rankedShortcutValues.isEmpty
-            : rankedShortcuts.isEmpty
+            ? sortedShortcutValues.isEmpty
+            : sortedShortcuts.isEmpty
 
         shortcutTableView.isHidden = isEmpty
         shortcutEmptyLabel.isHidden = !isEmpty
-    }
-
-    /**
-     * 候補推測に使う「入力中の内容」を取り出す
-     *
-     * - Returns: カーソル直前の入力内容（取得できない場合は空文字）
-     *
-     * 【切り出しをここで行わない理由】
-     * 末尾何文字を見るか・どう正規化するかは候補推測の規則そのものなので、
-     * 規則を写しているShortcutService側に一元化する。
-     */
-    private func currentInputContext() -> String {
-        return textDocumentProxy.documentContextBeforeInput ?? ""
     }
 
 }
@@ -2411,7 +2458,7 @@ extension KeyboardViewController: UITableViewDataSource {
         /* 2つのテーブルビューを1つのデータソースで扱うため、必ずテーブルビューの同一性で分岐する
            （引数のtableViewはプロパティのtableViewを隠すので、比較対象はshortcutTableViewに固定する） */
         if tableView === shortcutTableView {
-            return shortcutScreenMode == .values ? rankedShortcutValues.count : rankedShortcuts.count
+            return shortcutScreenMode == .values ? sortedShortcutValues.count : sortedShortcuts.count
         }
 
         return filteredSnippets.count
@@ -2465,7 +2512,7 @@ extension KeyboardViewController: UITableViewDataSource {
                 return UITableViewCell()
             }
 
-            let value = rankedShortcutValues[indexPath.row]
+            let value = sortedShortcutValues[indexPath.row]
             cell.configure(name: value.name, value: value.value)
 
             return cell
@@ -2478,9 +2525,8 @@ extension KeyboardViewController: UITableViewDataSource {
             return UITableViewCell()
         }
 
-        let shortcut = rankedShortcuts[indexPath.row]
-        /* 値が1件のショートカットは値一覧へ進まず直接挿入するため、次の階層を予告しない */
-        cell.configure(name: shortcut.name, hasValueList: shortcut.values.count > 1)
+        let shortcut = sortedShortcuts[indexPath.row]
+        cell.configure(name: shortcut.name)
 
         return cell
     }
@@ -2496,10 +2542,10 @@ extension KeyboardViewController: UITableViewDelegate {
                 /* 値をタップ: その値だけを現在のカーソル位置へ挿入し、ショートカット一覧へ戻る。
                    階層が入れ替わるため、ここでも二度押しを塞ぐ */
                 guard acceptShortcutTap() else { return }
-                insertShortcutValue(rankedShortcutValues[indexPath.row], shouldReloadList: true)
+                insertShortcutValue(sortedShortcutValues[indexPath.row])
             } else {
-                /* ショートカットをタップ: 値一覧へ進む（値が1件なら直接挿入） */
-                selectShortcut(rankedShortcuts[indexPath.row])
+                /* ショートカットをタップ: 値一覧へ進む */
+                selectShortcut(sortedShortcuts[indexPath.row])
             }
             return
         }
@@ -2712,19 +2758,16 @@ final class ShortcutCell: UITableViewCell {
     }
 
     /**
-     * 表示するショートカット名と、次の階層の有無を設定する
+     * 表示するショートカット名を設定する
      *
-     * - Parameters:
-     *   - name: ショートカット名
-     *   - hasValueList: タップしたときに値一覧へ進む場合はtrue
+     * - Parameter name: ショートカット名
      *
-     * 【件数で出し分ける理由】
-     * 値が1件のショートカットは値一覧を経由せずその場で挿入するため、
-     * 「＞」を出すと入らない階層を予告することになる。
+     * 【常に「＞」を出す理由】
+     * 値の件数にかかわらず必ず値一覧へ進むため、どの行も次の階層を持つ。
      */
-    func configure(name: String, hasValueList: Bool) {
+    func configure(name: String) {
         nameLabel.text = name
-        accessoryType = hasValueList ? .disclosureIndicator : .none
+        accessoryType = .disclosureIndicator
     }
 }
 

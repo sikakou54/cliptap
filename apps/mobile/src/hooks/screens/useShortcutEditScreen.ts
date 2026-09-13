@@ -5,23 +5,25 @@
  * UIコンポーネント（shortcut/edit.tsx）から完全に分離されたビジネスロジック層。
  *
  * 主な責務:
- * - ショートカット名・所属プロファイル・値一覧の下書き状態の管理
- * - 値編集モーダルとの往復（追加・更新・削除）
+ * - ショートカット名・所属プロファイル（0件以上。0件は全プロファイル向け）・カテゴリ・値一覧の下書き状態の管理
+ * - プロファイル選択画面・値編集モーダルとの往復（値は追加・更新・削除）
  * - 保存可否の判定と保存処理（新規作成/更新）
  *
  * @see app/shortcut/edit.tsx - UIコンポーネント
  * @see app/shortcut/value-edit.tsx - 値編集モーダル
+ * @see app/profile/select.tsx - プロファイル選択画面（定型文フォームと共有）
  * @see packages/shared/src/providers/ShortcutProvider.tsx - ショートカットCRUD操作（useShortcuts）
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
 import {
   Logger,
   translateError,
+  useCategories,
   useProfiles,
   useShortcuts,
-  type Profile,
+  type Category,
   type ShortcutValueInput,
 } from '@cliptap/shared';
 import { showConfirm, showErrorAlert } from '@utils/alerts';
@@ -45,8 +47,10 @@ export interface ShortcutValueDraft {
   id?: string;
   /** 値名 */
   name: string;
-  /** 挿入する値 */
+  /** 保存する文字列。カスタム変数を参照していない値は、一覧にもこれをそのまま表示する */
   value: string;
+  /** 参照するカスタム変数のID（参照していなければnull） */
+  variableId: string | null;
 }
 
 /**
@@ -66,12 +70,12 @@ export interface UseShortcutEditScreenReturn {
   name: string;
   /** ショートカット名を更新する */
   setName: (name: string) => void;
-  /** 選択中の所属プロファイルID（未確定ならnull） */
-  profileId: string | null;
-  /** 所属プロファイルを変更する */
-  setProfileId: (profileId: string) => void;
-  /** 選択できるプロファイル（無効なものを除く） */
-  selectableProfiles: Profile[];
+  /** 選択中の所属プロファイルID（空配列は全プロファイル向け） */
+  profileIds: string[];
+  /** 選択中の所属プロファイル名（プロファイル一覧の並び順） */
+  selectedProfileNames: string[];
+  /** 選択中のカテゴリ（未分類ならnull） */
+  selectedCategory: Category | null;
   /** 編集中の値一覧（表示順） */
   values: ShortcutValueDraft[];
   /** 保存処理中フラグ */
@@ -84,6 +88,10 @@ export interface UseShortcutEditScreenReturn {
   canSave: boolean;
 
   /* ハンドラ */
+  /** プロファイル選択画面を開く */
+  handleProfilePress: () => void;
+  /** カテゴリ選択画面を開く */
+  handleCategoryPress: () => void;
   /** 値の追加画面を開く */
   handleAddValue: () => void;
   /** 値の編集画面を開く */
@@ -134,14 +142,19 @@ export function useShortcutEditScreen(
   const { t } = useTranslation();
   const router = useRouter();
   const { shortcuts, activeProfileId, createShortcut, updateShortcut } = useShortcuts();
-  /* 無効なプロファイル（Free上限超過分）へは移せないようvalidProfilesを使う */
-  const { validProfiles } = useProfiles();
+  /* 既定のチェックは選択画面に出る有効なプロファイル（validProfiles）だけから選ぶ。
+     選択済みの名前は無効なプロファイルへの保存済みの紐づけも含めて出すため、profilesから引く */
+  const { profiles, validProfiles } = useProfiles();
+  const { categories } = useCategories();
 
   /* ======================================== */
   /* 状態管理 */
   /* ======================================== */
   const [name, setName] = useState('');
-  const [profileId, setProfileId] = useState<string | null>(null);
+  /* 空配列は全プロファイル向け（定型文のプロファイル選択と同じ） */
+  const [profileIds, setProfileIds] = useState<string[]>([]);
+  /* カテゴリは任意のため、未選択（未分類）をnullで表す */
+  const [categoryId, setCategoryId] = useState<string | null>(null);
   const [values, setValues] = useState<ShortcutValueDraft[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -161,37 +174,81 @@ export function useShortcutEditScreen(
    * @remarks
    * 値が1件も無いショートカットは拡張キーボードから何も挿入できないため保存させない
    * （docs/機能仕様書.md §8.24）。値名の必須判定は値編集モーダル側で行うため、ここでは件数だけを見る。
-   * 所属プロファイルが決まらないと登録先が無いため、こちらも必須とする。
+   * 所属プロファイルは0件（全プロファイル向け）でも保存できるため、条件に含めない。
    */
   const canSave = useMemo(
-    () => name.trim() !== '' && values.length > 0 && profileId !== null,
-    [name, values, profileId]
+    () => name.trim() !== '' && values.length > 0,
+    [name, values]
+  );
+
+  /**
+   * 選択中の所属プロファイル名
+   *
+   * @remarks
+   * 選んだ順ではなくプロファイル一覧の並び順で出す。定型文フォームと同じ見え方にするため。
+   */
+  const selectedProfileNames = useMemo(
+    () =>
+      profiles
+        .filter((profile) => profileIds.includes(profile.id))
+        .map((profile) => profile.name),
+    [profiles, profileIds]
   );
 
   /* ======================================== */
-  /* 初期化 */
+  /* 新規作成時の初期選択（アクティブなプロファイル） */
   /* ======================================== */
+
+  /**
+   * 初期選択を一度だけ適用したか
+   *
+   * @remarks
+   * アクティブなプロファイルは初回レンダリングでは未確定になりうるため、確定してから入れる。
+   * 判定を入れないと、利用者が選択を全部外して0件（＝全プロファイル向け）にした直後に
+   * 再レンダリングで選択が戻ってしまう（定型文フォーム useSnippetFormScreen と同じ形）。
+   */
+  const didApplyInitialProfiles = useRef(false);
+
   useEffect(() => {
-    if (editingShortcut) {
-      /* 編集モード: 既存ショートカットのデータをフォームに反映 */
-      setName(editingShortcut.name);
-      setProfileId(editingShortcut.profileId);
-      setValues(
-        editingShortcut.values.map((value) => ({
-          key: value.id,
-          id: value.id,
-          name: value.name,
-          value: value.value,
-        }))
-      );
+    /* 編集モードは保存済みの紐づけをそのまま使うため、初期選択を被せない */
+    if (isEdit) {
+      didApplyInitialProfiles.current = true;
       return;
     }
+    if (didApplyInitialProfiles.current) return;
 
-    /* 新規作成モード: フォームを空にリセットし、登録先はアクティブなプロファイルにする */
-    setName('');
-    setProfileId(activeProfileId);
-    setValues([]);
-  }, [editingShortcut, activeProfileId]);
+    /* 無効なプロファイル（Free上限超過分）は選択画面に出ないため、既定にも入れない。
+       出ない項目を選択済みにすると、画面上は0件に見えるのに保存すると1件入る食い違いになる */
+    const initialProfile = validProfiles.find((profile) => profile.id === activeProfileId);
+    if (!initialProfile) return;
+
+    setProfileIds([initialProfile.id]);
+    didApplyInitialProfiles.current = true;
+  }, [isEdit, activeProfileId, validProfiles]);
+
+  /* ======================================== */
+  /* 編集モード時のデータ反映 */
+  /* ======================================== */
+
+  /* 既存ショートカットのデータをフォームに反映する。
+     新規作成モードではフォームの初期値（空・未分類）のまま何もしない。ここで空へ戻したり
+     アクティブなプロファイルを入れ直したりすると、利用者が全部外した0件の選択が戻ってしまう */
+  useEffect(() => {
+    if (!editingShortcut) return;
+
+    setName(editingShortcut.name);
+    setProfileIds(editingShortcut.profileIds);
+    setCategoryId(editingShortcut.categoryId);
+    setValues(
+      editingShortcut.values.map((value) => ({
+        key: value.id,
+        id: value.id,
+        name: value.name,
+        value: value.storedValue,
+        variableId: value.variableId,
+      }))
+    );
+  }, [editingShortcut]);
 
   /* ======================================== */
   /* 画面フォーカス時の処理（コールバックデータ処理） */
@@ -217,6 +274,7 @@ export function useShortcutEditScreen(
             ...next[index],
             name: callbackData.name,
             value: callbackData.value,
+            variableId: callbackData.variableId,
           };
           return next;
         }
@@ -228,6 +286,7 @@ export function useShortcutEditScreen(
             key: createDraftKey(prev),
             name: callbackData.name,
             value: callbackData.value,
+            variableId: callbackData.variableId,
           },
         ];
       });
@@ -247,9 +306,16 @@ export function useShortcutEditScreen(
   const handleAddValue = useCallback(() => {
     router.push({
       pathname: '/shortcut/value-edit',
-      params: { valueKey: '', valueName: '', value: '' },
+      params: {
+        valueKey: '',
+        valueName: '',
+        value: '',
+        variableId: '',
+        /* カスタム変数選択でプロファイル別の値を確認するとき、ここで選んでいるプロファイルに絞るため */
+        profileIds: profileIds.join(','),
+      },
     });
-  }, [router]);
+  }, [router, profileIds]);
 
   /**
    * 値の編集画面を開く
@@ -260,12 +326,15 @@ export function useShortcutEditScreen(
         pathname: '/shortcut/value-edit',
         params: {
           valueKey: draft.key,
+          /* カスタム変数選択のプロファイル切替を、ここで選んでいるプロファイルに絞るため */
+          profileIds: profileIds.join(','),
           valueName: draft.name,
           value: draft.value,
+          variableId: draft.variableId ?? '',
         },
       });
     },
-    [router]
+    [router, profileIds]
   );
 
   /**
@@ -290,6 +359,53 @@ export function useShortcutEditScreen(
   );
 
   /**
+   * 選択中のカテゴリ
+   *
+   * @remarks
+   * カテゴリが削除された直後は、保持しているIDに一致するカテゴリが無くなる。
+   * その場合は未分類として扱い、存在しないカテゴリを表示しない。
+   */
+  const selectedCategory = useMemo(
+    () => categories.find((category) => category.id === categoryId) ?? null,
+    [categories, categoryId]
+  );
+
+  /**
+   * プロファイル選択画面へ遷移
+   *
+   * @remarks
+   * 定型文フォーム（useSnippetFormScreen.handleProfilePress）と同じ画面を使い、
+   * target で説明文をショートカット向けに切り替える。
+   * expo-routerのモーダルは戻り値を返せないため、グローバルコールバックで受け取る。
+   */
+  const handleProfilePress = useCallback(() => {
+    global.profileSelectCallback = (selectedIds: string[]) => {
+      setProfileIds(selectedIds);
+    };
+    router.push({
+      pathname: '/profile/select',
+      params: { selectedIds: profileIds.join(','), target: 'shortcut' },
+    });
+  }, [profileIds, router]);
+
+  /**
+   * カテゴリ選択画面へ遷移
+   *
+   * @remarks
+   * 定型文フォーム（useSnippetFormScreen.handleCategoryPress）と同じ経路を使う。
+   * expo-routerのモーダルは戻り値を返せないため、グローバルコールバックで受け取る。
+   */
+  const handleCategoryPress = useCallback(() => {
+    global.categorySelectCallback = (selectedId: string | null) => {
+      setCategoryId(selectedId);
+    };
+    router.push({
+      pathname: '/category/select',
+      params: { selectedId: categoryId ?? 'null' },
+    });
+  }, [categoryId, router]);
+
+  /**
    * ショートカットを保存する
    */
   const handleSave = useCallback(() => {
@@ -302,15 +418,21 @@ export function useShortcutEditScreen(
         id: draft.id,
         name: draft.name,
         value: draft.value,
+        variableId: draft.variableId,
       }));
 
-      /* canSave が profileId の確定を含むため、ここでは非nullが保証される */
-      if (!profileId) return;
-
+      /* profileIdsは常に明示して渡す。更新で省略すると紐づけを変えない扱いになり、
+         選択画面で変えた所属が保存されない */
       if (isEdit && editingShortcut) {
-        updateShortcut({ id: editingShortcut.id, profileId, name, values: inputs });
+        updateShortcut({
+          id: editingShortcut.id,
+          profileIds,
+          categoryId,
+          name,
+          values: inputs,
+        });
       } else {
-        createShortcut({ profileId, name, values: inputs });
+        createShortcut({ profileIds, categoryId, name, values: inputs });
       }
 
       router.back();
@@ -329,7 +451,8 @@ export function useShortcutEditScreen(
     updateShortcut,
     createShortcut,
     name,
-    profileId,
+    profileIds,
+    categoryId,
     router,
   ]);
 
@@ -340,13 +463,15 @@ export function useShortcutEditScreen(
   return {
     name,
     setName,
-    profileId,
-    setProfileId,
-    selectableProfiles: validProfiles,
+    profileIds,
+    selectedProfileNames,
+    selectedCategory,
     values,
     saving,
     isEdit,
     canSave,
+    handleProfilePress,
+    handleCategoryPress,
     handleAddValue,
     handleEditValue,
     handleDeleteValue,

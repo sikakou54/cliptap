@@ -6,20 +6,22 @@
  *
  * @features
  * - ショートカット名の入力
+ * - 所属プロファイルの選択（選択画面へ遷移。複数選択可、0件は全プロファイル向け）
  * - 値の追加/編集/削除（値の実体は保存時にまとめてDBへ反映）
  * - 値が1件も無い状態では保存できない
  *
  * @see src/hooks/screens/useShortcutEditScreen.ts - ビジネスロジック
+ * @see app/profile/select.tsx - プロファイル選択画面（定型文フォームと共有）
  * @see docs/機能仕様書.md §8.24 ショートカット管理
  */
 
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { useTranslation } from '@cliptap/shared';
+import { getProfileSelectPlaceholder, useTranslation, useVariables } from '@cliptap/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@lib/themeSystem';
 import { useShortcutEditScreen } from '@hooks/screens/useShortcutEditScreen';
-import { ProfileChipSelector } from '@components/profile/ProfileChipSelector';
+import { CategoryBadge } from '@components/category/CategoryBadge';
 import { ScreenContainer } from '@components/common/ScreenContainer';
 import { UI_CONSTANTS } from '@constants/ui';
 
@@ -30,16 +32,28 @@ export default function ShortcutEditModal() {
 
   const shortcutId = params.id as string | undefined;
 
+  /* 参照している変数の表示ラベルを引く。削除済みの変数を指していた場合は
+     参照そのものを保存時に外すため、ここでは空表示に留める */
+  const { variables } = useVariables();
+  const getVariableLabel = (variableId: string): string => {
+    const variable = variables.find((entry) => entry.id === variableId);
+    if (!variable) return '';
+    /* カスタム変数選択・値を編集の画面と同じく表示ラベルで見せ、未設定（null・空白だけ）なら変数名にする */
+    return variable.label?.trim() ? variable.label : variable.name;
+  };
+
   const {
     name,
     setName,
-    profileId,
-    setProfileId,
-    selectableProfiles,
+    profileIds,
+    selectedProfileNames,
+    selectedCategory,
     values,
     saving,
     isEdit,
     canSave,
+    handleProfilePress,
+    handleCategoryPress,
     handleAddValue,
     handleEditValue,
     handleDeleteValue,
@@ -63,7 +77,7 @@ export default function ShortcutEditModal() {
               },
             ]}
           >
-            {t('shortcut.register')}
+            {t('common.save')}
           </Text>
         </TouchableOpacity>
       }
@@ -108,29 +122,101 @@ export default function ShortcutEditModal() {
           />
         </View>
 
-        {/* 所属プロファイル選択セクション（プロファイルが複数ある場合のみ表示）。
-            新規作成ではアクティブなプロファイルが初期選択され、ここで別のプロファイルへ移せる */}
-        {selectableProfiles.length > 1 && (
-          <View style={styles.section}>
-            <Text
-              style={[
-                styles.label,
-                { color: colors.textSecondary, fontSize: responsiveFontSizes.sm },
-              ]}
-            >
-              {t('shortcut.profile')}
-            </Text>
-            {/* containerPaddingを0にするのは、このチップがフォームのセクション内にあり、
-                画面端の余白は既に親のcontentが持っているため。既定値のままだと
-                他のセクション（名前入力・値カード）より16pt余分に字下げされる */}
-            <ProfileChipSelector
-              profiles={selectableProfiles}
-              selectedProfileId={profileId}
-              onSelectProfile={setProfileId}
-              containerPadding={0}
-            />
-          </View>
-        )}
+        {/* 所属プロファイル選択セクション（複数選択可能。0件は全プロファイル向け）。
+            プロファイルが1件だけでも常に表示する。0件が「全プロファイル向け」であることを
+            ここで見せないと、所属を持たないショートカットがどこに出るのか分からなくなるため。
+            新規作成ではアクティブなプロファイルが初期選択される（定型文フォームと同じ形） */}
+        <View style={styles.section}>
+          <Text
+            style={[
+              styles.label,
+              { color: colors.textSecondary, fontSize: responsiveFontSizes.sm },
+            ]}
+          >
+            {t('shortcut.profile')}
+          </Text>
+          <TouchableOpacity
+            style={[styles.categoryButton, { backgroundColor: colors.surface }]}
+            onPress={handleProfilePress}
+          >
+            <View style={styles.profileSummary}>
+              {/* 未選択なら全プロファイル向けであることを、選択済みなら件数と名前を出す */}
+              {profileIds.length === 0 ? (
+                <Text
+                  style={{
+                    color: colors.textSecondary,
+                    fontSize: responsiveFontSizes.base,
+                    lineHeight: responsiveLineHeights.base,
+                  }}
+                >
+                  {getProfileSelectPlaceholder('shortcut', t)}
+                </Text>
+              ) : (
+                <View>
+                  {/* 選択中の件数 */}
+                  <Text
+                    style={[
+                      styles.profileCount,
+                      {
+                        color: colors.text,
+                        fontSize: responsiveFontSizes.base,
+                        lineHeight: responsiveLineHeights.base,
+                      },
+                    ]}
+                  >
+                    {t('profile.profiles_selected', { count: profileIds.length })}
+                  </Text>
+                  {/* 選択中のプロファイル名（プロファイル一覧の並び順） */}
+                  <Text
+                    style={[
+                      styles.profileNames,
+                      {
+                        color: colors.textSecondary,
+                        fontSize: responsiveFontSizes.sm,
+                        lineHeight: responsiveLineHeights.sm,
+                      },
+                    ]}
+                  >
+                    {selectedProfileNames.join(', ')}
+                  </Text>
+                </View>
+              )}
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+        </View>
+
+        {/* カテゴリ選択セクション。カテゴリは任意のため、未選択は未分類として保存される */}
+        <View style={styles.section}>
+          <Text
+            style={[
+              styles.label,
+              { color: colors.textSecondary, fontSize: responsiveFontSizes.sm },
+            ]}
+          >
+            {t('shortcut.category')}
+          </Text>
+          <TouchableOpacity
+            style={[styles.categoryButton, { backgroundColor: colors.surface }]}
+            onPress={handleCategoryPress}
+          >
+            {/* 選択済みならバッジ、未選択なら選択を促す文言を出す（定型文フォームと同じ形） */}
+            {selectedCategory ? (
+              <CategoryBadge category={selectedCategory} />
+            ) : (
+              <Text
+                style={{
+                  color: colors.textSecondary,
+                  fontSize: responsiveFontSizes.base,
+                  lineHeight: responsiveLineHeights.base,
+                }}
+              >
+                {t('category.select')}
+              </Text>
+            )}
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+        </View>
 
         {/* 値一覧セクション */}
         <View style={styles.section}>
@@ -143,11 +229,19 @@ export default function ShortcutEditModal() {
             {t('shortcut.values')}
           </Text>
 
-          {/* 登録済みの値（タップで編集） */}
-          {values.map((draft) => (
+          {/* 登録済みの値（タップで編集）。
+              区切り線は値と値の間にだけ引き、最後の値の下には引かない。
+              引くとセクションの終わりの線に見えて、下の「値を追加」と切り離されて見える */}
+          {values.map((draft, index) => (
             <TouchableOpacity
               key={draft.key}
-              style={[styles.valueCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              style={[
+                styles.valueRow,
+                index < values.length - 1 && {
+                  borderBottomWidth: UI_CONSTANTS.BORDER_WIDTH.THIN,
+                  borderBottomColor: colors.border,
+                },
+              ]}
               onPress={() => handleEditValue(draft)}
               activeOpacity={0.7}
             >
@@ -166,20 +260,40 @@ export default function ShortcutEditModal() {
                 >
                   {draft.name}
                 </Text>
-                {/* 挿入する値 */}
-                <Text
-                  style={[
-                    styles.valueText,
-                    {
-                      color: colors.textSecondary,
-                      fontSize: responsiveFontSizes.sm,
-                      lineHeight: responsiveLineHeights.sm,
-                    },
-                  ]}
-                  numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.DOUBLE}
-                >
-                  {draft.value}
-                </Text>
+                {/* 挿入する値。カスタム変数を参照している値は、中身が環境ごとに変わるため
+                    具体的な文字列ではなく参照先を示す（§8.24） */}
+                {draft.variableId ? (
+                  <View style={styles.valueReferenceRow}>
+                    <Ionicons name="link" size={14} color={colors.textSecondary} />
+                    <Text
+                      style={[
+                        styles.valueText,
+                        {
+                          color: colors.textSecondary,
+                          fontSize: responsiveFontSizes.sm,
+                          lineHeight: responsiveLineHeights.sm,
+                        },
+                      ]}
+                      numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.SINGLE}
+                    >
+                      {getVariableLabel(draft.variableId)}
+                    </Text>
+                  </View>
+                ) : (
+                  <Text
+                    style={[
+                      styles.valueText,
+                      {
+                        color: colors.textSecondary,
+                        fontSize: responsiveFontSizes.sm,
+                        lineHeight: responsiveLineHeights.sm,
+                      },
+                    ]}
+                    numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.DOUBLE}
+                  >
+                    {draft.value}
+                  </Text>
+                )}
               </View>
 
               {/* 削除ボタン */}
@@ -255,13 +369,39 @@ const styles = StyleSheet.create({
     padding: UI_CONSTANTS.SPACING.BASE,
     minHeight: UI_CONSTANTS.BUTTON_HEIGHT.MEDIUM,
   },
-  valueCard: {
+  /* カテゴリ選択ボタン: バッジ（または選択を促す文言）と「＞」を両端に置く。
+     プロファイル選択の行も同じ形のため共用する */
+  categoryButton: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     borderRadius: UI_CONSTANTS.BORDER_RADIUS.BASE,
-    borderWidth: UI_CONSTANTS.BORDER_WIDTH.THIN,
     padding: UI_CONSTANTS.SPACING.BASE,
-    marginBottom: UI_CONSTANTS.GAP.MD,
+    minHeight: UI_CONSTANTS.BUTTON_HEIGHT.MEDIUM,
+  },
+  /* プロファイル選択の表示部分。「＞」を右端へ押し出すため残りの幅を占める */
+  profileSummary: {
+    flex: 1,
+  },
+  profileCount: {
+    fontWeight: UI_CONSTANTS.FONT_WEIGHT.MEDIUM,
+  },
+  profileNames: {
+    marginTop: UI_CONSTANTS.GAP.XS,
+  },
+  /* 参照先の変数名を、鎖アイコンと同じ行に並べる */
+  valueReferenceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: UI_CONSTANTS.GAP.XS,
+  },
+  /* フラットデザイン。枠・角丸・下地を持たず、区切り線だけで値を分ける
+     （一覧のカード SnippetCard / ShortcutCard と同じ扱い）。
+     線は値と値の間にだけ引くため、ここでは幅を持たせない */
+  valueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: UI_CONSTANTS.SPACING.BASE,
     minHeight: UI_CONSTANTS.BUTTON_HEIGHT.LARGE,
   },
   valueCardMain: {

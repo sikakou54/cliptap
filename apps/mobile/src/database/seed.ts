@@ -18,6 +18,7 @@
  * - スニペット: 5種類（仕事2種類、SNS1種類、プロンプト2種類）
  * - プロファイル: 2種類（取引先別。デフォルトの「Main」と合わせて無料プラン上限の3件）
  * - カスタム変数: 3種類（取引先担当者名、自社名、送信者名）
+ * - ショートカット: 8種類（全プロファイル向け 1件、Main 3件、A社用 2件、B社用 1件、A社用とB社用の両方 1件）
  *
  * 定型文はLPの画面キャプチャに写っている文面を再現している。
  * ただしtpl_003はキャプチャでは見出しに日付が入っているが、本文では日付を使わない。
@@ -38,6 +39,7 @@ import {
   VariableMapper,           /* カスタム変数データ操作 */
   ProfileMapper,            /* プロファイル（環境）データ操作 */
   ProfileVariableMapper,    /* プロファイル別変数値データ操作 */
+  ShortcutService,          /* ショートカット管理（Mapperは非公開のためService経由） */
 } from '@cliptap/shared';
 import { Logger } from '@cliptap/shared';
 
@@ -85,6 +87,44 @@ const TEST_PROFILES = dummyTemplates.profiles;
  * 変数メタデータと標準値、プロファイル別の値を含む
  */
 const TEST_VARIABLES = dummyTemplates.custom_variables;
+
+/**
+ * ダミーデータのショートカット値
+ *
+ * @remarks
+ * - value: 挿入する値（保存する文字列）
+ * - variable: 参照するカスタム変数名（空文字なら参照しない）
+ */
+interface DummyShortcutValue {
+  name: string;
+  value: string;
+  variable: string;
+}
+
+/**
+ * ダミーデータのショートカット
+ *
+ * @remarks
+ * - profiles: 所属させるプロファイル名（0件以上。空配列は全プロファイル向け）
+ * - category: カテゴリ名（nullは未分類）
+ */
+interface DummyShortcut {
+  name: string;
+  profiles: string[];
+  category: string | null;
+  values: DummyShortcutValue[];
+}
+
+/**
+ * ショートカットテストデータ
+ *
+ * 所属プロファイル名・カテゴリ名・参照する変数名で持ち、シード時にIDへ解決する。
+ * カテゴリがnullのものは未分類として登録される。
+ *
+ * 型を明示するのは、JSONからの推論だと`category`がnullだけの要素と文字列の要素で
+ * ユニオンになり、中身を書き換えるたびに関係のない箇所で型が合わなくなるため。
+ */
+const TEST_SHORTCUTS: DummyShortcut[] = dummyTemplates.shortcuts;
 
 /* ======================================== */
 /* ヘルパー関数 */
@@ -236,13 +276,19 @@ async function seedProfiles(): Promise<Map<string, string>> {
  * 変数メタデータの作成自体は残る。
  *
  * @param {Map<string, string>} profileMap - プロファイル名とIDのマッピング
+ * @returns 変数名とIDのマッピング（ショートカット値からの参照を張るために使う）
  */
-async function seedVariables(profileMap: Map<string, string>): Promise<void> {
+async function seedVariables(
+  profileMap: Map<string, string>
+): Promise<Map<string, string>> {
+  /* ショートカット値からの参照を張るため、作成した変数の名前とIDを返す */
+  const variableMap = new Map<string, string>();
+
   /* 標準値はデフォルトプロファイル（Main）に格納するため、先に取得しておく */
   const defaultProfile = ProfileMapper.getDefault();
   if (!defaultProfile) {
     Logger.error('[Seed] Default profile not found, cannot seed variables');
-    return;
+    return variableMap;
   }
 
   for (const variableData of TEST_VARIABLES) {
@@ -254,6 +300,8 @@ async function seedVariables(profileMap: Map<string, string>): Promise<void> {
         icon: variableData.icon,      /* アイコン名（例: "business-outline"） */
         type: 'custom',               /* 変数タイプ（カスタム変数として作成） */
       });
+
+      variableMap.set(variableData.name, variable.id);
 
       Logger.info(`[Seed] Created variable: ${variableData.name}`);
 
@@ -293,6 +341,90 @@ async function seedVariables(profileMap: Map<string, string>): Promise<void> {
       Logger.error(`[Seed] Failed to create variable ${variableData.name}:`, error);
     }
   }
+
+  return variableMap;
+}
+
+/**
+ * ショートカットをシード
+ *
+ * TEST_SHORTCUTSの各ショートカットを、所属プロファイルとカテゴリを解決して作成する。
+ *
+ * 所属プロファイルは名前の配列で持ち、空配列は全プロファイル向けとしてそのまま作る。
+ * 名前を挙げたのに1件も解決できなかったものは作らずに飛ばす。空配列で作ると全プロファイル向けになり、
+ * 限定したはずのショートカットが全体へ広がるため。
+ * 一部だけ解決できなかったものは、解決できた分に紐づけて作り、解決できなかった名前をログに残す。
+ * カテゴリは任意のため、未指定・解決できない場合は未分類（null）として登録する。
+ * 値はカスタム変数への参照も張れる（参照中はその変数の値が挿入される。§8.24）。
+ *
+ * 1件の失敗で残りを諦めないため、ループ内で個別に catch して継続する。
+ *
+ * @param profileMap - プロファイル名とIDのマッピング
+ * @param categoryMap - カテゴリ名とIDのマッピング
+ * @param variableMap - 変数名とIDのマッピング（値のカスタム変数参照に使う）
+ */
+async function seedShortcuts(
+  profileMap: Map<string, string>,
+  categoryMap: Map<string, string>,
+  variableMap: Map<string, string>
+): Promise<void> {
+  /* 標準プロファイル「Main」はdatabase.tsが作るためprofileMapに含まれない。
+     dummy.jsonが "Main" を指したときの解決先として先に取得しておく */
+  const defaultProfile = ProfileMapper.getDefault();
+
+  for (const shortcutData of TEST_SHORTCUTS) {
+    try {
+      /* プロファイル名をIDへ解決する。プロファイル作成に失敗していると解決できない */
+      const profileIds: string[] = [];
+      const unresolvedProfiles: string[] = [];
+      for (const profileName of shortcutData.profiles) {
+        const profileId =
+          profileMap.get(profileName) ??
+          (profileName === defaultProfile?.name ? defaultProfile.id : undefined);
+        if (profileId) {
+          profileIds.push(profileId);
+        } else {
+          unresolvedProfiles.push(profileName);
+        }
+      }
+
+      /* 名前を挙げたのに1件も解決できなかった。空配列のまま作ると全プロファイル向けへ広がるため作らない */
+      if (shortcutData.profiles.length > 0 && profileIds.length === 0) {
+        Logger.error(
+          `[Seed] Skipped shortcut ${shortcutData.name}: profiles not found (${unresolvedProfiles.join(', ')})`
+        );
+        continue;
+      }
+
+      /* 一部だけ解決できなかった。解決できた分に紐づけて作り、欠けた名前を残す */
+      if (unresolvedProfiles.length > 0) {
+        Logger.error(
+          `[Seed] Shortcut ${shortcutData.name} is created without some profiles: profiles not found (${unresolvedProfiles.join(', ')})`
+        );
+      }
+
+      ShortcutService.create({
+        profileIds,                                                  /* 所属プロファイルID（空配列は全プロファイル向け） */
+        categoryId: shortcutData.category                            /* カテゴリID（未分類はnull） */
+          ? categoryMap.get(shortcutData.category) ?? null
+          : null,
+        name: shortcutData.name,                                     /* ショートカット名 */
+        values: shortcutData.values.map((value) => ({
+          name: value.name,                                          /* 値名 */
+          value: value.value,                                        /* 挿入する値 */
+          variableId: value.variable                                 /* カスタム変数への参照（未指定はnull） */
+            ? variableMap.get(value.variable) ?? null
+            : null,
+        })),
+      });
+
+      Logger.info(
+        `[Seed] Created shortcut: ${shortcutData.name} (profiles: [${shortcutData.profiles.join(', ')}], ${shortcutData.values.length} values)`
+      );
+    } catch (error) {
+      Logger.error(`[Seed] Failed to create shortcut ${shortcutData.name}:`, error);
+    }
+  }
 }
 
 /**
@@ -312,6 +444,7 @@ async function seedVariables(profileMap: Map<string, string>): Promise<void> {
  * 2. スニペット 5種類（仕事2種類、SNS1種類、プロンプト2種類）
  * 3. プロファイル 2種類（デフォルトの「Main」と合わせて計3件）
  * 4. カスタム変数 3種類 + 各プロファイル別の値
+ * 5. ショートカット 8種類（値は1〜3件。カテゴリ付きと未分類の両方を含む）
  *
  * デフォルトプロファイル「Main」の作成はこの関数の責務ではなく、
  * src/database/database.ts の setupDatabase / reset が担う。
@@ -347,7 +480,10 @@ export async function runSeed(): Promise<void> {
     const profileMap = await seedProfiles();
 
     /* 4. カスタム変数を作成し、各プロファイル別の値も設定 */
-    await seedVariables(profileMap);
+    const variableMap = await seedVariables(profileMap);
+
+    /* 5. ショートカットを作成（プロファイルとカテゴリの両方を解決するため最後に行う） */
+    await seedShortcuts(profileMap, categoryMap, variableMap);
 
     Logger.info('[Seed] Test data seeding completed successfully!');
   } catch (error) {

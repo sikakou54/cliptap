@@ -11,8 +11,7 @@
  * - カスタマイズ可能なパディング
  *
  * @see app/search.tsx - 検索画面での使用（表示対象の絞り込み）
- * @see app/shortcut/index.tsx - ショートカット一覧での使用（アクティブなプロファイルの切替）
- * @see app/shortcut/edit.tsx - ショートカット編集での使用（所属プロファイルの選択）
+ * @see app/variable/select.tsx - カスタム変数選択での使用（プロファイル別の値の確認）
  */
 
 import React from 'react';

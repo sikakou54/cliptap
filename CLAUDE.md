@@ -219,6 +219,7 @@ clipTap/
 - コメントはJSDocスタイル(ただし@exampleは禁止)
 - コメントは必ずブロックコメント(/**/)で実装すること
 - 文言のハードコーディングは禁止(packages/shared/src/i18n/*jsonで管理すること)
+- **翻訳キーの動的生成は禁止**。`t(`snippet.${type}_input`)` のように組み立てないこと。組み立てると対応するキーが未定義でも型チェック・Lint・未使用キー検出のいずれも素通りし、画面にキー名がそのまま出るまで気付けない。選択肢が閉じているならswitchか対応表で静的キーへ振り分ける（`packages/shared/src/utils/selectionTabLabels.ts` が実例）
 
 ---
 

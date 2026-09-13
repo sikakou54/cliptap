@@ -2,11 +2,13 @@
  * @module SearchScreen
  * @description 検索画面
  *
- * 定型文をキーワードで検索するためのモーダル画面。
+ * 定型文またはショートカットをキーワードで検索するためのモーダル画面。
+ * 検索対象はホームの表示対象（切替トグル）を引き継ぐ。
  *
  * @features
  * - リアルタイム検索（300msデバウンス）
- * - タイトル・本文の全文検索
+ * - 定型文はタイトル・本文の全文検索
+ * - ショートカットは名前・値名・値の検索
  * - 検索結果のワンタップコピー
  * - 検索結果から編集画面への遷移
  *
@@ -19,23 +21,31 @@
  */
 
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from '@cliptap/shared';
 import { useTheme } from '@lib/themeSystem';
 import { useSearchScreen } from '@hooks/screens/useSearchScreen';
 import { ScreenContainer } from '@components/common/ScreenContainer';
 import { SnippetList } from '@components/snippet/SnippetList';
+import { ShortcutList } from '@components/shortcut/ShortcutList';
 import { SearchBar } from '@components/snippet/SearchBar';
 import { ProfileChipSelector } from '@components/profile/ProfileChipSelector';
 
 export default function SearchScreen() {
+  const { t } = useTranslation();
   const { colors, isTablet, responsive, responsiveSpacing, maxContentWidth } = useTheme();
+  const params = useLocalSearchParams();
 
+  /* ホームの表示対象を引き継ぐ。パラメータが無い場合は定型文として扱う */
   const {
     query,
     setQuery,
+    isShowingShortcuts,
     selectedProfileId,
     setSelectedProfileId,
     displaySnippets,
+    displayShortcuts,
     profiles,
     filteredProfiles,
     categories,
@@ -46,8 +56,11 @@ export default function SearchScreen() {
     handleCopySnippetTitle,
     handleEditSnippet,
     handleDeleteSnippet,
+    handleCopyShortcutValue,
+    handleEditShortcut,
+    handleDeleteShortcut,
     handleClose,
-  } = useSearchScreen();
+  } = useSearchScreen({ isShowingShortcuts: params.mode === 'shortcut' });
 
   /* ヘッダー（閉じるボタンと検索バー）。上部インセットはScreenContainerが確保するため内部余白のみ持つ */
   const header = (
@@ -70,7 +83,12 @@ export default function SearchScreen() {
         </TouchableOpacity>
         {/* 検索バー */}
         <View style={styles.searchContainer}>
-          <SearchBar value={query} onChangeText={setQuery} autoFocus />
+          <SearchBar
+            value={query}
+            onChangeText={setQuery}
+            placeholder={isShowingShortcuts ? t('shortcut.search_placeholder') : undefined}
+            autoFocus
+          />
         </View>
       </View>
     </View>
@@ -86,8 +104,9 @@ export default function SearchScreen() {
           maxContentWidth !== undefined && { maxWidth: maxContentWidth, alignSelf: 'center', width: '100%' },
         ]}
       >
-        {/* プロファイルチップセレクター（複数プロファイルがある場合のみ表示） */}
-        {profiles.length > 1 && filteredProfiles.length > 0 && (
+        {/* プロファイルチップセレクター（複数プロファイルがある場合のみ表示）。
+            ショートカットはアクティブなプロファイルの分だけを対象にするため出さない（§8.24） */}
+        {!isShowingShortcuts && profiles.length > 1 && filteredProfiles.length > 0 && (
           <ProfileChipSelector
             profiles={filteredProfiles}
             selectedProfileId={selectedProfileId}
@@ -98,19 +117,30 @@ export default function SearchScreen() {
           />
         )}
 
-        {/* 検索結果一覧 */}
+        {/* 検索結果一覧。検索対象で中身を入れ替える */}
         <View style={styles.listContainer}>
-          <SnippetList
-            snippets={displaySnippets}
-            onPress={handleCopySnippet}
-            onEdit={handleEditSnippet}
-            onDelete={handleDeleteSnippet}
-            onPressTitle={handleCopySnippetTitle}
-            onRefresh={handleRefresh}
-            disableCopy={false}
-            overrideProfileId={selectedProfileId}
-            categories={categories}
-          />
+          {isShowingShortcuts ? (
+            <ShortcutList
+              shortcuts={displayShortcuts}
+              categories={categories}
+              onCopyValue={handleCopyShortcutValue}
+              onEdit={handleEditShortcut}
+              onDelete={handleDeleteShortcut}
+              onRefresh={handleRefresh}
+            />
+          ) : (
+            <SnippetList
+              snippets={displaySnippets}
+              onPress={handleCopySnippet}
+              onEdit={handleEditSnippet}
+              onDelete={handleDeleteSnippet}
+              onPressTitle={handleCopySnippetTitle}
+              onRefresh={handleRefresh}
+              disableCopy={false}
+              overrideProfileId={selectedProfileId}
+              categories={categories}
+            />
+          )}
         </View>
       </View>
     </ScreenContainer>

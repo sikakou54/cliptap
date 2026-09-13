@@ -34,9 +34,11 @@ import { useSortMenu } from '@hooks/components/useSortMenu';
 interface SortMenuProps {
   currentSort: SnippetSortBy;
   onSortChange: (sort: SnippetSortBy) => void;
+  /** 名前で並べ替える選択肢のラベル（省略時は定型文の「タイトル」） */
+  nameSortLabel?: string;
 }
 
-export function SortMenu({ currentSort, onSortChange }: SortMenuProps) {
+export function SortMenu({ currentSort, onSortChange, nameSortLabel }: SortMenuProps) {
   const { t } = useTranslation();
   const { colors, responsiveFontSizes, responsiveLineHeights } = useTheme();
 
@@ -48,7 +50,7 @@ export function SortMenu({ currentSort, onSortChange }: SortMenuProps) {
     handlePress,
     handleSelect,
     handleClose,
-  } = useSortMenu({ currentSort, onSortChange });
+  } = useSortMenu({ currentSort, onSortChange, nameSortLabel });
 
   return (
     <>

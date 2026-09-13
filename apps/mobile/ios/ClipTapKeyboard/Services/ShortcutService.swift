@@ -8,7 +8,7 @@
 //
 //  【役割】
 //  - データ取得: Mapperからショートカットと値を取得
-//  - 候補推測: 入力中の内容からショートカット・値の表示順を決める
+//  - 並べ替え: 選ばれた基準でショートカット・値の表示順を決める
 //  - テキスト挿入: 選ばれた値をカーソル位置へ挿入
 //  - 振動フィードバック: 挿入時にHaptic Feedback（触覚フィードバック）
 //  - 使用回数の記録: フルアクセスが許可されているときだけ記録
@@ -18,9 +18,9 @@
 //  変数（{{today}}など）の展開は行いません。値は「電話番号」「メールアドレス」のような
 //  実データそのものであり、置換対象を持たないためです。
 //
-//  【候補推測の規則について】
-//  規則の正本は packages/shared/src/shortcuts/candidates.ts と
-//  packages/shared/tests/shortcuts/candidates.test.ts です。
+//  【並べ替えの規則について】
+//  規則の正本は packages/shared/src/shortcuts/sort.ts と
+//  packages/shared/tests/shortcuts/sortShortcuts.test.ts です。
 //  ここはその規則をSwiftへ写したものなので、規則を変えるときは必ず正本と揃えること。
 //
 
@@ -46,23 +46,6 @@ class ShortcutService {
 
     /// フルアクセス状態を共有するUserDefaultsキー
     private let fullAccessStateKey = "keyboardHasFullAccess"
-
-    // MARK: - Constants（候補推測の定数：正本 candidates.ts と同じ値）
-
-    /// 入力中の内容として参照する文字数（SHORTCUT_CONTEXT_LENGTH）
-    ///
-    /// カーソル直前のすべてを見ると、離れた位置に出た語で候補が動き続けて落ち着かない。
-    /// 「電話番号は」程度の直前の手掛かりだけを見る。
-    private static let contextLength = 40
-
-    /// ショートカット名が入力中の内容に現れたときの一致度
-    private static let scoreNameMatch = 2
-
-    /// 値名が入力中の内容に現れたときの一致度
-    private static let scoreValueNameMatch = 1
-
-    /// 手掛かりが無いときの一致度
-    private static let scoreNone = 0
 
     // MARK: - Initialization（初期化）
 
@@ -92,96 +75,82 @@ class ShortcutService {
 
     // MARK: - Read Operations（読み取り操作）
 
-    /// 指定プロファイルのショートカットを値付きで取得（登録順）
-    ///
-    /// - Parameter profileId: 表示中の環境（プロファイル）のID
-    /// - Returns: ショートカットの配列（sortOrder順、値もsortOrder順）
-    ///
-    /// 【プロファイルで絞り込む理由】
-    /// ショートカットは1件のプロファイルに属します（DBスキーマV8で shortcuts.profileId を追加）。
-    /// 「会社用」で使う値と「個人用」で使う値が混ざると選び間違えるため、
-    /// キーボードは選択中の環境のショートカットだけを扱います。
-    func getAll(profileId: String) -> [Shortcut] {
-        return shortcutMapper.getAll(profileId: profileId)
-    }
-
-    // MARK: - Candidate Ranking（候補推測）
-
-    /// ショートカット一覧を表示順に並べ替えて取得
+    /// 指定プロファイル・カテゴリのショートカットを値付きで取得（登録順）
     ///
     /// - Parameters:
     ///   - profileId: 表示中の環境（プロファイル）のID
-    ///   - context: カーソル直前の入力内容
-    /// - Returns: 表示順に並べ替えたショートカットの配列
+    ///   - categoryId: 選択中のカテゴリID（nilは「すべて」）
+    /// - Returns: ショートカットの配列（sortOrder順、値もsortOrder順）
     ///
-    /// 【並びの決め方】
-    /// 一致度の降順 → sortOrderの昇順 → 元の位置。
-    /// どれも一致しない場合は登録順（通常順）のままになります。
+    /// 【プロファイルで絞り込む理由】
+    /// ショートカットと環境の紐づけは shortcut_profiles（中間テーブル）が持ち、
+    /// 各ショートカットは0件以上の環境に紐づきます（紐づけ0件は全環境向け）。
+    /// 「会社用」で使う値と「個人用」で使う値が混ざると選び間違えるため、
+    /// キーボードは選択中の環境に紐づくショートカットと、全環境向けのショートカットだけを扱います。
     ///
-    /// 【使用回数を使わない理由】
-    /// 利用者が決めた登録順が入力内容と無関係に入れ替わると、
-    /// 目で追う位置が毎回変わってしまうためです（正本 candidates.ts と同じ）。
-    func rankedShortcuts(profileId: String, context: String) -> [Shortcut] {
-        let shortcuts = getAll(profileId: profileId)
-        let normalizedContext = Self.normalizeContext(context)
+    /// 【カテゴリでも絞り込む理由】
+    /// ショートカットは定型文と同じcategoriesを共有します。
+    /// フィルター行のカテゴリは定型文とショートカットで共通の絞り込みなので、
+    /// 表示中の一覧が入れ替わっても選んだカテゴリの意味が変わらないように、同じ条件を掛けます。
+    /// 「すべて」を選んでいるときは全件を出します（未分類だけを選ぶ候補は用意していません）。
+    func getAll(profileId: String, categoryId: String?) -> [Shortcut] {
+        return shortcutMapper.getAll(profileId: profileId, categoryId: categoryId)
+    }
+
+    // MARK: - Sort Operations（並べ替え）
+
+    /// ショートカット一覧を指定の基準で並べ替えて取得
+    ///
+    /// - Parameters:
+    ///   - profileId: 表示中の環境（プロファイル）のID
+    ///   - categoryId: 選択中のカテゴリID（nilは「すべて」）
+    ///   - sortBy: 並べ替えの基準（"created" | "updated" | "title" | "usage"）
+    /// - Returns: 並べ替えたショートカットの配列
+    ///
+    /// 【絞り込みを取得段で済ませる理由】
+    /// 並べ替えは「表示する一覧の中での順番」を決める処理なので、
+    /// 絞り込み済みの一覧を受け取る形にして、並べ替えの規則そのものには手を入れません。
+    func sortedShortcuts(profileId: String, categoryId: String?, sortBy: String) -> [Shortcut] {
+        let shortcuts = getAll(profileId: profileId, categoryId: categoryId)
 
         /* 添字を持ったまま並べ替える。
-           Swiftのsortedは安定ソートを保証しないため、同点の並びは元の位置で自分で決める */
-        let scored: [(index: Int, shortcut: Shortcut, score: Int)] = shortcuts.enumerated().map { entry in
-            return (
-                index: entry.offset,
-                shortcut: entry.element,
-                score: Self.score(for: entry.element, in: normalizedContext)
-            )
+           Swiftのsortedは安定ソートを保証しないため、基準で決着しない並びは元の位置で自分で決める
+           （正本 sort.ts のArray.prototype.sortは安定なので、揃えるには元の位置が要る） */
+        let sorted = shortcuts.enumerated().sorted { left, right in
+            let result = Self.compare(left.element, right.element, sortBy: sortBy)
+            if result != .orderedSame { return result == .orderedAscending }
+            return left.offset < right.offset
         }
 
-        let sorted = scored.sorted { left, right in
-            if left.score != right.score { return left.score > right.score }
-            if left.shortcut.sortOrder != right.shortcut.sortOrder {
-                return left.shortcut.sortOrder < right.shortcut.sortOrder
-            }
-            return left.index < right.index
-        }
-
-        return sorted.map { $0.shortcut }
+        return sorted.map { $0.element }
     }
 
     /// ショートカット値の一覧を表示順に並べ替える
     ///
-    /// - Parameters:
-    ///   - values: 保存順（sortOrder順）の値一覧
-    ///   - context: カーソル直前の入力内容
+    /// - Parameter values: 保存順（sortOrder順）の値一覧
     /// - Returns: 表示順に並べ替えた値の配列
     ///
     /// 【並びの決め方】
-    /// 値名が入力中の内容に現れたものを先頭 → 使用回数の降順 → sortOrderの昇順 → 元の位置。
-    /// 使用回数がすべて0で手掛かりも無い場合は登録順（通常順）のままになります。
-    func rankedValues(_ values: [ShortcutValue], context: String) -> [ShortcutValue] {
-        let normalizedContext = Self.normalizeContext(context)
-
+    /// 使用回数の降順 → sortOrderの昇順 → 元の位置。
+    /// 使用回数がすべて0の場合は登録順（通常順）のままになります。
+    ///
+    /// 【一覧で選んだ並べ替えを効かせない理由】
+    /// 値が持つのは名前と使用回数だけで、作成日時順・更新日時順にあたる基準がありません。
+    /// 4種のうち一部しか効かない並べ替えを値一覧にも掛けると、
+    /// 同じ設定なのに階層によって効いたり効かなかったりして読み取れなくなります。
+    func sortedValues(_ values: [ShortcutValue]) -> [ShortcutValue] {
         /* ショートカット一覧と同じ理由で、添字を持ったまま並べ替える */
-        let scored: [(index: Int, value: ShortcutValue, score: Int)] = values.enumerated().map { entry in
-            return (
-                index: entry.offset,
-                value: entry.element,
-                score: Self.contains(normalizedContext, term: entry.element.name)
-                    ? Self.scoreValueNameMatch
-                    : Self.scoreNone
-            )
+        let sorted = values.enumerated().sorted { left, right in
+            if left.element.useCount != right.element.useCount {
+                return left.element.useCount > right.element.useCount
+            }
+            if left.element.sortOrder != right.element.sortOrder {
+                return left.element.sortOrder < right.element.sortOrder
+            }
+            return left.offset < right.offset
         }
 
-        let sorted = scored.sorted { left, right in
-            if left.score != right.score { return left.score > right.score }
-            if left.value.useCount != right.value.useCount {
-                return left.value.useCount > right.value.useCount
-            }
-            if left.value.sortOrder != right.value.sortOrder {
-                return left.value.sortOrder < right.value.sortOrder
-            }
-            return left.index < right.index
-        }
-
-        return sorted.map { $0.value }
+        return sorted.map { $0.element }
     }
 
     // MARK: - Insert Operations（挿入操作）
@@ -218,50 +187,82 @@ class ShortcutService {
         }
     }
 
-    // MARK: - Helper Methods（候補推測の内部処理）
+    // MARK: - Helper Methods（並べ替えの内部処理）
 
-    /// 入力中の内容を突き合わせ用に正規化する
-    ///
-    /// - Parameter context: カーソル直前の入力内容
-    /// - Returns: 末尾を切り出して小文字化した文字列
-    ///
-    /// 【英字を小文字化する理由】
-    /// 英字は大小を区別せずに突き合わせるため。日本語はこの正規化の影響を受けません。
-    private static func normalizeContext(_ context: String) -> String {
-        return String(context.suffix(contextLength)).lowercased()
-    }
-
-    /// 入力中の内容にその語が含まれるか判定する
+    /// 2件のショートカットの順序を求める
     ///
     /// - Parameters:
-    ///   - normalizedContext: normalizeContextで正規化済みの入力内容
-    ///   - term: 突き合わせる語（ショートカット名または値名）
-    /// - Returns: 含まれる場合はtrue
+    ///   - left: 比較するショートカット
+    ///   - right: 比較するショートカット
+    ///   - sortBy: 並べ替えの基準
+    /// - Returns: leftが先ならorderedAscending、決着しなければorderedSame
     ///
-    /// 【空文字を除く理由】
-    /// 空文字はどんな文字列にも含まれると判定されてしまい、すべてが一致扱いになるため。
-    private static func contains(_ normalizedContext: String, term: String) -> Bool {
-        let trimmed = term.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        if trimmed.isEmpty { return false }
-        return normalizedContext.contains(trimmed)
-    }
+    /// 【同順位の決着まで正本に揃える理由】
+    /// 同じ設定なのにメインアプリと拡張キーボードで並びが違うと、
+    /// 目で覚えた位置がアプリを跨いだ途端に当てにならなくなるためです。
+    private static func compare(_ left: Shortcut, _ right: Shortcut, sortBy: String) -> ComparisonResult {
+        switch sortBy {
+        case "updated":
+            /* 更新日時の新しい順 → 名前の昇順 */
+            let byUpdated = compareDescending(left.updatedAt, right.updatedAt)
+            return byUpdated != .orderedSame ? byUpdated : compareAscending(left.name, right.name)
 
-    /// ショートカットの一致度を求める
-    ///
-    /// - Parameters:
-    ///   - shortcut: 対象のショートカット
-    ///   - normalizedContext: 正規化済みの入力内容
-    /// - Returns: 一致度（大きいほど上位）
-    ///
-    /// 【ショートカット名を強く見る理由】
-    /// 「電話番号は」と入力中なら「電話番号」が最上位に来てほしいため、
-    /// ショートカット名の一致を値名の一致より強く見ます。
-    private static func score(for shortcut: Shortcut, in normalizedContext: String) -> Int {
-        if Self.contains(normalizedContext, term: shortcut.name) { return scoreNameMatch }
-        /* 配列のcontains(where:)と見分けやすいよう、こちらの判定はSelf付きで書く */
-        if shortcut.values.contains(where: { Self.contains(normalizedContext, term: $0.name) }) {
-            return scoreValueNameMatch
+        case "title":
+            /* 名前の昇順 → 作成日時の新しい順
+               （定型文はタイトルを見る基準だが、ショートカットではそれにあたるのが名前） */
+            let byName = compareAscending(left.name, right.name)
+            return byName != .orderedSame ? byName : compareDescending(left.createdAt, right.createdAt)
+
+        case "usage":
+            /* 使用回数の合計が多い順 → 作成日時の新しい順 */
+            let leftUseCount = totalUseCount(left)
+            let rightUseCount = totalUseCount(right)
+            if leftUseCount != rightUseCount {
+                return leftUseCount > rightUseCount ? .orderedAscending : .orderedDescending
+            }
+            return compareDescending(left.createdAt, right.createdAt)
+
+        default:
+            /* created（既定）: 作成日時の新しい順 → 名前の昇順。
+               保存済みの設定が知らない値でも一覧は出したいので、既定をこのdefaultが兼ねる */
+            let byCreated = compareDescending(left.createdAt, right.createdAt)
+            return byCreated != .orderedSame ? byCreated : compareAscending(left.name, right.name)
         }
-        return scoreNone
+    }
+
+    /// ショートカットの使用回数
+    ///
+    /// - Parameter shortcut: 対象のショートカット
+    /// - Returns: 値ごとの使用回数の合計
+    ///
+    /// 【最大値ではなく合計にする理由】
+    /// 使用回数は値ごとに持つため、ショートカット単位の使用頻度は合計で表します。
+    /// 「よく使う値が1つあるショートカット」と「満遍なく使うショートカット」の
+    /// どちらも上位に来るようにするためです（正本 sort.ts と同じ）。
+    private static func totalUseCount(_ shortcut: Shortcut) -> Int {
+        return shortcut.values.reduce(0) { $0 + $1.useCount }
+    }
+
+    /// 昇順の比較結果を求める
+    ///
+    /// - Parameters:
+    ///   - left: 比較する文字列
+    ///   - right: 比較する文字列
+    /// - Returns: leftが先ならorderedAscending
+    private static func compareAscending(_ left: String, _ right: String) -> ComparisonResult {
+        return left.compare(right)
+    }
+
+    /// 降順（日時なら新しい順）の比較結果を求める
+    ///
+    /// - Parameters:
+    ///   - left: 比較する文字列
+    ///   - right: 比較する文字列
+    /// - Returns: leftが先ならorderedAscending
+    ///
+    /// 【日時を文字列のまま比較する理由】
+    /// 日時はISO8601で桁が揃っているため、Dateへ変換しなくても辞書順で新旧を判定できます（正本 sort.ts と同じ）。
+    private static func compareDescending(_ left: String, _ right: String) -> ComparisonResult {
+        return right.compare(left)
     }
 }

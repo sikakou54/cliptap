@@ -2,20 +2,27 @@
  * @module ProfileSelectScreen
  * @description プロファイル（環境）選択画面
  *
- * 定型文を表示するプロファイルを複数選択するためのモーダル画面。
+ * 定型文・ショートカットを表示するプロファイルを複数選択するためのモーダル画面。
+ * 定型文フォームとショートカット編集の両方から開く共有の画面で、選び方は同じ
+ * （0件＝全プロファイル向け）。遷移パラメータ target で何を選んでいるかを受け取り、
+ * 説明文だけを対象に合わせて出し分ける。
  *
  * @features
  * - 利用可能なプロファイルの一覧表示
  * - 複数選択によるプロファイル指定
  * - 「全ての環境」オプション（空配列=全プロファイルで表示）
+ * - 選択対象（定型文 / ショートカット）に応じた説明文
  *
  * @see src/hooks/screens/useProfileSelectScreen.ts - ビジネスロジック
+ * @see src/hooks/screens/useSnippetFormScreen.ts - 呼び出し元（定型文フォーム）
+ * @see src/hooks/screens/useShortcutEditScreen.ts - 呼び出し元（ショートカット編集）
+ * @see packages/shared/src/utils/profileSelectLabels.ts - 対象の読み取りと説明文の出し分け
  */
 
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
-import { useTranslation } from '@cliptap/shared'
+import { getProfileSelectDescription, parseProfileSelectTarget, useTranslation } from '@cliptap/shared';
 import { useTheme } from '@lib/themeSystem';
 import { useProfileSelectScreen } from '@hooks/screens/useProfileSelectScreen';
 import { Profile } from '@cliptap/shared';
@@ -33,6 +40,9 @@ export default function ProfileSelectScreen() {
       : params.selectedIds
     : [];
 
+  /* 何を選んでいるか（定型文 / ショートカット）。未指定・想定外の値は定型文として扱う */
+  const target = parseProfileSelectTarget(params.target);
+
   const {
     tempSelectedIds,
     profiles,
@@ -43,7 +53,7 @@ export default function ProfileSelectScreen() {
 
   return (
     <ScreenContainer
-      title={t('snippet.select_profiles_title')}
+      title={t('profile.select_profiles_title')}
       isModal={!isTablet}
       /* 画面下端まで一覧が伸びるため下辺のセーフエリアも確保する */
       edges={['top', 'left', 'right', 'bottom']}
@@ -57,7 +67,7 @@ export default function ProfileSelectScreen() {
     >
       <ScrollView style={styles.content}>
         <Text style={[styles.description, { color: colors.textSecondary, fontSize: responsiveFontSizes.sm }]}>
-          {t('snippet.select_profiles_description')}
+          {getProfileSelectDescription(target, t)}
         </Text>
 
         <View style={[styles.section, { backgroundColor: colors.surface }]}>
@@ -73,7 +83,7 @@ export default function ProfileSelectScreen() {
                 style={styles.checkbox}
               />
               <Text style={[styles.profileName, { color: colors.text, fontSize: responsiveFontSizes.base }]}>
-                {t('snippet.all_profiles')}
+                {t('profile.all_profiles')}
               </Text>
             </View>
           </TouchableOpacity>

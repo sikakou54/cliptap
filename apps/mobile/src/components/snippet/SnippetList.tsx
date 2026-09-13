@@ -118,11 +118,12 @@ export function SnippetList({
             onPressTitle={onPressTitle}
             disableCopy={disableCopy}
             category={category}
+            isLast={index === snippets.length - 1}
           />
         </View>
       );
     },
-    [categoryMap, isTablet, columnGap, onPress, onEdit, onDelete, onPressTitle, disableCopy]
+    [categoryMap, isTablet, columnGap, snippets.length, onPress, onEdit, onDelete, onPressTitle, disableCopy]
   );
 
   if (snippets.length === 0) {
@@ -171,7 +172,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  /* フラットデザインでは項目を区切り線で分けるため、項目間の余白は持たない */
   cardWrapper: {
-    marginBottom: 12,
+    marginBottom: 0,
   },
 });

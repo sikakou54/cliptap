@@ -113,25 +113,26 @@ function AppContent({ isTabletDevice }: { isTabletDevice: boolean }) {
                   {/* スニペットタイトル入力画面 */}
                   <Stack.Screen name="snippet/title-input" options={tabletAwareModalOptions} />
                   {/* スニペットプロファイル選択画面 */}
-                  <Stack.Screen name="snippet/profile-select" options={MODAL_SLIDE_OPTIONS} />
+                  <Stack.Screen name="profile/select" options={MODAL_SLIDE_OPTIONS} />
                   {/* カテゴリ編集画面 */}
                   <Stack.Screen name="category/edit" options={MODAL_SLIDE_OPTIONS} />
                   {/* カテゴリ選択画面 */}
                   <Stack.Screen name="category/select" options={MODAL_SLIDE_OPTIONS} />
                   {/* 変数編集画面 */}
                   <Stack.Screen name="variable/edit" options={MODAL_SLIDE_OPTIONS} />
+                  <Stack.Screen name="variable/select" options={MODAL_SLIDE_OPTIONS} />
                   {/* 変数プロファイル値編集画面 */}
                   <Stack.Screen name="variable/profile-value-edit" options={MODAL_SLIDE_OPTIONS} />
                   {/* システム変数書式選択画面 */}
                   <Stack.Screen name="variable/format-edit" options={MODAL_SLIDE_OPTIONS} />
                   {/* プロファイル編集画面 */}
                   <Stack.Screen name="profile/edit" options={MODAL_SLIDE_OPTIONS} />
-                  {/* ショートカット一覧画面（ホームヘッダーから開く） */}
-                  <Stack.Screen name="shortcut/index" />
                   {/* ショートカット作成・編集画面 */}
                   <Stack.Screen name="shortcut/edit" options={MODAL_SLIDE_OPTIONS} />
                   {/* ショートカット値編集画面 */}
                   <Stack.Screen name="shortcut/value-edit" options={MODAL_SLIDE_OPTIONS} />
+                  {/* ショートカットの値入力画面 */}
+                  <Stack.Screen name="shortcut/value-text-edit" options={MODAL_SLIDE_OPTIONS} />
                   {/* 設定画面 */}
                   <Stack.Screen name="settings" />
                   {/* サブスクリプション課金画面（フルスクリーンモーダル） */}

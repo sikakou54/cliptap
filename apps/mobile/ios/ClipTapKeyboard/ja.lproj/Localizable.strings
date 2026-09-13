@@ -89,6 +89,7 @@
 "sort.created" = "作成日時";
 "sort.updated" = "更新日時";
 "sort.title" = "タイトル";
+"sort.name" = "名前";
 "sort.usage" = "使用頻度";
 
 /* 設定関連 */

@@ -1,8 +1,10 @@
 /**
  * プロファイル選択画面のビジネスロジックフック
  *
- * スニペットに関連付けるプロファイル（環境）を選択する画面の状態管理とロジックを提供。
- * UIコンポーネント（snippet/profile-select.tsx）から完全に分離されたビジネスロジック層。
+ * 定型文・ショートカットを表示するプロファイル（環境）を複数選択する画面の状態管理とロジックを提供。
+ * 定型文フォームとショートカット編集の両方から開き、どちらも0件を全プロファイル向けとして扱う。
+ * 対象による違いは説明文だけで、それは画面側（profile/select.tsx）が出し分けるため、ここは対象を知らない。
+ * UIコンポーネント（profile/select.tsx）から完全に分離されたビジネスロジック層。
  *
  * 主な責務:
  * - 選択中プロファイルIDの状態管理
@@ -10,7 +12,9 @@
  * - 「全ての環境」選択処理
  * - 保存処理（コールバック経由）
  *
- * @see app/snippet/profile-select.tsx - UIコンポーネント
+ * @see app/profile/select.tsx - UIコンポーネント
+ * @see src/hooks/screens/useSnippetFormScreen.ts - 呼び出し元（定型文フォーム）
+ * @see src/hooks/screens/useShortcutEditScreen.ts - 呼び出し元（ショートカット編集）
  * @see packages/shared/src/providers/ProfileProvider.tsx - プロファイルCRUD操作（useProfiles）
  */
 

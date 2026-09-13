@@ -51,6 +51,8 @@ interface SnippetCardProps {
   onPressTitle?: (snippet: SnippetWithDisplay) => void | Promise<void>;
   disableCopy?: boolean;
   category?: Category | null;
+  /** 一覧の最後の項目か（区切り線を引くかの判定に使う） */
+  isLast: boolean;
 }
 
 const SnippetCardComponent = ({
@@ -61,6 +63,7 @@ const SnippetCardComponent = ({
   onPressTitle,
   disableCopy = false,
   category: categoryProp,
+  isLast,
 }: SnippetCardProps) => {
   const { colors, isTablet, responsive, responsiveFontSizes, responsiveLineHeights } = useTheme();
   const { t } = useTranslation();
@@ -97,10 +100,9 @@ const SnippetCardComponent = ({
     <View
       style={[
         styles.card,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-        },
+        /* 区切り線は項目と項目の間にだけ引く。最後にも引くと一覧の終わりに線が残り、
+           下の余白や広告と切り離されて見える */
+        !isLast && { borderBottomWidth: UI_CONSTANTS.BORDER_WIDTH.THIN, borderBottomColor: colors.border },
       ]}
     >
       {/* メインコンテンツエリア */}
@@ -192,7 +194,6 @@ const SnippetCardComponent = ({
             left: UI_CONSTANTS.GAP.MD,
             bottom: UI_CONSTANTS.GAP.MD,
             borderColor: colors.border,
-            backgroundColor: colors.surface,
           }
         ]}
         onPress={toggleExpanded}
@@ -210,10 +211,7 @@ const SnippetCardComponent = ({
         <TouchableOpacity
           style={[
             styles.roundButton,
-            {
-              borderColor: colors.border,
-              backgroundColor: colors.surface,
-            }
+            { borderColor: colors.border }
           ]}
           onPress={handleDelete}
         >
@@ -227,10 +225,7 @@ const SnippetCardComponent = ({
         <TouchableOpacity
           style={[
             styles.roundButton,
-            {
-              borderColor: colors.border,
-              backgroundColor: colors.surface,
-            }
+            { borderColor: colors.border }
           ]}
           onPress={handleEdit}
         >
@@ -244,10 +239,7 @@ const SnippetCardComponent = ({
         <TouchableOpacity
           style={[
             styles.roundButton,
-            {
-              borderColor: isCopied ? colors.success : colors.primary,
-              backgroundColor: colors.surface,
-            },
+            { borderColor: isCopied ? colors.success : colors.primary },
             /* 無効時は枠線を中立色へ戻す。style配列は後勝ちのため、上の borderColor より後ろに置く */
             disableCopy && [styles.disabledButton, { borderColor: colors.border }]
           ]}
@@ -275,6 +267,7 @@ const SnippetCardComponent = ({
 export const SnippetCard = React.memo(SnippetCardComponent, (prevProps, nextProps) => {
   return (
     prevProps.snippet.id === nextProps.snippet.id &&
+    prevProps.isLast === nextProps.isLast &&
     prevProps.snippet.updatedAt === nextProps.snippet.updatedAt &&
     prevProps.snippet.title === nextProps.snippet.title &&
     prevProps.snippet.content === nextProps.snippet.content &&
@@ -287,10 +280,8 @@ export const SnippetCard = React.memo(SnippetCardComponent, (prevProps, nextProp
 });
 
 const styles = StyleSheet.create({
+  /* フラットデザイン。カードの枠・角丸・下地を持たず、下端の区切り線だけで項目を分ける */
   card: {
-    borderRadius: UI_CONSTANTS.BORDER_RADIUS.LG,
-    marginBottom: UI_CONSTANTS.GAP.LG,
-    borderWidth: UI_CONSTANTS.BORDER_WIDTH.THIN,
     overflow: 'hidden',
   },
   mainContent: {

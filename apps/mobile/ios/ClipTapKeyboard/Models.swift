@@ -80,6 +80,7 @@ struct ProfileWithVariables {
 
 struct Shortcut {
     let id: String
+    let categoryId: String?    /* 所属カテゴリID（定型文と共通のcategories。未分類はnil） */
     let name: String
     let sortOrder: Int
     let createdAt: String

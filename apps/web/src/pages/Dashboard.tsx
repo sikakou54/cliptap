@@ -9,7 +9,7 @@
  *
  * @see hooks/screens/useHomeScreen.ts - ビジネスロジック
  */
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useAuth, useTranslation, useSharedSubscription } from '@cliptap/shared';
 import { useHomeScreen } from '@hooks/screens/useHomeScreen';
 import { SnippetEditModal } from '@components/snippet/SnippetEditModal';
@@ -21,8 +21,6 @@ import { ImportFileModal, ImportSelectionModal, ImportModeSelectModal } from '@c
 import { ExportSelectionModal } from '@components/export';
 import { shouldShowSubscriptionVerificationWarning } from '@services/SubscriptionVerificationService';
 
-/** 新規作成時のプロファイルID初期値（空配列を再利用してメモリ効率化） */
-const EMPTY_PROFILE_IDS: string[] = [];
 
 export function Dashboard() {
   const { signInWithGoogle, signInWithApple, loading: authLoading, error: authError, user } = useAuth();
@@ -81,6 +79,26 @@ export function Dashboard() {
     getCategoryColor,
     getCategoryName,
   } = useHomeScreen();
+
+  /**
+   * 新規作成時に既定でチェックしておくプロファイル
+   *
+   * @remarks
+   * アクティブなプロファイルを1件だけ初期選択にする。無効なプロファイル（Free上限超過分）は
+   * 選択肢に出ないため既定にも入れない。出ない項目を選択済みにすると、画面上は0件に見えるのに
+   * 保存すると1件入る食い違いになる。
+   *
+   * useMemoで参照を固定するのは、SnippetEditModalがinitialProfileIdsを状態の初期化と
+   * 未保存判定の比較に使っているため。毎レンダリングで新しい配列を渡すと
+   * 変更していないのに「未保存の変更あり」と判定され、フォームも初期化し直される。
+   */
+  const initialProfileIds = useMemo(
+    () =>
+      validProfiles.some((profile) => profile.id === activeProfile?.id) && activeProfile
+        ? [activeProfile.id]
+        : [],
+    [validProfiles, activeProfile]
+  );
 
   /* DB未読み込み時は何も表示しない（nullを返す） */
   if (!isLoaded) {
@@ -174,7 +192,7 @@ export function Dashboard() {
           initialTitle=""
           initialContent=""
           initialCategoryId={null}
-          initialProfileIds={EMPTY_PROFILE_IDS}
+          initialProfileIds={initialProfileIds}
           initialCopyWithTitle={false}
           categories={categories}
           profiles={validProfiles}

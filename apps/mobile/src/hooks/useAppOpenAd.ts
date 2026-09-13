@@ -13,13 +13,16 @@
  * 【表示条件（すべて満たしたときだけ表示する）】
  * 1. 広告ユニットIDが設定されていること
  * 2. 初回起動ではないこと（インストール直後はATT許可ダイアログと連続してしまうため出さない）
- * 3. 前回の表示から COOLDOWN_MS 以上経過していること
- * 4. 無料プランであることが確定していること（未確定・権利確認失敗の間は表示しない）
- * 5. このプロセスでまだ一度も表示を試みていないこと（＝コールドスタート直後の1回だけ）
- * 6. 上限時間内にロードが完了し、その時点でアプリが前面にあること
+ * 3. 無料プランであることが確定していること（未確定・権利確認失敗の間は表示しない）
+ * 4. このプロセスでまだ一度も表示を試みていないこと（＝コールドスタート直後の1回だけ）
+ * 5. 上限時間内にロードが完了し、その時点でアプリが前面にあること
  *
- * 1〜3は加入状態を待たずに判定できるため先に行う。こうするとクールダウン中の起動が
+ * 1と2は加入状態を待たずに判定できるため先に行う。こうすると表示しないと決まった起動が
  * 課金サービスの応答を待たずに決着し、起動が速いままになる。
+ *
+ * 【時間による間隔を設けない理由】
+ * コールドスタート1回につき最大1回という制限（条件4）だけで頻度を抑える。
+ * アプリを開き直すたびに表示されるが、これはApp Open広告が想定している出し方である。
  *
  * 【起動を止めない】
  * 判定・初期化・ロード・表示のどこで失敗しても、必ず settle() を通って onSettled を呼ぶ。
@@ -53,14 +56,6 @@ const AD_UNIT_IDS = {
 };
 
 /**
- * 前回表示からこの時間が経過するまでは再表示しない
- *
- * 短時間に何度も起動し直す使い方で毎回全画面広告が出ると体験が壊れるため、
- * コールドスタート限定であることに加えて時間でも間隔を空ける。
- */
-const COOLDOWN_MS = 4 * 60 * 60 * 1000;
-
-/**
  * 起動を保留してよい上限時間
  *
  * 加入状態の確定・SDK初期化・広告ロードの合計がこの時間を超えたら広告を諦めて起動を進める。
@@ -69,8 +64,11 @@ const COOLDOWN_MS = 4 * 60 * 60 * 1000;
  */
 const SETTLE_TIMEOUT_MS = 3000;
 
-/** 最終表示時刻（エポックミリ秒）の保存キー */
-const LAST_SHOWN_AT_KEY = '@app_open_ad_last_shown_at';
+/** 初回起動を通過済みかどうかの保存キー */
+const FIRST_LAUNCH_DONE_KEY = '@app_open_ad_first_launch_done';
+
+/** 初回起動を通過済みであることを表す値 */
+const FIRST_LAUNCH_DONE_VALUE = '1';
 
 /* ========================================
    プロセス単位の状態
@@ -252,7 +250,7 @@ function resolveAdUnitId(): string {
  * 加入状態を待たずに判定できる条件をまとめて確認する
  *
  * ここで弾ける起動は課金サービスの応答を待たずに決着するため、
- * クールダウン中の起動が遅くならない。
+ * 表示しないと決まった起動が遅くならない。
  */
 async function runPreflight(): Promise<PreflightResult> {
   if (!resolveAdUnitId()) {
@@ -261,7 +259,7 @@ async function runPreflight(): Promise<PreflightResult> {
     return 'skip';
   }
 
-  return (await isWithinCooldown()) ? 'skip' : 'eligible';
+  return (await isFirstLaunch()) ? 'skip' : 'eligible';
 }
 
 /** loadAndShowAppOpenAd の引数 */
@@ -305,7 +303,7 @@ async function loadAndShowAppOpenAd({
      *
      * ロード完了だけでなく、実際に提示できたこと（OPENED）まで見届ける。
      * show() の解決は提示要求が受理されたことまでしか保証しないため、
-     * それを表示成功とみなすと、出ていない広告でクールダウンを消費してしまう。
+     * それだけでは表示できたかどうかを判断できない。
      */
     const unsubscribe = ad.addAdEventsListener(({ type, payload }) => {
       switch (type) {
@@ -314,8 +312,6 @@ async function loadAndShowAppOpenAd({
           break;
 
         case AdEventType.OPENED:
-          /* ここで初めて表示成功。クールダウンの起点にする */
-          void recordShownAt();
           break;
 
         case AdEventType.CLOSED:
@@ -399,43 +395,36 @@ function presentAd(ad: AppOpenAd, settle: (reason: string, adShown?: boolean) =>
 }
 
 /**
- * 前回表示からクールダウン中かを判定する
+ * インストール後の初回起動かを判定する
  *
- * 記録が無い場合は初回起動とみなし、現在時刻を記録したうえでクールダウン中として扱う。
+ * 記録が無い場合を初回起動とみなし、通過済みの印を残したうえで初回として扱う。
  * インストール直後はATT許可ダイアログが出るため、続けて全画面広告を出すと
  * アプリの中身を一度も見せないまま全画面を2枚踏ませることになる。
- * 読み出しや解析に失敗した場合は表示してよい側へ倒す。
+ * 読み出しや保存に失敗した場合は表示してよい側へ倒す（起動を止めない方針に合わせる）。
  */
-async function isWithinCooldown(): Promise<boolean> {
+async function isFirstLaunch(): Promise<boolean> {
   try {
-    const raw = await AsyncStorage.getItem(LAST_SHOWN_AT_KEY);
+    const raw = await AsyncStorage.getItem(FIRST_LAUNCH_DONE_KEY);
+    if (raw === FIRST_LAUNCH_DONE_VALUE) return false;
 
-    if (!raw) {
-      await recordShownAt();
-      return true;
-    }
-
-    const lastShownAt = Number(raw);
-    if (!Number.isFinite(lastShownAt)) return false;
-
-    /* 端末時計が巻き戻された場合も差が負になるだけでクールダウンは解ける */
-    return Date.now() - lastShownAt < COOLDOWN_MS;
+    await recordFirstLaunchDone();
+    return true;
   } catch (error) {
-    Logger.error('[useAppOpenAd] Failed to read the last shown timestamp:', error);
+    Logger.error('[useAppOpenAd] Failed to read the first launch marker:', error);
     return false;
   }
 }
 
 /**
- * 最終表示時刻を記録する
+ * 初回起動を通過したことを記録する
  *
- * 保存に失敗しても広告はすでに表示済みのため、次回のクールダウンが効かなくなるだけで
+ * 保存に失敗した場合は次の起動も初回として扱われ、広告が1回余分に出ないだけで
  * 起動そのものには影響しない。
  */
-async function recordShownAt(): Promise<void> {
+async function recordFirstLaunchDone(): Promise<void> {
   try {
-    await AsyncStorage.setItem(LAST_SHOWN_AT_KEY, String(Date.now()));
+    await AsyncStorage.setItem(FIRST_LAUNCH_DONE_KEY, FIRST_LAUNCH_DONE_VALUE);
   } catch (error) {
-    Logger.error('[useAppOpenAd] Failed to record the last shown timestamp:', error);
+    Logger.error('[useAppOpenAd] Failed to record the first launch marker:', error);
   }
 }

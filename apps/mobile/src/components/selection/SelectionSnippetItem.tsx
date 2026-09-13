@@ -46,7 +46,7 @@ function SelectionSnippetItemInner({
   const { responsiveFontSizes } = useTheme();
 
   const profileNames = item.profiles.length === 0
-    ? [t('snippet.all_profiles')]
+    ? [t('profile.all_profiles')]
     : item.profiles.map(p => p.profileName).filter(Boolean) as string[];
 
   /* 選択スニペットアイテム */

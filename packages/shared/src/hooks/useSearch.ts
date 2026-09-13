@@ -38,6 +38,14 @@ export interface UseSearchResult {
   query: string;
   /** 検索クエリを更新する関数 */
   setQuery: (query: string) => void;
+  /**
+   * デバウンス後の検索クエリ（既定300ms）
+   *
+   * @remarks
+   * results を使わない絞り込み（ショートカット検索）向け。
+   * results もこの値で評価しているため、使えば定型文検索と同じ遅延で揃う。
+   */
+  debouncedQuery: string;
   /** 検索結果のスニペット配列 */
   results: Snippet[];
   /** 検索実行中フラグ */
@@ -110,6 +118,7 @@ export function useSearch(options: UseSearchOptions = {}): UseSearchResult {
   return {
     query,
     setQuery,
+    debouncedQuery,
     results,
     searching,
     clearSearch,

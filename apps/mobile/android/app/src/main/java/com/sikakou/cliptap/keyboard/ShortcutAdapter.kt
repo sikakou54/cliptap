@@ -3,7 +3,6 @@ package com.sikakou.cliptap.keyboard
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -38,7 +37,6 @@ class ShortcutAdapter(
     ) : RecyclerView.ViewHolder(itemView) {
 
         private val nameTextView: TextView = itemView.findViewById(R.id.shortcutName)
-        private val chevronImageView: ImageView = itemView.findViewById(R.id.shortcutChevron)
 
         /** 現在この行が表示しているショートカット */
         private var currentShortcut: Shortcut? = null
@@ -55,10 +53,6 @@ class ShortcutAdapter(
         fun bind(shortcut: Shortcut) {
             currentShortcut = shortcut
             nameTextView.text = shortcut.name
-
-            /* 値が1件のショートカットは値一覧を経由せず直接挿入するため、
-               入らない階層を予告しないよう「＞」を隠す */
-            chevronImageView.visibility = if (shortcut.values.size > 1) View.VISIBLE else View.GONE
         }
     }
 

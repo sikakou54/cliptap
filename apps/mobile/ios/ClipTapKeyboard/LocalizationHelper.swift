@@ -326,6 +326,9 @@ enum L10n {
         /// "タイトル" / "Title"
         static let title = localized("sort.title")
 
+        /// "名前" / "Name"（ショートカットの並べ替えで使う。定型文はタイトル、ショートカットは名前）
+        static let name = localized("sort.name")
+
         /// "使用頻度" / "Frequency"
         static let usage = localized("sort.usage")
     }
@@ -472,6 +475,7 @@ enum L10n {
         case "sort.created": return isJapanese ? "作成日時" : "Created"
         case "sort.updated": return isJapanese ? "更新日時" : "Updated"
         case "sort.title": return isJapanese ? "タイトル" : "Title"
+        case "sort.name": return isJapanese ? "名前" : "Name"
         case "sort.usage": return isJapanese ? "使用頻度" : "Frequency"
 
         // Settings

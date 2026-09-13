@@ -11,55 +11,99 @@
 import { getMainDbAdapter } from '../adapters/DbAdapter';
 import type {
   Shortcut,
+  ShortcutProfile,
   ShortcutRow,
   ShortcutValue,
   ShortcutValueInput,
+  ShortcutValueRow,
 } from '../schema';
+import { resolveShortcutValue, type ProfileValueMap } from '../shortcuts/resolveValue';
 import { generateUniqueId, getCurrentTimestamp } from '../utils/dateHelpers';
+
+/**
+ * SQLプレースホルダーを生成
+ * @param count - プレースホルダーの数
+ * @returns プレースホルダー文字列 (例: "?,?,?")
+ */
+const placeholders = (count: number): string =>
+  Array.from({ length: count }, () => '?').join(',');
 
 /* ======================================== */
 /* SQLクエリ定義 */
 /* ======================================== */
 
+/**
+ * 指定プロファイルから見えるショートカットの条件（別名 s の shortcuts に掛ける。`?` はプロファイルID1個）
+ *
+ * @remarks
+ * そのプロファイルに紐づくものと、紐づけが0件のもの（全プロファイル向け）を拾う。
+ * 定型文の snippet_profiles と同じ規則。
+ *
+ * 結合（JOIN）で絞らないのは、0件のショートカットは結合相手の行が無く、
+ * INNER JOIN だと一覧からもIDでの取得からも消えてしまうため。
+ * 複数のプロファイルに紐づいても行が増えないよう、紐づけ側はサブクエリで見る。
+ *
+ * 外側の括弧は外さないこと。後ろに AND の条件（カテゴリ等）を続けたとき、
+ * 括弧が無いと AND が OR より先に結び付き「紐づく OR (紐づけ0件 AND 後続の条件)」と解釈され、
+ * 表示中のプロファイルに紐づくものが後続の条件をすり抜ける。例外にならないため気付けない。
+ *
+ * iOS版・Android版のキーボードが同じ文字列を持ち、
+ * `tests/shortcuts/visibleInProfileParity.test.ts` が3実装の一致を検査している。
+ * 変えるときは3か所を同時に変えること。
+ */
+const VISIBLE_IN_PROFILE = '(s.id IN (SELECT sp.shortcutId FROM shortcut_profiles sp WHERE sp.profileId = ?) OR NOT EXISTS (SELECT 1 FROM shortcut_profiles sp2 WHERE sp2.shortcutId = s.id))';
+
 const ShortcutQueries = {
-  /* 指定プロファイルのショートカットを取得（sortOrder順） */
-  SELECT_BY_PROFILE:
-    'SELECT * FROM shortcuts WHERE profileId = ? ORDER BY sortOrder ASC',
-  /* IDでショートカットを取得 */
+  /* 指定プロファイルから見えるショートカットを取得（sortOrder順） */
+  SELECT_BY_PROFILE: `SELECT s.* FROM shortcuts s WHERE ${VISIBLE_IN_PROFILE} ORDER BY s.sortOrder`,
+  /* IDでショートカットを取得。紐づけが0件でも取得できるよう結合しない */
   SELECT_BY_ID: 'SELECT * FROM shortcuts WHERE id = ?',
-  /* プロファイル内の名前でショートカットを取得（重複チェック用） */
-  SELECT_BY_NAME: 'SELECT * FROM shortcuts WHERE profileId = ? AND name = ?',
   /* ショートカットを新規作成 */
-  INSERT: `INSERT INTO shortcuts (id, profileId, name, sortOrder, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)`,
-  /* ショートカットの所属プロファイル・名前・更新日時を更新 */
-  UPDATE: `UPDATE shortcuts SET profileId = ?, name = ?, sortOrder = ?, updatedAt = ? WHERE id = ?`,
+  INSERT: `INSERT INTO shortcuts (id, categoryId, name, sortOrder, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)`,
+  /* ショートカットのカテゴリ・名前・更新日時を更新 */
+  UPDATE: `UPDATE shortcuts SET categoryId = ?, name = ?, sortOrder = ?, updatedAt = ? WHERE id = ?`,
   /* 更新日時だけを更新（値の増減で親の更新日時を進めるため） */
   TOUCH: 'UPDATE shortcuts SET updatedAt = ? WHERE id = ?',
   /* ショートカットを削除 */
   DELETE: 'DELETE FROM shortcuts WHERE id = ?',
   /* ショートカットの並び順を更新 */
   UPDATE_SORT_ORDER: 'UPDATE shortcuts SET sortOrder = ? WHERE id = ?',
-  /* 指定プロファイルのショートカット数を取得 */
-  SELECT_COUNT_BY_PROFILE:
-    'SELECT COUNT(*) as count FROM shortcuts WHERE profileId = ?',
-  /* 指定プロファイル内の最大sortOrderを取得（新規作成時に使用） */
-  SELECT_MAX_SORT_ORDER:
-    'SELECT MAX(sortOrder) as maxOrder FROM shortcuts WHERE profileId = ?',
+  /* 指定プロファイルから見えるショートカット数を取得 */
+  SELECT_COUNT_BY_PROFILE: `SELECT COUNT(*) AS count FROM shortcuts s WHERE ${VISIBLE_IN_PROFILE}`,
+  /* 名前の重複を探す（0件で保存する場合）。0件のショートカットは全プロファイルから見えるため、
+     紐づけを問わず同名すべてと衝突する */
+  SELECT_CONFLICT_FOR_ALL_PROFILES: 'SELECT s.id FROM shortcuts s WHERE s.name = ? AND s.id <> ? LIMIT 1',
+  /* 最大sortOrderを取得（新規作成時に使用）。
+     プロファイルを横断した通し番号にしている。表示順は並べ替え（shortcuts/sort.ts）が
+     決めるため、通しでも見た目は変わらない */
+  SELECT_MAX_SORT_ORDER: 'SELECT MAX(sortOrder) as maxOrder FROM shortcuts',
+};
+
+const ShortcutProfileQueries = {
+  /* 紐づけを登録 */
+  INSERT: 'INSERT INTO shortcut_profiles (shortcutId, profileId) VALUES (?, ?)',
+  /* 指定ショートカットの紐づけを削除（紐づけの置き換えと、削除時に使う） */
+  DELETE_BY_SHORTCUT: 'DELETE FROM shortcut_profiles WHERE shortcutId = ?',
+  /* 指定ショートカットに紐づくプロファイルIDを取得（一覧の一括取得と同じ並び） */
+  SELECT_BY_SHORTCUT: 'SELECT profileId FROM shortcut_profiles WHERE shortcutId = ? ORDER BY profileId',
+  /* 一覧に載るショートカットの紐づけを一括取得する。
+     指定プロファイルに紐づくショートカットについて、他のプロファイルへの紐づけも含めて全件読む。
+     0件のショートカットは行を持たないため、ここには現れない */
+  SELECT_FOR_PROFILE_LIST: 'SELECT shortcutId, profileId FROM shortcut_profiles WHERE shortcutId IN (SELECT shortcutId FROM shortcut_profiles WHERE profileId = ?) ORDER BY shortcutId, profileId',
 };
 
 const ShortcutValueQueries = {
-  /* 指定プロファイルのショートカット値を取得（ショートカット順・並び順） */
-  SELECT_BY_PROFILE: `SELECT v.* FROM shortcut_values v
-           INNER JOIN shortcuts s ON s.id = v.shortcutId
-           WHERE s.profileId = ?
-           ORDER BY v.shortcutId ASC, v.sortOrder ASC`,
+  /* 指定プロファイルから見えるショートカットの値を取得（ショートカット順・並び順）。
+     shortcut_values は紐づけを持たないため、本体と結合して表示条件で絞る。
+     紐づけ側はサブクエリで見るため、複数のプロファイルに紐づいても値は重複しない */
+  SELECT_BY_PROFILE: `SELECT v.* FROM shortcut_values v INNER JOIN shortcuts s ON s.id = v.shortcutId WHERE ${VISIBLE_IN_PROFILE} ORDER BY v.shortcutId, v.sortOrder`,
   /* 指定ショートカットの値を取得（並び順） */
   SELECT_BY_SHORTCUT: 'SELECT * FROM shortcut_values WHERE shortcutId = ? ORDER BY sortOrder ASC',
   /* ショートカット値を新規作成 */
-  INSERT: `INSERT INTO shortcut_values (id, shortcutId, name, value, useCount, sortOrder, createdAt, updatedAt)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+  INSERT: `INSERT INTO shortcut_values (id, shortcutId, name, value, variableId, useCount, sortOrder, createdAt, updatedAt)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   /* ショートカット値を更新（useCountは挿入時にだけ動かすため触れない） */
-  UPDATE: `UPDATE shortcut_values SET name = ?, value = ?, sortOrder = ?, updatedAt = ? WHERE id = ?`,
+  UPDATE: `UPDATE shortcut_values SET name = ?, value = ?, variableId = ?, sortOrder = ?, updatedAt = ? WHERE id = ?`,
   /* ショートカット値を削除 */
   DELETE: 'DELETE FROM shortcut_values WHERE id = ?',
   /* 指定ショートカットの値をすべて削除 */
@@ -67,6 +111,17 @@ const ShortcutValueQueries = {
   /* 使用回数を1加算 */
   INCREMENT_USE_COUNT:
     'UPDATE shortcut_values SET useCount = useCount + 1 WHERE id = ?',
+  /* 指定したカスタム変数への参照をすべて外す（変数削除時。§8.5）。
+     実行時に外部キーを強制しないため、宣言した ON DELETE SET NULL は働かない */
+  CLEAR_VARIABLE_REFERENCE:
+    'UPDATE shortcut_values SET variableId = NULL, updatedAt = ? WHERE variableId = ?',
+};
+
+/* カスタム変数の値と標準プロファイルを引くためのクエリ。
+   ショートカット値の参照を解決するためだけに読み、更新は行わない */
+const ResolutionQueries = {
+  /* 標準プロファイルのID（フォールバック先） */
+  SELECT_DEFAULT_PROFILE_ID: 'SELECT id FROM profiles WHERE isDefault = 1 LIMIT 1',
 };
 
 /* ======================================== */
@@ -80,7 +135,7 @@ const ShortcutValueQueries = {
  */
 const toShortcutRow = (row: any): ShortcutRow => ({
   id: row.id, /* ショートカットID */
-  profileId: row.profileId, /* 所属プロファイルID */
+  categoryId: row.categoryId ?? null, /* 所属カテゴリID（未分類はnull） */
   name: row.name, /* ショートカット名 */
   sortOrder: row.sortOrder ?? 0, /* 並び順（列がNULLの場合は0） */
   createdAt: row.createdAt, /* 作成日時 */
@@ -88,15 +143,16 @@ const toShortcutRow = (row: any): ShortcutRow => ({
 });
 
 /**
- * DB行データをShortcutValueエンティティに変換
+ * DB行データをShortcutValueRowエンティティに変換
  * @param row - データベースから取得した行データ
- * @returns ShortcutValue型のオブジェクト
+ * @returns ShortcutValueRow型のオブジェクト
  */
-const toValue = (row: any): ShortcutValue => ({
+const toValueRow = (row: any): ShortcutValueRow => ({
   id: row.id, /* ショートカット値ID */
   shortcutId: row.shortcutId, /* 所属するショートカットのID */
   name: row.name, /* 値名 */
-  value: row.value, /* 挿入する値 */
+  value: row.value, /* 保存されている文字列 */
+  variableId: row.variableId ?? null, /* 参照するカスタム変数ID（参照なしはnull） */
   useCount: row.useCount ?? 0, /* 使用回数（列がNULLの場合は0） */
   sortOrder: row.sortOrder ?? 0, /* 並び順（列がNULLの場合は0） */
   createdAt: row.createdAt, /* 作成日時 */
@@ -115,11 +171,17 @@ const toValue = (row: any): ShortcutValue => ({
  * すべてのメソッドはgetMainDbAdapter()経由でDBアクセスを行う。
  */
 export class ShortcutMapper {
-  /** バックアップ行をID・日時・並び順ごと逐語復元する。 */
+  /**
+   * バックアップ行をID・日時・並び順ごと逐語復元する。
+   *
+   * @remarks
+   * 紐づくプロファイルは別テーブルのため、`restoreProfileLink`で個別に復元する
+   * （定型文の`SnippetMapper.restore`／`restoreProfileLink`と同じ分け方）。
+   */
   static restore(shortcut: ShortcutRow): void {
     getMainDbAdapter().run(ShortcutQueries.INSERT, [
       shortcut.id,
-      shortcut.profileId,
+      shortcut.categoryId,
       shortcut.name,
       shortcut.sortOrder,
       shortcut.createdAt,
@@ -127,13 +189,22 @@ export class ShortcutMapper {
     ]);
   }
 
+  /** バックアップの紐づけ行を逐語復元する。 */
+  static restoreProfileLink(link: ShortcutProfile): void {
+    getMainDbAdapter().run(ShortcutProfileQueries.INSERT, [
+      link.shortcutId,
+      link.profileId,
+    ]);
+  }
+
   /** バックアップの値行をID・日時・使用回数ごと逐語復元する。 */
-  static restoreValue(value: ShortcutValue): void {
+  static restoreValue(value: ShortcutValueRow): void {
     getMainDbAdapter().run(ShortcutValueQueries.INSERT, [
       value.id,
       value.shortcutId,
       value.name,
       value.value,
+      value.variableId,
       value.useCount,
       value.sortOrder,
       value.createdAt,
@@ -142,105 +213,269 @@ export class ShortcutMapper {
   }
 
   /**
-   * 指定プロファイルのショートカットを値付きで取得
-   * @param profileId - 所属プロファイルID
+   * 指定プロファイルから見えるショートカットを値付きで取得
+   * @param profileId - 表示中のプロファイルID
    * @returns ショートカット一覧（sortOrder順、値もsortOrder順）
    * @description
-   * 値はショートカットの件数によらず1回のクエリでまとめて取得する。
+   * そのプロファイルに紐づくものと、紐づけが0件のもの（全プロファイル向け）を返す。
+   * 各要素の`profileIds`は、表示中のプロファイル以外も含めた全紐づけを持つ
+   * （編集画面が一覧の要素を初期値にするため、表示中の1件だけにすると保存時に他の紐づけが消える）。
+   *
+   * 値と紐づけは、ショートカットの件数によらずそれぞれ1回のクエリでまとめて取得する。
    * 全プロファイル横断で取得する用途は無いため、プロファイル指定を必須にしている。
    */
   static getByProfileId(profileId: string): Shortcut[] {
     const db = getMainDbAdapter();
-    const rows = db
-      .all<any>(ShortcutQueries.SELECT_BY_PROFILE, [profileId])
-      .map(toShortcutRow);
+    const rows = db.all<any>(ShortcutQueries.SELECT_BY_PROFILE, [profileId]);
     const valueRows = db
       .all<any>(ShortcutValueQueries.SELECT_BY_PROFILE, [profileId])
-      .map(toValue);
+      .map(toValueRow);
+    const links = db.all<ShortcutProfile>(
+      ShortcutProfileQueries.SELECT_FOR_PROFILE_LIST,
+      [profileId]
+    );
+
+    /* 参照先のカスタム変数は、このプロファイルを基準に解決する */
+    const resolved = this.resolveValues(valueRows, profileId);
 
     /* ショートカットIDごとに値をまとめる（1回の走査で振り分ける） */
     const valuesByShortcut = new Map<string, ShortcutValue[]>();
-    for (const value of valueRows) {
+    for (const value of resolved) {
       const entries = valuesByShortcut.get(value.shortcutId) ?? [];
       entries.push(value);
       valuesByShortcut.set(value.shortcutId, entries);
     }
 
-    return rows.map((row) => ({ ...row, values: valuesByShortcut.get(row.id) ?? [] }));
+    /* ショートカットIDごとに紐づけをまとめる。行の無いショートカットは0件（全プロファイル向け） */
+    const profileIdsByShortcut = new Map<string, string[]>();
+    for (const link of links) {
+      const entries = profileIdsByShortcut.get(link.shortcutId) ?? [];
+      entries.push(link.profileId);
+      profileIdsByShortcut.set(link.shortcutId, entries);
+    }
+
+    return rows.map((row) => ({
+      ...toShortcutRow(row),
+      profileIds: profileIdsByShortcut.get(row.id) ?? [],
+      values: valuesByShortcut.get(row.id) ?? [],
+    }));
   }
 
   /**
    * IDでショートカットを値付きで取得
    * @param id - ショートカットID
+   * @param basisProfileId - 値の参照を解決する基準プロファイルID（nullなら標準プロファイルで解決する）
    * @returns ショートカット（存在しない場合はnull）
+   * @description
+   * 紐づけが0件のショートカットも取得できるよう、紐づけとは結合しない。
+   *
+   * 複数のプロファイルに紐づく（または0件で全プロファイル向けの）ショートカットは、
+   * 本体からは解決の基準を1つに決められない。表示中のプロファイルで解決しないと
+   * 一覧と異なる値を返すため、呼び出し側が基準を渡す。
    */
-  static getById(id: string): Shortcut | null {
+  static getById(id: string, basisProfileId: string | null): Shortcut | null {
     const db = getMainDbAdapter();
     const row = db.get<any>(ShortcutQueries.SELECT_BY_ID, [id]);
     if (!row) return null;
 
-    return { ...toShortcutRow(row), values: this.getValues(id) };
+    return {
+      ...toShortcutRow(row),
+      profileIds: this.getProfileIds(id),
+      values: this.getValues(id, basisProfileId),
+    };
   }
 
   /**
-   * プロファイル内の名前でショートカットを取得
-   * @param profileId - 所属プロファイルID
-   * @param name - ショートカット名
-   * @returns ショートカット（存在しない場合はnull）
-   * @description
-   * ショートカット名の重複チェックで使用される。
-   * 名前の一意性はプロファイル内に限るため、プロファイルも条件に含める。
+   * ショートカットに紐づくプロファイルID一覧を取得
+   * @param shortcutId - ショートカットID
+   * @returns プロファイルIDの配列（空配列は全プロファイル向け）
    */
-  static getByName(profileId: string, name: string): Shortcut | null {
+  static getProfileIds(shortcutId: string): string[] {
     const db = getMainDbAdapter();
-    const row = db.get<any>(ShortcutQueries.SELECT_BY_NAME, [profileId, name]);
-    if (!row) return null;
+    const rows = db.all<{ profileId: string }>(
+      ShortcutProfileQueries.SELECT_BY_SHORTCUT,
+      [shortcutId]
+    );
+    return rows.map((row) => row.profileId);
+  }
 
-    return { ...toShortcutRow(row), values: this.getValues(row.id) };
+  /**
+   * 指定した名前が、保存先のプロファイルで既に使われているか調べる
+   *
+   * @param name - ショートカット名
+   * @param profileIds - 保存後に紐づくプロファイルID（空配列は全プロファイル向け）
+   * @param excludeId - 判定から除くショートカットID（更新時に自分自身を除くため）
+   * @returns 見つかったショートカットのID（無ければnull）
+   *
+   * @description
+   * 選んだプロファイルのいずれかで同名が見えるなら衝突とする。
+   * 紐づけが0件のショートカットは全プロファイルから見えるため、次の2つを衝突として数える。
+   * - 既存が0件の同名は、どのプロファイルを選んでも常に衝突する
+   * - 0件で保存する場合は、紐づけを問わず同名すべてと衝突する
+   *
+   * DB側に一意制約を置けない（紐づけが別テーブルのため）ので、この判定が唯一の担保になる。
+   *
+   * @remarks
+   * excludeIdはSQLで除く。取得後にJavaScriptで弾くと、自分自身が先に1件ヒットしたときに
+   * 別の衝突相手を見落とす（1件しか読まないため）。
+   */
+  static findConflictingName(
+    name: string,
+    profileIds: readonly string[],
+    excludeId?: string
+  ): string | null {
+    const db = getMainDbAdapter();
+    /* 除外対象が無いときも同じ形の条件にできるよう、IDとして成立しない空文字を渡す */
+    const excluded = excludeId ?? '';
+
+    if (profileIds.length === 0) {
+      const row = db.get<{ id: string }>(
+        ShortcutQueries.SELECT_CONFLICT_FOR_ALL_PROFILES,
+        [name, excluded]
+      );
+      return row?.id ?? null;
+    }
+
+    /* 選んだプロファイルのどれかに紐づく同名と、0件（全プロファイル向け）の同名を探す。
+       紐づけ側はサブクエリで見るため、複数に紐づく相手でも行は増えない */
+    const row = db.get<{ id: string }>(
+      `SELECT s.id FROM shortcuts s WHERE s.name = ? AND s.id <> ? AND (s.id IN (SELECT sp.shortcutId FROM shortcut_profiles sp WHERE sp.profileId IN (${placeholders(profileIds.length)})) OR NOT EXISTS (SELECT 1 FROM shortcut_profiles sp2 WHERE sp2.shortcutId = s.id)) LIMIT 1`,
+      [name, excluded, ...profileIds]
+    );
+    return row?.id ?? null;
   }
 
   /**
    * 指定ショートカットの値を取得
    * @param shortcutId - ショートカットID
-   * @returns ショートカット値の一覧（sortOrder順）
+   * @param basisProfileId - 値の参照を解決する基準プロファイルID（nullなら標準プロファイルで解決する）
+   * @returns ショートカット値の一覧（sortOrder順、参照は解決済み）
    */
-  static getValues(shortcutId: string): ShortcutValue[] {
+  static getValues(shortcutId: string, basisProfileId: string | null): ShortcutValue[] {
     const db = getMainDbAdapter();
-    return db
+    const rows = db
       .all<any>(ShortcutValueQueries.SELECT_BY_SHORTCUT, [shortcutId])
-      .map(toValue);
+      .map(toValueRow);
+
+    return this.resolveValues(rows, basisProfileId);
+  }
+
+  /**
+   * ショートカット値の行に、参照の解決結果を詰める
+   *
+   * @param rows - 値の行
+   * @param profileId - 基準プロファイルID（nullなら標準プロファイルで解決する）
+   * @returns 解決結果を詰めた値
+   *
+   * @remarks
+   * 参照先カスタム変数の値は、参照している変数の分だけ1回のクエリでまとめて引く。
+   * 値の件数だけクエリを撃つと、一覧を開くたびにSQLiteへ何度も往復することになる。
+   *
+   * 解決の規則そのものは`shortcuts/resolveValue`が正本で、ここはデータを揃えるだけに留める。
+   * iOS版・Android版のキーボードが同じ規則を写しており、規則をMapperへ散らすと
+   * 3実装のどれかだけがずれたときに気付けない。
+   */
+  private static resolveValues(
+    rows: ShortcutValueRow[],
+    profileId: string | null
+  ): ShortcutValue[] {
+    if (rows.length === 0) return [];
+
+    const db = getMainDbAdapter();
+
+    /* 参照しているカスタム変数の値。参照が1件も無ければ引かない */
+    const variableIds = [
+      ...new Set(rows.map((row) => row.variableId).filter((id): id is string => Boolean(id))),
+    ];
+    const variableValues: Record<string, Record<string, string>> = {};
+    let defaultProfileId: string | null = null;
+    if (variableIds.length > 0) {
+      defaultProfileId =
+        db.get<{ id: string }>(ResolutionQueries.SELECT_DEFAULT_PROFILE_ID)?.id ?? null;
+      const rowsForVariables = db.all<{
+        variableId: string;
+        profileId: string;
+        value: string;
+      }>(
+        `SELECT variableId, profileId, value FROM profile_variables
+         WHERE variableId IN (${placeholders(variableIds.length)})`,
+        variableIds
+      );
+      for (const row of rowsForVariables) {
+        const entry = variableValues[row.variableId] ?? {};
+        entry[row.profileId] = row.value;
+        variableValues[row.variableId] = entry;
+      }
+    }
+
+    return rows.map((row) => {
+      const { value: storedValue, ...rest } = row;
+      return {
+        ...rest,
+        storedValue,
+        value: resolveShortcutValue(
+          { variableId: row.variableId, storedValue },
+          profileId,
+          defaultProfileId,
+          variableValues as Readonly<Record<string, ProfileValueMap>>
+        ),
+      };
+    });
+  }
+
+  /**
+   * 指定したカスタム変数への参照をすべて外す
+   *
+   * @param variableId - 削除されるカスタム変数のID
+   *
+   * @remarks
+   * 実行時に外部キーを強制しないため、宣言した ON DELETE SET NULL は働かない。
+   * 参照を外した値は保存されていた文字列へ戻る（§8.5、§8.24）。
+   */
+  static clearVariableReferences(variableId: string): void {
+    getMainDbAdapter().run(ShortcutValueQueries.CLEAR_VARIABLE_REFERENCE, [
+      getCurrentTimestamp(),
+      variableId,
+    ]);
   }
 
   /**
    * ショートカットを値ごと作成
-   * @param profileId - 所属させるプロファイルID（検証済み）
+   * @param profileIds - 紐づけるプロファイルID（検証済み。空配列は全プロファイル向け）
    * @param name - ショートカット名（検証済み）
    * @param values - 登録する値（検証済み、1件以上）
+   * @param categoryId - 所属カテゴリID（未指定・nullは未分類）
+   * @param basisProfileId - 戻り値の値の参照を解決する基準プロファイルID（nullなら標準プロファイル）
    * @returns 作成されたショートカット
    * @description
-   * ショートカット本体と値の挿入を1トランザクションで行い、
-   * 値だけが残る中途半端な状態を作らない。
+   * ショートカット本体・紐づけ・値の挿入を1トランザクションで行い、
+   * 紐づけや値だけが残る中途半端な状態を作らない。
    */
   static create(
-    profileId: string,
+    profileIds: readonly string[],
     name: string,
-    values: ShortcutValueInput[]
+    values: ShortcutValueInput[],
+    categoryId: string | null = null,
+    basisProfileId: string | null = null
   ): Shortcut {
     const db = getMainDbAdapter();
     /* 一意性を保証するIDとタイムスタンプを生成 */
     const id = generateUniqueId();
     const now = getCurrentTimestamp();
-    /* 同一プロファイル内の最大sortOrder+1を次の並び順として設定（末尾に追加） */
-    const sortOrder = this.getNextSortOrder(profileId);
+    /* 最大sortOrder+1を次の並び順として設定（末尾に追加） */
+    const sortOrder = this.getNextSortOrder();
 
     db.transaction(() => {
-      db.run(ShortcutQueries.INSERT, [id, profileId, name, sortOrder, now, now]);
+      db.run(ShortcutQueries.INSERT, [id, categoryId, name, sortOrder, now, now]);
+      /* 紐づけは中間テーブルへ。空配列なら行を作らず全プロファイル向けになる */
+      this.setProfileIds(id, profileIds);
       values.forEach((value, index) => {
         db.run(ShortcutValueQueries.INSERT, [
           generateUniqueId(),
           id,
           value.name,
           value.value,
+          value.variableId ?? null,
           0,
           index,
           now,
@@ -250,7 +485,7 @@ export class ShortcutMapper {
     });
 
     /* 挿入したデータを再取得して返却（DBから取得することで整合性を確保） */
-    const created = this.getById(id);
+    const created = this.getById(id, basisProfileId);
     if (!created) {
       throw new Error('Failed to create shortcut');
     }
@@ -262,44 +497,49 @@ export class ShortcutMapper {
    * @param id - ショートカットID
    * @param name - 新しいショートカット名（未指定なら既存値を保持）
    * @param values - 新しい値一覧（未指定なら既存値を保持）
-   * @param profileId - 新しい所属プロファイルID（未指定なら既存値を保持）
+   * @param profileIds - 新しい紐づけ（未指定なら既存の紐づけを保持。空配列で全プロファイル向け）
+   * @param categoryId - 新しい所属カテゴリID（未指定なら既存値を保持。nullで未分類へ戻す）
+   * @param basisProfileId - 戻り値の値の参照を解決する基準プロファイルID（nullなら標準プロファイル）
    * @returns 更新されたショートカット
    * @description
    * valuesを指定した場合は差し替え方式で反映する。
    * 入力にidを持つ値は既存行を更新し、持たない値は追加し、
    * 入力に現れなかった既存行は削除する。使用回数は既存行を更新するかぎり保持される。
-   * プロファイルを移す場合は、移動先の末尾へ並ぶよう並び順を採り直す。
-   * 値と使用回数は値行に持つため、移動しても失われない。
+   *
+   * profileIdsを指定した場合は、旧値と比べず常に置き換える（全削除→挿入）。
+   * 値と使用回数は値行に持つため、紐づけを変えても失われない。
+   * 並び順は紐づけによらない通し番号のため、変えても採り直さない。
    */
   static update(
     id: string,
     name?: string,
     values?: ShortcutValueInput[],
-    profileId?: string
+    profileIds?: readonly string[],
+    categoryId?: string | null,
+    basisProfileId: string | null = null
   ): Shortcut {
     const db = getMainDbAdapter();
-    /* 更新対象のショートカットが存在するか確認（存在しない場合はエラー） */
-    const existing = this.getById(id);
+    /* 更新対象のショートカットが存在するか確認（存在しない場合はエラー）。
+       ここで使うのは本体の列と値のIDだけで、解決結果は使わないため基準は問わない */
+    const existing = this.getById(id, null);
     if (!existing) {
       throw new Error(`Shortcut not found: ${id}`);
     }
 
     const now = getCurrentTimestamp();
-    const nextProfileId = profileId !== undefined ? profileId : existing.profileId;
-    const isMovingProfile = nextProfileId !== existing.profileId;
-    /* 移動先では既存の並び順が別の行と衝突しうるため、末尾へ採り直す */
-    const nextSortOrder = isMovingProfile
-      ? this.getNextSortOrder(nextProfileId)
-      : existing.sortOrder;
 
     db.transaction(() => {
       db.run(ShortcutQueries.UPDATE, [
-        nextProfileId,
+        categoryId !== undefined ? categoryId : existing.categoryId,
         name !== undefined ? name : existing.name,
-        nextSortOrder,
+        existing.sortOrder,
         now,
         id,
       ]);
+
+      if (profileIds !== undefined) {
+        this.setProfileIds(id, profileIds);
+      }
 
       if (values !== undefined) {
         this.replaceValues(id, existing.values, values, now);
@@ -307,7 +547,7 @@ export class ShortcutMapper {
     });
 
     /* 更新後のデータを再取得して返却（DBから取得することで整合性を確保） */
-    const updated = this.getById(id);
+    const updated = this.getById(id, basisProfileId);
     if (!updated) {
       throw new Error('Failed to update shortcut');
     }
@@ -318,12 +558,13 @@ export class ShortcutMapper {
    * ショートカットを削除
    * @param id - ショートカットID
    * @description
-   * 実行時の外部キー強制は行わない方針のため、値も明示的に削除する
+   * 実行時の外部キー強制は行わない方針のため、値と紐づけも明示的に削除する
    */
   static delete(id: string): void {
     const db = getMainDbAdapter();
     db.transaction(() => {
       db.run(ShortcutValueQueries.DELETE_BY_SHORTCUT, [id]);
+      db.run(ShortcutProfileQueries.DELETE_BY_SHORTCUT, [id]);
       db.run(ShortcutQueries.DELETE, [id]);
     });
   }
@@ -345,8 +586,8 @@ export class ShortcutMapper {
    * @param valueId - ショートカット値ID
    * @param shortcutId - 所属するショートカットのID
    * @description
-   * 候補推測（値単位）の並べ替えに使う。加算するのは拡張キーボードから値を挿入したときだけで、
-   * アプリ内にショートカットを挿入する画面は無いため、実行時の呼び出し元はネイティブ側にしかない。
+   * 値一覧の並びと、使用頻度順（§8.9）の根拠に使う。
+   * 加算するのはモバイルで値をコピーしたときと、拡張キーボードから値を挿入したときの2か所（§8.12）。
    * ここに置いているのは、iOS版・Android版のMapperが写す正本を1か所に保つためで、
    * TypeScript側からはテストがこの実装を呼んで振る舞いを固定している。
    *
@@ -361,9 +602,9 @@ export class ShortcutMapper {
   }
 
   /**
-   * 指定プロファイルのショートカット数を取得
-   * @param profileId - 所属プロファイルID
-   * @returns ショートカット数
+   * 指定プロファイルから見えるショートカット数を取得
+   * @param profileId - 表示中のプロファイルID
+   * @returns ショートカット数（紐づくもの＋0件で全プロファイル向けのもの）
    */
   static count(profileId: string): number {
     const db = getMainDbAdapter();
@@ -376,18 +617,40 @@ export class ShortcutMapper {
 
   /**
    * 次のsortOrder値を取得（新規ショートカット作成時に使用）
-   * @param profileId - 所属プロファイルID
-   * @returns 同一プロファイル内の最大sortOrder+1（データが存在しない場合は0）
+   * @returns 全ショートカットの最大sortOrder+1（データが存在しない場合は0）
+   *
+   * @remarks
+   * プロファイルを横断した通し番号にしている。表示順は並べ替え（shortcuts/sort.ts）が
+   * 決めるので、通しでも見た目は変わらず、他のマスタ（カテゴリ・プロファイル・変数）とも揃う。
    */
-  static getNextSortOrder(profileId: string): number {
+  static getNextSortOrder(): number {
     const db = getMainDbAdapter();
     /* 現在の最大sortOrderを取得（新規ショートカットを末尾に追加するため） */
-    const result = db.get<{ maxOrder: number | null }>(
-      ShortcutQueries.SELECT_MAX_SORT_ORDER,
-      [profileId]
-    );
+    const result = db.get<{ maxOrder: number | null }>(ShortcutQueries.SELECT_MAX_SORT_ORDER);
     /* 最大値+1を返す（データがない場合は-1+1=0が返る） */
     return (result?.maxOrder ?? -1) + 1;
+  }
+
+  /**
+   * ショートカットの紐づけを指定の一覧へ置き換える
+   *
+   * @param shortcutId - 対象のショートカットID
+   * @param profileIds - 紐づけるプロファイルID（検証済み。空配列は全プロファイル向け）
+   *
+   * @remarks
+   * 呼び出し元のトランザクション内で実行することを前提とする。
+   * 既存の紐づけを全削除してから挿入する（定型文の`SnippetMapper.setProfileIds`と同じ置き換え方式）。
+   * 重複IDは主キー違反になるため、呼び出し側（ShortcutService）で除いてから渡すこと。
+   */
+  private static setProfileIds(shortcutId: string, profileIds: readonly string[]): void {
+    const db = getMainDbAdapter();
+    /* 既存の紐づけを全削除（旧値と比べず、常に入力どおりへ置き換える） */
+    db.run(ShortcutProfileQueries.DELETE_BY_SHORTCUT, [shortcutId]);
+
+    /* 空配列なら紐づけ行を作らない = 全プロファイル向け */
+    for (const profileId of profileIds) {
+      db.run(ShortcutProfileQueries.INSERT, [shortcutId, profileId]);
+    }
   }
 
   /**
@@ -400,12 +663,12 @@ export class ShortcutMapper {
    *
    * @remarks
    * 呼び出し元のトランザクション内で実行することを前提とする。
-   * 全削除・全挿入にすると使用回数が失われ、値単位の候補推測が毎回リセットされるため、
+   * 全削除・全挿入にすると使用回数が失われ、使用頻度順の並びが毎回リセットされるため、
    * idが一致する行は更新して残す。
    */
   private static replaceValues(
     shortcutId: string,
-    existingValues: ShortcutValue[],
+    existingValues: readonly ShortcutValue[],
     inputs: ShortcutValueInput[],
     now: string
   ): void {
@@ -428,6 +691,7 @@ export class ShortcutMapper {
         db.run(ShortcutValueQueries.UPDATE, [
           input.name,
           input.value,
+          input.variableId ?? null,
           index,
           now,
           input.id,
@@ -441,6 +705,7 @@ export class ShortcutMapper {
         shortcutId,
         input.name,
         input.value,
+        input.variableId ?? null,
         0,
         index,
         now,

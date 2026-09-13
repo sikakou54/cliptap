@@ -13,14 +13,22 @@ import { z } from 'zod';
  *
  * @remarks
  * - name: 値を識別する名称（例: 母, 父）。挿入対象ではない
- * - value: 拡張キーボードから実際に挿入する文字列
- * - useCount: 拡張キーボードから挿入した回数。値単位の候補推測に使う
+ * - storedValue: 保存されている文字列そのもの
+ * - variableId: 参照するカスタム変数のID。設定時はstoredValueではなくその変数を解決して挿入する
+ * - value: 表示・挿入に使う解決済みの文字列。参照が無ければstoredValueと同じ
+ * - useCount: 拡張キーボードから挿入した回数。使用頻度順の根拠
  * - sortOrder: 同一ショートカット内での並び順（0始まり）
+ *
+ * `value`を解決結果として持つのは、読み手（一覧・コピー・キーボード）が
+ * 「参照中かどうか」を意識せずに済むようにするため。参照中の値で`storedValue`を
+ * 挿入してしまう取り違えを、型の上で起こしにくくしている。
  */
 export const ShortcutValueSchema = z.object({
   id: z.string(),
   shortcutId: z.string(),
   name: z.string(),
+  storedValue: z.string(),
+  variableId: z.string().nullable(),
   value: z.string(),
   useCount: z.number(),
   sortOrder: z.number(),
@@ -39,11 +47,13 @@ export type ShortcutValue = z.infer<typeof ShortcutValueSchema>;
  * @remarks
  * - idを持つ場合は既存値の更新、持たない場合は新規追加として扱う
  * - useCountとsortOrderは保存時に決まるため入力には含めない
+ * - variableIdを指定した値でもvalueは保存する（参照を外したときに戻せるようにするため）
  */
 export const ShortcutValueInputSchema = z.object({
   id: z.string().optional(),
   name: z.string(),
   value: z.string(),
+  variableId: z.string().nullable().optional(),
 });
 
 /**
@@ -51,20 +61,50 @@ export const ShortcutValueInputSchema = z.object({
  */
 export type ShortcutValueInput = z.infer<typeof ShortcutValueInputSchema>;
 
+/**
+ * ショートカット値の行スキーマ（テーブル1行）
+ *
+ * @remarks
+ * 全復元はバックアップの識別子・日時・使用回数を逐語で書き戻すため、
+ * 解決済みの`value`を持つ`ShortcutValue`ではなくテーブルの行そのものを扱う。
+ * ここでの`value`は保存されている文字列（`ShortcutValue.storedValue`にあたる）。
+ */
+export const ShortcutValueRowSchema = z.object({
+  id: z.string(),
+  shortcutId: z.string(),
+  name: z.string(),
+  value: z.string(),
+  variableId: z.string().nullable(),
+  useCount: z.number(),
+  sortOrder: z.number(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+/**
+ * ショートカット値の行型
+ */
+export type ShortcutValueRow = z.infer<typeof ShortcutValueRowSchema>;
+
 /* ==================== Shortcut ==================== */
 
 /**
  * ショートカットスキーマ
  *
  * @remarks
- * - profileId: 所属するプロファイルID。1ショートカットは必ず1プロファイルに属する
- * - name: ショートカット名（同一プロファイル内で重複不可）。複数の値をまとめるグループ名
+ * - profileIds: 紐づくプロファイルIDの一覧。0件以上で、0件は全プロファイル向け（定型文の`snippet_profiles`と同じ）
+ * - categoryId: 定型文と共通のカテゴリID。nullは未分類
+ * - name: ショートカット名。紐づくいずれかのプロファイル内で重複不可（0件のものは全プロファイルの中で数える）。複数の値をまとめるグループ名
  * - values: 1件以上のショートカット値（sortOrder順）
- * - sortOrder: 同一プロファイル内での並び順（0始まり）
+ * - sortOrder: 並び順（0始まり）。プロファイルを横断した通し番号
+ *
+ * `profileIds`を必須にしているのは、編集画面が一覧の要素を初期値にするため。
+ * 任意にすると詰め忘れが型を通り、保存時に`[]`（全プロファイル向け）へ静かに化けてしまう。
  */
 export const ShortcutSchema = z.object({
   id: z.string(),
-  profileId: z.string(),
+  profileIds: z.array(z.string()),
+  categoryId: z.string().nullable(),
   name: z.string(),
   values: z.array(ShortcutValueSchema),
   sortOrder: z.number(),
@@ -81,13 +121,15 @@ export type Shortcut = z.infer<typeof ShortcutSchema>;
  * ショートカット作成入力スキーマ
  *
  * @remarks
- * - profileId: 必須。呼び出し側はアクティブなプロファイルのIDを渡す
- * - name: 必須（同一プロファイル内で重複チェックされる）
+ * - profileIds: 省略可（省略時は`[]`＝全プロファイル向け）。重複と空文字は保存前に除かれる
+ * - categoryId: 省略可（省略時は未分類）
+ * - name: 必須（紐づけるいずれかのプロファイルに同名があると拒否される。0件で保存するときは全ショートカットと比べる）
  * - values: 1件以上必須。0件では保存できない
  * - sortOrderは自動設定される
  */
 export const CreateShortcutInputSchema = z.object({
-  profileId: z.string(),
+  profileIds: z.array(z.string()).optional(),
+  categoryId: z.string().nullable().optional(),
   name: z.string(),
   values: z.array(ShortcutValueInputSchema),
 });
@@ -103,11 +145,14 @@ export type CreateShortcutInput = z.infer<typeof CreateShortcutInputSchema>;
  * @remarks
  * - valuesは差し替え方式。入力に含まれない既存値は削除される
  * - valuesを省略した場合は既存の値をそのまま残す
- * - profileIdを指定すると所属プロファイルを移す。値と使用回数はそのまま持ち越す
+ * - profileIdsを指定すると紐づけをその一覧へ置き換える（`[]`で全プロファイル向け）。省略した場合は紐づけを変えない。
+ *   値と使用回数はそのまま持ち越す
+ * - categoryIdにnullを渡すと未分類へ戻す。省略した場合は現在のカテゴリを変えない
  */
 export const UpdateShortcutInputSchema = z.object({
   id: z.string(),
-  profileId: z.string().optional(),
+  profileIds: z.array(z.string()).optional(),
+  categoryId: z.string().nullable().optional(),
   name: z.string().optional(),
   values: z.array(ShortcutValueInputSchema).optional(),
 });
@@ -125,10 +170,11 @@ export type UpdateShortcutInput = z.infer<typeof UpdateShortcutInputSchema>;
  * @remarks
  * 全復元はバックアップの識別子と日時を逐語で書き戻すため、
  * 値をぶら下げた`Shortcut`ではなくテーブルの行そのものを扱う。
+ * 紐づくプロファイルは`shortcut_profiles`の行として別に復元する（`ShortcutProfile`）。
  */
 export const ShortcutRowSchema = z.object({
   id: z.string(),
-  profileId: z.string(),
+  categoryId: z.string().nullable(),
   name: z.string(),
   sortOrder: z.number(),
   createdAt: z.string(),
@@ -139,3 +185,22 @@ export const ShortcutRowSchema = z.object({
  * ショートカットの行型
  */
 export type ShortcutRow = z.infer<typeof ShortcutRowSchema>;
+
+/* ==================== ShortcutProfile ==================== */
+
+/**
+ * ショートカット-プロファイル関連スキーマ
+ *
+ * @remarks
+ * - ショートカットと、それを使うプロファイルの紐づけを管理する中間テーブル
+ * - 形も意味も定型文の`SnippetProfile`と同じ。1件のショートカットにつき0件以上。0件は全プロファイル向け
+ */
+export const ShortcutProfileSchema = z.object({
+  shortcutId: z.string(),
+  profileId: z.string(),
+});
+
+/**
+ * ショートカット-プロファイル関連型
+ */
+export type ShortcutProfile = z.infer<typeof ShortcutProfileSchema>;

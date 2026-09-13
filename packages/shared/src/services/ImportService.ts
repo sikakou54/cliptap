@@ -613,6 +613,11 @@ export class ImportService {
         restoreData.systemVariableFormats
       );
       restoreData.shortcuts.forEach((row) => ShortcutMapper.restore(row));
+      /* 紐づけは本体の後に復元する（定型文のsnippetProfilesと同じ理由）。
+         紐づけが0件のショートカットは行を持たないため、そのまま全プロファイル向けとして戻る */
+      restoreData.shortcutProfiles.forEach((row) =>
+        ShortcutMapper.restoreProfileLink(row)
+      );
       restoreData.shortcutValues.forEach((row) => ShortcutMapper.restoreValue(row));
 
       /* 壊れたバックアップに標準・アクティブが無い場合だけ補完する。 */
@@ -627,7 +632,8 @@ export class ImportService {
    * 既存の全データを削除（外部キー制約を考慮した順序）
    *
    * @remarks
-   * 外部キー制約があるため、関連テーブルから先に削除する必要がある
+   * 宣言上の外部キーに合わせて関連テーブルから先に削除する。
+   * 実行時には外部キーを強制していないため、条件なしの全件削除では順序が結果を変えない
    */
   private static clearAllDataForFullRestore(): void {
     const mainDbAdapter = getMainDbAdapter();
@@ -635,11 +641,12 @@ export class ImportService {
     try {
       mainDbAdapter.run('DELETE FROM system_variable_formats');
 
-      /* ショートカットは値（子テーブル）から先に削除する。
-         ショートカット本体はプロファイルに属するため、profiles より先に消す必要がある。
-         実行時に外部キーを強制していないので、順序を崩しても例外にはならず
-         所属先の無い行が静かに残る */
+      /* ショートカットは値・紐づけ（shortcut_profiles）・本体の3表をすべて全件削除する。
+         どれかを消し忘れると、復元後に旧データの行が残り、同じIDの値や紐づけが混ざってしまう。
+         いずれも条件なしの全件削除で、実行時に外部キーも強制していないため順序は結果に影響しない。
+         宣言上の依存（子→親）に合わせて、値・紐づけを本体より先に書いている */
       mainDbAdapter.run('DELETE FROM shortcut_values');
+      mainDbAdapter.run('DELETE FROM shortcut_profiles');
       mainDbAdapter.run('DELETE FROM shortcuts');
 
       /* 外部キー制約を考慮した削除順序 */

@@ -11,7 +11,7 @@
  * - V4 → V5: variables, profilesテーブルにsortOrderカラム追加
  * - V5 → V6: snippetsテーブルにcopyCountカラム追加（使用頻度ソート用）
  * - V6 → V7: システム変数書式設定テーブル追加
- * - V7 → V8: ショートカット・ショートカット値テーブル追加
+ * - V7 → V8: ショートカット・ショートカットプロファイル・ショートカット値テーブル追加
  */
 
 import type { DbAdapter } from '../adapters/DbAdapter';
@@ -673,8 +673,15 @@ export async function migrateV6ToV7(db: DbAdapter): Promise<void> {
  * 既存データは持たないため、初期行は挿入しません。
  * 派生indexは移行後の`finalizeLatestSchema`が作成するため、ここでは作成しません。
  *
- * ショートカットは所属プロファイルID（`profileId`）を持ち、名前は同一プロファイル内で一意です。
- * V8はまだリリースしていないため（`release/prod`はV7）、新しい段を作らずこの段の定義を更新しています。
+ * ショートカットは定型文と共通のカテゴリID（`categoryId`）を持ち、紐づくプロファイルは
+ * `shortcut_profiles`（定型文の`snippet_profiles`と同じ形の中間テーブル）で表します。
+ * 1件のショートカットにつき紐づけは0件以上で、0件は全プロファイル向けです（`snippet_profiles`と同じ）。
+ * 名前は紐づくプロファイル内で一意ですが、紐づけが別テーブルにあるためDB制約では表せず、
+ * 判定もShortcutServiceが行います。
+ *
+ * 値は`shortcut_values.value`に文字列で持ち、`variableId`を設定した値は
+ * カスタム変数を参照して解決します。
+ * V8はまだリリースしていないため（`release/prod`はV5）、新しい段を作らずこの段の定義を更新しています。
  * 同じ理由で、配布中の`apps/web/public/starter_v8_*.cliptap`はファイル名が変わりません。
  * 版据置でDDLを変えたときは404で検知できないため、必ず再生成すること。
  */
@@ -683,6 +690,7 @@ export async function migrateV7ToV8(db: DbAdapter): Promise<void> {
 
   try {
     await db.exec(CREATE_TABLES.shortcuts);
+    await db.exec(CREATE_TABLES.shortcutProfiles);
     await db.exec(CREATE_TABLES.shortcutValues);
     Logger.success('[Migration V7→V8] Migration completed successfully');
   } catch (error) {
@@ -708,6 +716,7 @@ export async function createTablesWithDb(db: DbAdapter): Promise<void> {
     await db.exec(CREATE_TABLES.snippetProfiles);
     await db.exec(CREATE_TABLES.systemVariableFormats);
     await db.exec(CREATE_TABLES.shortcuts);
+    await db.exec(CREATE_TABLES.shortcutProfiles);
     await db.exec(CREATE_TABLES.shortcutValues);
     Logger.info('[Migration] Tables created successfully');
   } catch (error) {

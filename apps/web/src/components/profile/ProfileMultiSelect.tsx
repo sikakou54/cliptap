@@ -56,12 +56,12 @@ export function ProfileMultiSelect({
       {/* ヘッダー（タイトルと選択数） */}
       <div className="flex items-center justify-between mb-2">
         <label className="text-sm font-medium text-gray-700 dark:text-[#A0A0A0]">
-          {t('snippet.select_profiles_title')}
+          {t('profile.select_profiles_title')}
         </label>
         {/* 個別選択されている場合のみ選択数を表示 */}
         {selectedProfileIds.length > 0 && (
           <span className="text-xs text-gray-500 dark:text-[#707070]">
-            {t('snippet.profiles_selected', { count: selectedProfileIds.length })}
+            {t('profile.profiles_selected', { count: selectedProfileIds.length })}
           </span>
         )}
       </div>
@@ -89,7 +89,7 @@ export function ProfileMultiSelect({
                 : 'bg-gray-100 dark:bg-[#2A2A2A] border-gray-200 dark:border-[#333333] text-gray-700 dark:text-[#A0A0A0] hover:bg-gray-200 dark:hover:bg-[#333333]'
             }`}
           >
-            {t('snippet.all_profiles')}
+            {t('profile.all_profiles')}
           </button>
           {/* 個別プロファイルボタン（クリックでトグル） */}
           {profiles.map((profile) => {

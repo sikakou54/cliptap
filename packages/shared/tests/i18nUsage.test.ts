@@ -284,41 +284,18 @@ const USAGE_SCAN_DIRS = [
   'apps/web/src',
 ];
 
-/** テンプレートリテラルで組み立てるキーのパターン */
-interface DynamicKeyPattern {
-  /** 用途（失敗メッセージ用） */
-  readonly description: string;
-  /** このパターンで到達する翻訳キー */
-  readonly keys: RegExp;
-  /** キーを組み立てているソース上の記述 */
-  readonly generator: RegExp;
-}
-
 /**
- * 動的に組み立てられる翻訳キー
+ * コメントを取り除く
  *
  * @remarks
- * これらはキー文字列がソースへそのまま現れないため、リテラル検索では未使用に見える。
- * 生成元の記述自体を検査対象にすることで、生成元が消えたときは
- * 「生成元が存在する」検査が落ちて許可が空振りしないようにしている。
+ * 「組み立ててはいけない」と説明するコメントには、例として組み立ての記述が現れる。
+ * 実装として組み立てているかだけを見たいので、判定前にコメントを落とす。
  */
-const DYNAMIC_KEY_PATTERNS: readonly DynamicKeyPattern[] = [
-  {
-    description: '拡張キーボードの設定手順（プラットフォーム別・手順番号別）',
-    keys: /^subscription\.keyboard_guide_step\d+_(?:ios|android)$/,
-    generator: /`subscription\.keyboard_guide_step\$\{step\}_(?:ios|android)`/,
-  },
-  {
-    description: 'エクスポート・インポート選択画面のタブ見出し',
-    keys: /^backup\.tab_(?:snippets|profiles|variables|categories)$/,
-    generator: /`backup\.tab_\$\{tab\}`/,
-  },
-  {
-    description: '名称重複エラー（エンティティ種別ごと）',
-    keys: /^error\.duplicate_(?:category|profile|variable|shortcut)_name$/,
-    generator: /`error\.duplicate_\$\{entityType\}_name`/,
-  },
-];
+function stripComments(source: string): string {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*\/\/.*$/gm, '');
+}
 
 describe('i18n unused keys', () => {
   const scanned = USAGE_SCAN_DIRS.flatMap((dir) => listSourceFiles(dir));
@@ -338,22 +315,48 @@ describe('i18n unused keys', () => {
   });
 
   it('どこからも参照されていない翻訳キーが残っていない', () => {
-    const unused = enKeys.filter((key) =>
-      !sourceText.includes(key)
-      && !DYNAMIC_KEY_PATTERNS.some((pattern) => pattern.keys.test(key)));
+    /* 翻訳キーはすべて文字列リテラルで書く決まりのため、
+       ソースにそのまま現れないキーは使われていないと判断してよい */
+    const unused = enKeys.filter((key) => !sourceText.includes(key));
 
     expect(unused).toEqual([]);
   });
 
-  it('動的キーの許可パターンは生成元と対象キーの両方を実際に持つ', () => {
-    /* 生成元が消えた許可や、対象キーが消えた許可を空振りのまま残さない */
-    for (const pattern of DYNAMIC_KEY_PATTERNS) {
-      expect(
-        { [pattern.description]: pattern.generator.test(sourceText) },
-      ).toEqual({ [pattern.description]: true });
-      expect(
-        { [pattern.description]: enKeys.some((key) => pattern.keys.test(key)) },
-      ).toEqual({ [pattern.description]: true });
-    }
+  /**
+   * 翻訳キーを組み立てることを禁止する
+   *
+   * @remarks
+   * `t(`snippet.${type}_input`)` のように組み立てると、対応するキーが未定義でも
+   * 型チェックもLintも通り、未定義キー検出テストも「使われている」と見なせないため
+   * 素通りする。画面にキー名がそのまま出て初めて気付くことになる。
+   * 選択肢が閉じているなら、switchや対応表で静的キーへ振り分けること。
+   */
+  it('翻訳キーをテンプレートリテラルで組み立てていない', () => {
+    const offenders = scanned.filter((file) => {
+      const text = stripComments(fs.readFileSync(path.resolve(REPOSITORY_ROOT, file), 'utf8'));
+      /* t(`...${...}...`) の形を探す。キーを組み立てている記述はこれだけ */
+      return /\bt\(\s*`[^`]*\$\{/.test(text);
+    });
+
+    expect(offenders).toEqual([]);
+  });
+
+  /**
+   * 翻訳キーの定数も組み立てないこと
+   *
+   * @remarks
+   * t() へ渡す直前で組み立てなくても、キー文字列を変数で作れば同じ穴が開く。
+   * `error.` や `snippet.` のような名前空間から始まるテンプレートリテラルを禁止する。
+   */
+  it('翻訳キーの文字列を名前空間から組み立てていない', () => {
+    const namespaces = Object.keys(en).join('|');
+    const pattern = new RegExp('`(?:' + namespaces + ')\\.[^`]*\\$\\{');
+
+    const offenders = scanned.filter((file) => {
+      const text = stripComments(fs.readFileSync(path.resolve(REPOSITORY_ROOT, file), 'utf8'));
+      return pattern.test(text);
+    });
+
+    expect(offenders).toEqual([]);
   });
 });

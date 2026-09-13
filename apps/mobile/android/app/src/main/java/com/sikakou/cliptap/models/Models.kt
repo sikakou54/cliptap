@@ -77,7 +77,7 @@ data class ShortcutValue(
     val shortcutId: String,
     val name: String,
     val value: String,
-    val useCount: Int,       /* 拡張キーボードから挿入した回数（値単位の候補推測に使う） */
+    val useCount: Int,       /* 拡張キーボードから挿入した回数（値一覧の並びと、使用頻度順の一覧に使う） */
     val sortOrder: Int,      /* 同一ショートカット内での並び順（0始まり） */
     val createdAt: String,
     val updatedAt: String
@@ -91,7 +91,9 @@ data class ShortcutValue(
  */
 data class Shortcut(
     val id: String,
-    val profileId: String,           /* 所属するプロファイルID（1ショートカットは必ず1プロファイルに属する） */
+    /* 紐づくプロファイル（0件以上。0件は全プロファイル向け）は shortcut_profiles が持つため、この型は持たない。
+       キーボードは取得時に選択中のプロファイルで絞り込むだけで、紐づけそのものを参照しない（iOS版のShortcutと同じ構成） */
+    val categoryId: String?,         /* 所属するカテゴリID（未分類はnull）。カテゴリは定型文と共用 */
     val name: String,
     val values: List<ShortcutValue>, /* 所属する値（sortOrder順） */
     val sortOrder: Int,              /* 一覧での並び順（0始まり） */

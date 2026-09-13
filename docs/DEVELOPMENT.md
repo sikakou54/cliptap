@@ -1138,7 +1138,7 @@ npm run android
 
 ```bash
 # プレビュービルド（iOS/Android）
-npm run preview:mobile
+npm run build:mobile:preview
 
 # EAS Buildの進捗はWebで確認
 # https://expo.dev/accounts/sikakou/projects/cliptap/builds

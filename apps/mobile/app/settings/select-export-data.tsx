@@ -26,7 +26,7 @@ import {
 } from 'react-native';
 import { useTranslation } from '@cliptap/shared'
 import { Ionicons } from '@expo/vector-icons';
-import { type ImportTabType } from '@cliptap/shared';
+import { type ImportTabType, getSelectionTabLabel } from '@cliptap/shared';
 import { useTheme } from '@lib/themeSystem';
 import { commonStyles } from '@lib/styles/commonStyles';
 import { ScreenContainer } from '@components/common/ScreenContainer';
@@ -109,7 +109,7 @@ export default function SelectExportDataScreen() {
               styles.tabText,
               { color: activeTab === tab ? colors.primary : colors.textSecondary }
             ]}>
-              {t(`backup.tab_${tab}`)}
+              {getSelectionTabLabel(tab, t)}
             </Text>
             <Text style={[
               styles.tabCount,

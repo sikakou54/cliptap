@@ -23,8 +23,19 @@ export function KeyboardGuideModal({ visible, onClose }: KeyboardGuideModalProps
   /* テーマ: 色とレスポンシブフォントサイズを取得 */
   const { colors, responsiveFontSizes } = useTheme();
 
-  /* ガイドステップ数（4ステップ固定） */
-  const steps = [1, 2, 3, 4] as const;
+  /**
+   * ガイドの手順（4手順固定）
+   *
+   * 翻訳キーは文字列リテラルで書く。組み立てるとキーの追加漏れを
+   * 未定義キー検出テストも全文検索も捕まえられず、
+   * 画面にキー名がそのまま出るまで気付けない。
+   */
+  const steps = [
+    { number: 1, ios: 'subscription.keyboard_guide_step1_ios', android: 'subscription.keyboard_guide_step1_android' },
+    { number: 2, ios: 'subscription.keyboard_guide_step2_ios', android: 'subscription.keyboard_guide_step2_android' },
+    { number: 3, ios: 'subscription.keyboard_guide_step3_ios', android: 'subscription.keyboard_guide_step3_android' },
+    { number: 4, ios: 'subscription.keyboard_guide_step4_ios', android: 'subscription.keyboard_guide_step4_android' },
+  ] as const;
 
   /* ========================================
      レンダリング
@@ -56,17 +67,14 @@ export function KeyboardGuideModal({ visible, onClose }: KeyboardGuideModalProps
             {/* 各ステップ（1〜4）をmap表示 */}
             {steps.map((step) => (
               /* ガイドステップ */
-              <View key={step} style={styles.guideStep}>
+              <View key={step.number} style={styles.guideStep}>
                 {/* ステップ番号（円形バッジ） */}
                 <View style={[styles.stepNumber, { backgroundColor: colors.primary }]}>
-                  <Text style={[styles.stepNumberText, { color: colors.onPrimary }]}>{step}</Text>
+                  <Text style={[styles.stepNumberText, { color: colors.onPrimary }]}>{step.number}</Text>
                 </View>
                 {/* ステップ説明テキスト（iOS/Android別） */}
                 <Text style={[styles.stepText, { color: colors.text, fontSize: responsiveFontSizes.base }]}>
-                  {t(Platform.OS === 'ios'
-                    ? `subscription.keyboard_guide_step${step}_ios`
-                    : `subscription.keyboard_guide_step${step}_android`
-                  )}
+                  {t(Platform.OS === 'ios' ? step.ios : step.android)}
                 </Text>
               </View>
             ))}

@@ -7,6 +7,7 @@
   <string name="keyboard_sort_created">"作成日時"</string>
   <string name="keyboard_sort_updated">"更新日時"</string>
   <string name="keyboard_sort_title">"タイトル"</string>
+  <string name="keyboard_sort_name">"名前"</string>
   <string name="keyboard_sort_usage">"使用頻度"</string>
   <string name="category_all">"すべて"</string>
   <string name="snippet_empty">"スニペットがありません"</string>

@@ -32,10 +32,13 @@ import {
  */
 export class ShortcutService {
   /**
-   * 指定プロファイルのショートカットを取得
+   * 指定プロファイルから見えるショートカットを取得
    *
-   * @param profileId - 所属プロファイルID
+   * @param profileId - 表示中のプロファイルID
    * @returns ショートカットの配列（sortOrderの昇順でソート済み、値も並び順）
+   *
+   * @remarks
+   * そのプロファイルに紐づくものと、紐づけが0件のもの（全プロファイル向け）を返す。
    */
   static getByProfileId(profileId: string): Shortcut[] {
     return ShortcutMapper.getByProfileId(profileId);
@@ -45,37 +48,33 @@ export class ShortcutService {
    * IDでショートカットを取得
    *
    * @param id - ショートカットのID
+   * @param basisProfileId - 値の参照を解決する基準プロファイルID（nullなら標準プロファイルで解決する）
    * @returns ショートカット（存在しない場合はnull）
-   */
-  static getById(id: string): Shortcut | null {
-    return ShortcutMapper.getById(id);
-  }
-
-  /**
-   * プロファイル内の名前でショートカットを取得
    *
-   * @param profileId - 所属プロファイルID
-   * @param name - ショートカット名
-   * @returns ショートカット（存在しない場合はnull）
+   * @remarks
+   * 複数のプロファイルに紐づく（または0件で全プロファイル向けの）ショートカットは
+   * 本体から解決の基準を決められないため、基準を必須の引数にしている。
+   * 省略可能にすると渡し忘れが型を通り、表示中ではなく標準プロファイルの値が静かに返る。
    */
-  static getByName(profileId: string, name: string): Shortcut | null {
-    return ShortcutMapper.getByName(profileId, name);
+  static getById(id: string, basisProfileId: string | null): Shortcut | null {
+    return ShortcutMapper.getById(id, basisProfileId);
   }
 
   /**
    * ショートカットを作成
    *
    * @param input - 作成するショートカットの情報
+   * @param basisProfileId - 戻り値の値の参照を解決する基準プロファイルID（nullなら標準プロファイル）
    * @returns 作成されたショートカット
    * @throws {EmptyContentError} ショートカット名が空の場合
-   * @throws {DuplicateNameError} 同じプロファイルに同名のショートカットが既に存在する場合
+   * @throws {DuplicateNameError} 紐づけるいずれかのプロファイルで同名のショートカットが見える場合
    * @throws {ShortcutValueRequiredError} 値が1件も無い場合
    * @throws {ShortcutValueNameRequiredError} 値名が空の値がある場合
    *
    * @remarks
-   * 呼び出し側はアクティブなプロファイルのIDを渡す。
+   * profileIdsは0件以上。省略または空配列は全プロファイル向けになる（定型文と同じ）。
    */
-  static create(input: CreateShortcutInput): Shortcut {
+  static create(input: CreateShortcutInput, basisProfileId: string | null = null): Shortcut {
     /* ショートカット名の前後空白をトリム（ユーザー入力の正規化） */
     const trimmedName = input.name.trim();
 
@@ -84,40 +83,52 @@ export class ShortcutService {
       throw new EmptyContentError();
     }
 
-    /* 同じプロファイルに同名のショートカットが既に存在するかチェック（重複防止）。
-       名前の一意性はプロファイル内に限るため、別プロファイルの同名は許す */
-    const existing = ShortcutMapper.getByName(input.profileId, trimmedName);
-    if (existing) {
-      throw new DuplicateNameError('shortcut', trimmedName);
-    }
+    /* 省略は0件（全プロファイル向け）として扱う */
+    const profileIds = this.normalizeProfileIds(input.profileIds ?? []);
+
+    /* 紐づけるいずれかのプロファイルに同名が見えるかチェック（重複防止）。
+       紐づけの重ならないプロファイルの同名は許す */
+    this.assertNameAvailable(trimmedName, profileIds);
 
     const values = this.normalizeValues(input.values);
 
-    /* 検証はService、SQLはMapperに集約する規約のため、検証済みデータをそのままMapperへ渡す */
-    return ShortcutMapper.create(input.profileId, trimmedName, values);
+    /* 検証はService、SQLはMapperに集約する規約のため、検証済みデータをそのままMapperへ渡す。
+       カテゴリは任意のため、未指定は未分類（null）として扱う */
+    return ShortcutMapper.create(
+      profileIds,
+      trimmedName,
+      values,
+      input.categoryId ?? null,
+      basisProfileId
+    );
   }
 
   /**
    * ショートカットを更新
    *
    * @param input - 更新するショートカットの情報
+   * @param basisProfileId - 戻り値の値の参照を解決する基準プロファイルID（nullなら標準プロファイル）
    * @returns 更新されたショートカット
    * @throws {EmptyContentError} ショートカット名が空の場合
-   * @throws {DuplicateNameError} 移動先のプロファイルに同名のショートカットが既に存在する場合（自分以外）
+   * @throws {DuplicateNameError} 保存後に紐づくいずれかのプロファイルで同名のショートカットが見える場合（自分以外）
    * @throws {ShortcutValueRequiredError} 値をすべて削除しようとした場合
    * @throws {ShortcutValueNameRequiredError} 値名が空の値がある場合
    *
    * @remarks
-   * profileIdを指定すると所属プロファイルを移す。値と使用回数はそのまま持ち越す。
+   * profileIdsを指定すると紐づけをその一覧へ置き換える（空配列で全プロファイル向け）。
+   * 省略した場合は紐づけを変えない。値と使用回数はそのまま持ち越す。
+   * categoryIdにnullを渡すと未分類へ戻す。省略した場合は現在のカテゴリを変えない。
    */
-  static update(input: UpdateShortcutInput): Shortcut {
-    /* 更新対象の現在の所属を知らないと、名前の重複をどのプロファイル内で見るかが決まらない */
-    const current = ShortcutMapper.getById(input.id);
+  static update(input: UpdateShortcutInput, basisProfileId: string | null = null): Shortcut {
+    /* 現在の紐づけを知らないと、紐づけを変えない更新で名前の重複をどこで見るかが決まらない。
+       ここで使うのは名前と紐づけだけで、値の解決結果は使わないため基準は問わない */
+    const current = ShortcutMapper.getById(input.id, null);
     if (!current) {
       throw new Error(`Shortcut not found: ${input.id}`);
     }
 
-    const targetProfileId = input.profileId ?? current.profileId;
+    const profileIds =
+      input.profileIds !== undefined ? this.normalizeProfileIds(input.profileIds) : undefined;
     let trimmedName: string | undefined;
 
     /* ショートカット名が指定されている場合はバリデーションと重複チェック */
@@ -130,19 +141,24 @@ export class ShortcutService {
       }
     }
 
-    /* 重複は移動先のプロファイルで見る。名前を変えなくてもプロファイルを移せば
-       移動先に同名がある可能性があるため、名前変更の有無にかかわらず確認する */
+    /* 重複は保存後の紐づけで見る。名前を変えなくても紐づけを広げれば（0件にするのも含む）
+       新たに同名が見えるようになる可能性があるため、名前変更・紐づけ変更の有無にかかわらず常に確認する */
     const nameToCheck = trimmedName ?? current.name;
-    const existing = ShortcutMapper.getByName(targetProfileId, nameToCheck);
-    if (existing && existing.id !== input.id) {
-      throw new DuplicateNameError('shortcut', nameToCheck);
-    }
+    this.assertNameAvailable(nameToCheck, profileIds ?? current.profileIds, input.id);
 
     const values =
       input.values !== undefined ? this.normalizeValues(input.values) : undefined;
 
-    /* 検証はService、SQLはMapperに集約する規約のため、検証済みデータをそのままMapperへ渡す */
-    return ShortcutMapper.update(input.id, trimmedName, values, input.profileId);
+    /* 検証はService、SQLはMapperに集約する規約のため、検証済みデータをそのままMapperへ渡す。
+       profileIds・categoryIdは未指定なら現在の値を変えないため、undefinedのまま渡す */
+    return ShortcutMapper.update(
+      input.id,
+      trimmedName,
+      values,
+      profileIds,
+      input.categoryId,
+      basisProfileId
+    );
   }
 
   /**
@@ -173,8 +189,9 @@ export class ShortcutService {
    * @param shortcutId - 所属するショートカットのID
    *
    * @remarks
-   * 値単位の候補推測の並べ替え根拠になる。加算するのは拡張キーボードから値を挿入したときだけで、
-   * アプリ内にショートカットを挿入する画面は無いため、実行時の呼び出し元はネイティブ側にしかない。
+   * 値一覧の並びと、使用頻度順（§8.9）の根拠になる。
+   * 加算するのはモバイルで値をコピーしたときと、拡張キーボードから値を挿入したときの2か所（§8.12）。
+   * 使用回数は値の行が持つため、どのプロファイルで使ってもまとめて数える。
    * 振る舞いの正本としてここに置き、TypeScript側からはテストが呼んで固定している。
    */
   static recordUse(valueId: string, shortcutId: string): void {
@@ -182,13 +199,53 @@ export class ShortcutService {
   }
 
   /**
-   * 指定プロファイルのショートカット数を取得
+   * 指定プロファイルから見えるショートカット数を取得
    *
-   * @param profileId - 所属プロファイルID
-   * @returns ショートカット数
+   * @param profileId - 表示中のプロファイルID
+   * @returns ショートカット数（紐づくもの＋0件で全プロファイル向けのもの）
    */
   static count(profileId: string): number {
     return ShortcutMapper.count(profileId);
+  }
+
+  /**
+   * その名前を使えるか確かめ、使えなければ例外を投げる
+   *
+   * @param name - 検証するショートカット名（トリム済み）
+   * @param profileIds - 保存後に紐づくプロファイルID（正規化済み。空配列は全プロファイル向け）
+   * @param excludeId - 判定から除くショートカットID（更新時に自分自身を除くため）
+   * @throws {DuplicateNameError} 同名が使えない場合
+   *
+   * @remarks
+   * 選んだプロファイルのいずれかで同名が見えるなら拒否する。紐づけの重ならない同名は許す。
+   * 0件のショートカットは全プロファイルから見えるため、既存が0件なら常に衝突し、
+   * 0件で保存するなら同名すべてと衝突する（判定はShortcutMapper.findConflictingName）。
+   * DB側に一意制約を置けない（紐づけが別テーブルのため）ので、この検査が唯一の担保になる。
+   */
+  private static assertNameAvailable(
+    name: string,
+    profileIds: readonly string[],
+    excludeId?: string
+  ): void {
+    if (ShortcutMapper.findConflictingName(name, profileIds, excludeId)) {
+      throw new DuplicateNameError('shortcut', name);
+    }
+  }
+
+  /**
+   * 紐づけるプロファイルIDを保存できる形へ正規化する
+   *
+   * @param profileIds - 画面から渡されたプロファイルID
+   * @returns 重複と空文字を除いたプロファイルID（元の並び順を保つ）
+   *
+   * @remarks
+   * 重複は紐づけテーブルの主キー違反になる。
+   * 空文字はどのプロファイルとも一致せず、どこからも見えない紐づけになる
+   * （0件ではないため全プロファイル向けにもならない）。
+   * 選択画面の戻り値を`split(',')`した`['']`がそのまま届く経路があるため、ここで除く。
+   */
+  private static normalizeProfileIds(profileIds: readonly string[]): string[] {
+    return [...new Set(profileIds.filter((profileId) => profileId !== ''))];
   }
 
   /**
@@ -202,12 +259,16 @@ export class ShortcutService {
    * @remarks
    * 値名は一覧での識別に使うため必須とする。
    * 挿入する値そのものは空文字を許容する（空文字の挿入を選ぶ利用者の意図を壊さない）。
+   *
+   * カスタム変数を参照している値でも、入力された文字列はそのまま保存する。
+   * 参照を外したときに、参照前に入れていた文字列へ戻せるようにするため。
    */
   private static normalizeValues(inputs: ShortcutValueInput[]): ShortcutValueInput[] {
     const normalized = inputs.map((input) => ({
       id: input.id,
       name: input.name.trim(),
       value: input.value.trim(),
+      variableId: input.variableId ?? null,
     }));
 
     /* 値が1件も無いショートカットは拡張キーボードから何も挿入できないため拒否する */
