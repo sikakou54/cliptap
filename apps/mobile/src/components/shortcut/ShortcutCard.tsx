@@ -9,9 +9,9 @@
  * 画面を埋めてしまい、一覧として見渡せなくなる。
  * 定型文カードが本文を2行で畳むのと同じ考え方で、既定では数件だけを見せる。
  *
- * 【行全体ではなく編集アイコンで編集へ進む理由】
+ * 【行全体ではなく「・・・」メニューから編集へ進む理由】
  * カードの中に「タップでコピー」する値の行があるため、カード全体もタップ対象にすると
- * どちらが起きるのか押す前に分からない。編集は明示的なアイコンに寄せる。
+ * どちらが起きるのか押す前に分からない。編集と削除は右上の「・・・」メニューに寄せる。
  *
  * @see apps/mobile/src/components/snippet/SnippetCard.tsx - 定型文側の同じ役割のコンポーネント
  * @see apps/mobile/src/components/shortcut/ShortcutList.tsx - 使用元
@@ -24,6 +24,7 @@ import { useTranslation } from '@cliptap/shared';
 import { useTheme } from '@lib/themeSystem';
 import { type Category, type Shortcut, type ShortcutValue } from '@cliptap/shared';
 import { CategoryBadge } from '@components/category/CategoryBadge';
+import { ItemActionMenu } from '@components/common/ItemActionMenu';
 import { ShortcutValueRow } from '@components/shortcut/ShortcutValueRow';
 import { UI_CONSTANTS } from '@constants/ui';
 
@@ -44,8 +45,8 @@ const COLLAPSED_VALUE_COUNT = 2;
  * @property shortcut - 表示するショートカット
  * @property category - 所属カテゴリ（未分類ならnull）
  * @property onCopyValue - 値がタップされたときのコールバック（クリップボードへコピー）
- * @property onEdit - 編集ボタンが押されたときのコールバック
- * @property onDelete - 削除ボタンが押されたときのコールバック
+ * @property onEdit - メニューで「編集」が選ばれたときのコールバック
+ * @property onDelete - メニューで「削除」が選ばれたときのコールバック（確認ダイアログは呼び出し側が出す）
  * @property isLast - 一覧の最後の項目か（区切り線を引くかの判定に使う）
  */
 interface ShortcutCardProps {
@@ -89,30 +90,38 @@ function ShortcutCardComponent({
         !isLast && { borderBottomWidth: UI_CONSTANTS.BORDER_WIDTH.THIN, borderBottomColor: colors.border },
       ]}
     >
-      {/* メインコンテンツエリア。下端は操作ボタンの領域を空ける */}
+      {/* メインコンテンツエリア。下端の開閉ボタンを出すときだけ、その領域を空ける */}
       <View
         style={[
           styles.mainContent,
-          {
-            padding: responsive.card.padding,
-            paddingBottom: 60,
-          },
+          { padding: responsive.card.padding },
+          hasHiddenValues && { paddingBottom: 60 },
         ]}
       >
-        {/* ショートカット名 */}
-        <Text
-          style={[
-            styles.name,
-            {
-              color: colors.text,
-              fontSize: responsiveFontSizes.base,
-            },
-          ]}
-          numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.SINGLE}
-          ellipsizeMode="tail"
-        >
-          {shortcut.name}
-        </Text>
+        {/* 名前の行。ショートカット名と、右端の「・・・」メニュー */}
+        <View style={styles.nameRow}>
+          {/* ショートカット名 */}
+          <Text
+            style={[
+              styles.name,
+              {
+                color: colors.text,
+                fontSize: responsiveFontSizes.base,
+              },
+            ]}
+            numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.SINGLE}
+            ellipsizeMode="tail"
+          >
+            {shortcut.name}
+          </Text>
+
+          {/* 「・・・」メニュー（編集・削除） */}
+          <ItemActionMenu
+            itemName={shortcut.name}
+            onEdit={() => onEdit(shortcut)}
+            onDelete={() => onDelete(shortcut)}
+          />
+        </View>
 
         {/* カテゴリバッジ */}
         {category !== null && (
@@ -149,33 +158,6 @@ function ShortcutCardComponent({
           />
         </TouchableOpacity>
       )}
-
-      {/* アクションボタン */}
-      <View style={styles.actionButtons}>
-        <TouchableOpacity
-          style={[
-            styles.roundButton,
-            { borderColor: colors.border },
-          ]}
-          onPress={() => onDelete(shortcut)}
-          accessibilityRole="button"
-          accessibilityLabel={t('common.delete')}
-        >
-          <Ionicons name="trash-outline" size={isTablet ? 22 : 18} color={colors.error} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.roundButton,
-            { borderColor: colors.border },
-          ]}
-          onPress={() => onEdit(shortcut)}
-          accessibilityRole="button"
-          accessibilityLabel={t('shortcut.edit')}
-        >
-          <Ionicons name="create-outline" size={isTablet ? 22 : 18} color={colors.text} />
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
@@ -206,7 +188,14 @@ const styles = StyleSheet.create({
   mainContent: {
     gap: UI_CONSTANTS.GAP.SM,
   },
+  /* 名前と「・・・」メニューを横に並べる（定型文カード SnippetCard.titleRow と同じ間隔） */
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: UI_CONSTANTS.GAP.LG,
+  },
   name: {
+    flex: 1,
     fontWeight: UI_CONSTANTS.FONT_WEIGHT.SEMIBOLD,
   },
   categoryBadgeContainer: {
@@ -216,13 +205,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: UI_CONSTANTS.GAP.MD,
     bottom: UI_CONSTANTS.GAP.MD,
-  },
-  actionButtons: {
-    position: 'absolute',
-    right: UI_CONSTANTS.GAP.MD,
-    bottom: UI_CONSTANTS.GAP.MD,
-    flexDirection: 'row',
-    gap: UI_CONSTANTS.GAP.SM,
   },
   /* 定型文カードの操作ボタン（SnippetCard.roundButton）と同じ寸法に揃える */
   roundButton: {

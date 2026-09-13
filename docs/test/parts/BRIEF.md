@@ -61,8 +61,17 @@ TAP  label=\uF5B1     入出力    TAP  label=\uF5F6     削除
 TAP  label=\uF105     追加      TAP  label=\uF293     編集
 ```
 
-対応表は `.claude/skills/full-test/reference/icons.md`（アプリで使う32個）。
+対応表は `.claude/skills/full-test/reference/icons.md`（アプリで使う33個）。
 同じアイコンが複数あるときだけ順序指定を足す（例 `label=\uF293&visible=true[0]`）。
+
+定型文・ショートカットの一覧カードの編集・削除はアイコンではない。
+カード右上の「・・・」（ラベル「<項目名>のその他の操作」）でメニューを開き、`label=編集` / `label=削除` を押す。
+
+```
+TAP  label=<名前>のその他の操作                  名前でカードを指定（画面外なら先に SCROLL_TO）
+TAP  label~=のその他の操作&visible=true[0]      画面内で先頭のカード
+TAP  label=編集
+```
 
 **書いたロケータは実機で一致件数を確認すること。**
 

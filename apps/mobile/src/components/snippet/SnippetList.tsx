@@ -28,8 +28,8 @@ import { Category } from '@cliptap/shared';
  * SnippetListのProps
  * @property snippets - 表示するスニペット配列
  * @property onPress - スニペットタップ時のコールバック（コピー処理）
- * @property onEdit - 編集ボタンタップ時のコールバック
- * @property onDelete - 削除ボタンタップ時のコールバック
+ * @property onEdit - カードのメニューで「編集」が選ばれたときのコールバック
+ * @property onDelete - カードのメニューで「削除」が選ばれ、確認ダイアログでOKされたときのコールバック
  * @property onPressTitle - タイトルタップ時のコールバック（タイトルのみコピー、省略可）
  * @property refreshing - プルリフレッシュ中フラグ（省略可、デフォルト: false）
  * @property onRefresh - プルリフレッシュ時のコールバック（省略可）

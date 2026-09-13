@@ -32,8 +32,8 @@ import { ShortcutCard } from '@components/shortcut/ShortcutCard';
  * @property shortcuts - 表示するショートカット一覧（表示順）
  * @property categories - カテゴリバッジの解決に使う全カテゴリ
  * @property onCopyValue - 値がタップされたときのコールバック（クリップボードへコピー）
- * @property onEdit - 編集ボタンが押されたときのコールバック
- * @property onDelete - 削除ボタンが押されたときのコールバック
+ * @property onEdit - カードのメニューで「編集」が選ばれたときのコールバック
+ * @property onDelete - カードのメニューで「削除」が選ばれたときのコールバック（確認ダイアログは呼び出し側が出す）
  * @property onRefresh - 引き下げ更新のコールバック
  */
 interface ShortcutListProps {

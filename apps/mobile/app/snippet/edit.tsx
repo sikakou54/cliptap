@@ -14,7 +14,7 @@
  * - タイトル付きコピー設定
  *
  * @navigation
- * - メイン画面の定型文をスワイプ→編集 → /snippet/edit?id=xxx
+ * - ホーム・検索の定型文カードの「・・・」メニュー→編集 → /snippet/edit?id=xxx
  *
  * @see components/snippet/SnippetFormScreen.tsx - 共通フォームコンポーネント
  * @see app/snippet/create.tsx - 新規作成画面

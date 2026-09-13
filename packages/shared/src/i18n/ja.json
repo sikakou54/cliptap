@@ -21,6 +21,7 @@
     "unsaved_changes_warning": "入力途中のデータがあります。破棄してもよろしいですか？",
     "closeModal": "モーダルを閉じる",
     "open_menu": "メニューを開く",
+    "more_actions": "{{name}}のその他の操作",
     "search": "検索"
   },
   "snippet": {

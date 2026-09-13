@@ -23,8 +23,8 @@ import { UI_CONSTANTS } from '@constants/ui';
  * useSnippetCardのProps
  * @property snippet - 表示するスニペットデータ
  * @property onPress - タップ時のコールバック
- * @property onEdit - 編集ボタンタップ時のコールバック
- * @property onDelete - 削除ボタンタップ時のコールバック
+ * @property onEdit - メニューで「編集」が選ばれたときのコールバック
+ * @property onDelete - メニューで「削除」が選ばれ、確認ダイアログでOKされたときのコールバック
  * @property categoryProp - 親から渡されるカテゴリ
  */
 export interface UseSnippetCardProps {
@@ -49,7 +49,8 @@ export interface UseSnippetCardReturn {
   canCopyTitle: boolean;
   isExpanded: boolean;
   category: Category | null;
-  displayTitle: string | null;
+  /* タイトルがない定型文は「(タイトルなし)」になるため、常に文字列 */
+  displayTitle: string;
   displayContent: string | null;
 
   /* ハンドラ */
@@ -176,7 +177,7 @@ export function useSnippetCard({
   }, [onPressTitle, canCopyTitle, isCopyingTitle, snippet]);
 
   /**
-   * 削除ボタン押下時の処理
+   * メニューで削除が選ばれたときの処理（確認ダイアログを出し、OKなら削除する）
    */
   const handleDelete = useCallback(() => {
     showConfirm(
@@ -188,7 +189,7 @@ export function useSnippetCard({
   }, [t, onDelete, snippet]);
 
   /**
-   * 編集ボタン押下時の処理
+   * メニューで編集が選ばれたときの処理
    */
   const handleEdit = useCallback(() => {
     onEdit(snippet);

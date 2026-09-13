@@ -1,7 +1,8 @@
 # アイコンボタンの指定方法
 
-ClipTapのアイコンボタンは `accessibilityLabel` を持たない。
+ClipTapのアイコンボタンの多くは `accessibilityLabel` を持たない。
 しかし**ラベルが空なわけではない**。Ioniconsのグリフ文字がそのままAXラベルになる。
+（`accessibilityLabel` を持つボタンはグリフがAXラベルに出ないため、下の「ラベルを持つボタン」のとおりラベルで指定する）
 
 ```
 [AXGenericElement] label="" @1498,187   ← 実体は U+F56C（settings-outline）
@@ -27,10 +28,24 @@ TAP  label=\\uF127          戻る（arrow-back）
 同じアイコンが画面に複数あるときは、順序指定や位置で絞る。
 
 ```
-label=\\uF5F6&visible=true[0]     1件目の削除アイコン
+label=\\uF5F6&visible=true[0]     画面内で1件目の削除アイコン（カテゴリ管理など）
 ```
 
-## アプリで使われているアイコン（32件）
+## ラベルを持つボタン
+
+定型文・ショートカットの一覧カード右上の「・・・」（`ellipsis-horizontal`）は、
+読み上げラベル「<項目名>のその他の操作」を持つ。編集・削除はこのボタンでメニューを開いてから選ぶ。
+
+```
+TAP  label=値3件ショートカットのその他の操作     名前でカードを指定して開く
+TAP  label~=のその他の操作&visible=true[0]      画面内で先頭のカードを開く
+TAP  label=編集                                  開いたメニューの項目（削除は label=削除）
+```
+
+- ボタンはタイトルと同じ行にあるため、`TAP_NEAR`（基準より下にある対象）では拾えない。ラベルで直接指定する。
+- 役割（role）は付けていないため、`role=AXButton&has=label`（定型文タイトルの並び）には含まれない。
+
+## アプリで使われているアイコン（33件）
 
 出典は `node_modules/@expo/vector-icons` のIoniconsグリフマップ。
 アイコン名は `apps/mobile` のソースから抽出した。
@@ -51,6 +66,7 @@ label=\\uF5F6&visible=true[0]     1件目の削除アイコン
 | `code-slash-outline` | `\\uF26F` |
 | `create-outline` | `\\uF293` |
 | `diamond` | `\\uF2A1` |
+| `ellipsis-horizontal` | `\\uF2CE` |
 | `information-circle-outline` | `\\uF399` |
 | `keypad` | `\\uF3A6` |
 | `keypad-outline` | `\\uF3A7` |

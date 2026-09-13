@@ -186,7 +186,7 @@ export function useSearchShortcuts(params: UseSearchShortcutsParams): UseSearchS
   /**
    * ショートカット編集画面へ遷移
    *
-   * ホームの一覧と同じく、編集アイコンから編集へ進む。
+   * ホームの一覧と同じく、カード右上の「・・・」メニューから編集へ進む。
    */
   const handleEditShortcut = useCallback(
     (shortcut: Shortcut) => {

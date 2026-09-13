@@ -21,6 +21,7 @@
     "unsaved_changes_warning": "You have unsaved changes. Are you sure you want to discard them?",
     "closeModal": "Close modal",
     "open_menu": "Open menu",
+    "more_actions": "More actions for {{name}}",
     "search": "Search"
   },
   "snippet": {

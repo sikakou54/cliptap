@@ -1,0 +1,440 @@
+TestID,PatternID,StepNo,Action,Result,Expected,Actual,Evidence,ExecutedAt
+TC-0027,P-F02-027,1,TAP,PASS,先頭の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:10:56.700Z
+TC-0027,P-F02-027,2,TAP,PASS,定型文カードのメニューの「編集」のタップが受け付けられる,"tap 1557,322 hold=60ms",,2026-09-13T16:10:58.339Z
+TC-0027,P-F02-027,3,ASSERT_SCREEN,PASS,定型文編集画面が表示される,SC-SNIPPET-EDIT を確認,,2026-09-13T16:10:59.737Z
+TC-0027,P-F02-027,4,ASSERT_SCREEN_HAS,PASS,タイトルが保存済みの値で表示される,含む,,2026-09-13T16:11:01.106Z
+TC-0027,P-F02-027,5,ASSERT_SCREEN_HAS,PASS,本文が未展開のまま保存済みの値で表示される,含む,,2026-09-13T16:11:02.501Z
+TC-0027,P-F02-027,6,ASSERT_SCREEN_HAS,PASS,カテゴリ 仕事 が表示される,含む,,2026-09-13T16:11:03.900Z
+TC-0027,P-F02-027,7,ASSERT_SCREEN_HAS,PASS,対象プロファイル0件のためプレースホルダーが表示される,含む,,2026-09-13T16:11:05.206Z
+TC-0028,P-F02-028,1,TAP,PASS,先頭の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:11:20.668Z
+TC-0028,P-F02-028,2,TAP,PASS,定型文カードのメニューの「編集」のタップが受け付けられる,"tap 1557,322 hold=60ms",,2026-09-13T16:11:22.260Z
+TC-0028,P-F02-028,3,TAP,PASS,本文欄のタップが受け付けられる,"tap 1478,318 hold=60ms",,2026-09-13T16:11:24.037Z
+TC-0028,P-F02-028,4,PASTE_RAW,PASS,入力欄の末尾へ 追記 が入力される,pasted: 追記,,2026-09-13T16:11:26.080Z
+TC-0028,P-F02-028,5,TAP,PASS,完了ボタンのタップが受け付けられる,"tap 1623,198 hold=60ms",,2026-09-13T16:11:27.931Z
+TC-0028,P-F02-028,6,TAP,PASS,保存ボタンのタップが受け付けられる,"tap 1623,189 hold=60ms",,2026-09-13T16:11:29.707Z
+TC-0028,P-F02-028,7,ASSERT_DB,PASS,本文が更新されている,"""{{client_name}} 宛の本文。追記""",,2026-09-13T16:11:30.469Z
+TC-0028,P-F02-028,8,ASSERT_DB,PASS,更新日時が変わっている,"""CHANGED""",,2026-09-13T16:11:31.218Z
+TC-0028,P-F02-028,9,ASSERT_DB,PASS,作成日時は変わらない,"""2026-02-01T00:00:00.000Z""",,2026-09-13T16:11:31.984Z
+TC-0034,P-F02-034,1,TAP,PASS,先頭の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:11:49.654Z
+TC-0034,P-F02-034,2,TAP,PASS,定型文カードのメニューの「編集」のタップが受け付けられる,"tap 1557,322 hold=60ms",,2026-09-13T16:11:51.274Z
+TC-0034,P-F02-034,3,TAP,PASS,タイトル欄のタップが受け付けられる,"tap 1478,248 hold=60ms",,2026-09-13T16:11:52.987Z
+TC-0034,P-F02-034,4,PASTE_RAW,PASS,入力欄の末尾へ 変更 が入力される,pasted: 変更,,2026-09-13T16:11:54.645Z
+TC-0034,P-F02-034,5,TAP,PASS,完了ボタンのタップが受け付けられる,"tap 1623,198 hold=60ms",,2026-09-13T16:11:56.367Z
+TC-0034,P-F02-034,6,TAP,PASS,閉じるボタンのタップが受け付けられる,"tap 1333,189 hold=60ms",,2026-09-13T16:11:58.145Z
+TC-0034,P-F02-034,7,ASSERT_SCREEN,PASS,ホーム画面が表示される,SC-HOME を確認,,2026-09-13T16:11:59.555Z
+TC-0034,P-F02-034,8,ASSERT_DB,PASS,タイトルが変わっていない,"""唯一の定型文""",,2026-09-13T16:12:00.349Z
+TC-0035,P-F02-035,1,ASSERT_DB,PASS,snippetsテーブルが5件である,"""5""",,2026-09-13T16:12:14.135Z
+TC-0035,P-F02-035,2,TAP,PASS,先頭の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:12:16.158Z
+TC-0035,P-F02-035,3,TAP,PASS,先頭カードのメニューの「削除」のタップが受け付けられる,"tap 1557,360 hold=60ms",,2026-09-13T16:12:17.829Z
+TC-0035,P-F02-035,4,ASSERT_SCREEN_HAS,PASS,削除確認メッセージが表示される,含む,,2026-09-13T16:12:19.165Z
+TC-0035,P-F02-035,5,TAP,PASS,OKのタップが受け付けられる,"tap 1544,526 hold=60ms",,2026-09-13T16:12:20.815Z
+TC-0035,P-F02-035,6,ASSERT_DB,PASS,snippetsテーブルが4件になる,"""4""",,2026-09-13T16:12:21.597Z
+TC-0035,P-F02-035,7,ASSERT_DB,PASS,削除対象の行が無くなる,"""0""",,2026-09-13T16:12:22.354Z
+TC-0035,P-F02-035,8,ASSERT_DB,PASS,categoriesは3件のままである,"""3""",,2026-09-13T16:12:23.130Z
+TC-0035,P-F02-035,9,ASSERT_DB,PASS,profilesは3件のままである,"""3""",,2026-09-13T16:12:23.884Z
+TC-0035,P-F02-035,10,ASSERT_DB,PASS,variablesは3件のままである,"""3""",,2026-09-13T16:12:24.659Z
+TC-0035,P-F02-035,11,ASSERT_SCREEN_LACKS,PASS,削除した定型文が一覧から消える,無い,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-0035-11-deleted.png,2026-09-13T16:12:26.469Z
+TC-0036,P-F02-036,1,TAP,PASS,先頭の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:12:43.760Z
+TC-0036,P-F02-036,2,TAP,PASS,先頭カードのメニューの「削除」のタップが受け付けられる,"tap 1557,360 hold=60ms",,2026-09-13T16:12:45.421Z
+TC-0036,P-F02-036,3,ASSERT_SCREEN_HAS,PASS,削除確認メッセージが表示される,含む,,2026-09-13T16:12:46.724Z
+TC-0036,P-F02-036,4,TAP,PASS,キャンセルのタップが受け付けられる,"tap 1413,526 hold=60ms",,2026-09-13T16:12:48.378Z
+TC-0036,P-F02-036,5,ASSERT_DB,PASS,snippetsテーブルは5件のままである,"""5""",,2026-09-13T16:12:49.135Z
+TC-0036,P-F02-036,6,ASSERT_SCREEN_HAS,PASS,対象の定型文が一覧に残る,含む,,2026-09-13T16:12:50.655Z
+TC-0037,P-F02-037,1,TAP,PASS,先頭の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:13:05.998Z
+TC-0037,P-F02-037,2,TAP,PASS,定型文カードのメニューの「編集」のタップが受け付けられる,"tap 1557,322 hold=60ms",,2026-09-13T16:13:07.554Z
+TC-0037,P-F02-037,3,TAP,PASS,タイトル欄のタップが受け付けられる,"tap 1478,248 hold=60ms",,2026-09-13T16:13:09.349Z
+TC-0037,P-F02-037,4,PASTE_RAW,PASS,入力欄の末尾へ 改 が入力される,pasted: 改,,2026-09-13T16:13:10.937Z
+TC-0037,P-F02-037,5,TAP,PASS,完了ボタンのタップが受け付けられる,"tap 1623,198 hold=60ms",,2026-09-13T16:13:12.746Z
+TC-0037,P-F02-037,6,TAP,PASS,保存ボタンのタップが受け付けられる,"tap 1623,189 hold=60ms",,2026-09-13T16:13:14.547Z
+TC-0037,P-F02-037,7,ASSERT_SCREEN,PASS,ホーム画面へ戻る,SC-HOME を確認,,2026-09-13T16:13:15.952Z
+TC-0037,P-F02-037,8,ASSERT_DB,PASS,タイトルが更新されている,"""唯一の定型文改""",,2026-09-13T16:13:16.735Z
+TC-0037,P-F02-037,9,ASSERT_SCREEN_HAS,PASS,一覧のタイトルが更新後の値になる,含む,,2026-09-13T16:13:18.113Z
+TC-0038,P-F02-038,1,TAP,PASS,ホームの検索アイコンのタップが受け付けられる,"tap 1581,187 hold=60ms",,2026-09-13T16:13:34.820Z
+TC-0038,P-F02-038,2,ASSERT_SCREEN,PASS,検索画面が表示される,SC-SEARCH を確認,,2026-09-13T16:13:36.274Z
+TC-0038,P-F02-038,3,TAP,PASS,先頭の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,250 hold=60ms",,2026-09-13T16:13:38.037Z
+TC-0038,P-F02-038,4,TAP,FAIL,検索結果カードのメニューの「編集」のタップが受け付けられる,"要素が見つかりません: label=編集&visible=true （一致件数 0）
+ERROR: 要素が見つかりません: label=編集&visible=true",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-0038-4-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-0038-4-FAIL.txt,2026-09-13T16:13:40.610Z
+TC-0038,P-F02-038,5,ASSERT_SCREEN,SKIPPED,定型文編集画面が表示される,前のステップが失敗したため未実行,,2026-09-13T16:13:41.216Z
+TC-0038,P-F02-038,6,TAP,SKIPPED,タイトル欄のタップが受け付けられる,前のステップが失敗したため未実行,,2026-09-13T16:13:41.216Z
+TC-0038,P-F02-038,7,PASTE_RAW,SKIPPED,入力欄の末尾へ 改 が入力される,前のステップが失敗したため未実行,,2026-09-13T16:13:41.216Z
+TC-0038,P-F02-038,8,TAP,SKIPPED,完了ボタンのタップが受け付けられる,前のステップが失敗したため未実行,,2026-09-13T16:13:41.216Z
+TC-0038,P-F02-038,9,TAP,SKIPPED,保存ボタンのタップが受け付けられる,前のステップが失敗したため未実行,,2026-09-13T16:13:41.216Z
+TC-0038,P-F02-038,10,ASSERT_SCREEN,SKIPPED,検索画面へ戻る,前のステップが失敗したため未実行,,2026-09-13T16:13:41.216Z
+TC-0038,P-F02-038,11,ASSERT_DB,SKIPPED,タイトルが更新されている,前のステップが失敗したため未実行,,2026-09-13T16:13:41.216Z
+TC-0039,P-F02-039,1,TAP,PASS,ホームの検索アイコンのタップが受け付けられる,"tap 1581,187 hold=60ms",,2026-09-13T16:13:57.205Z
+TC-0039,P-F02-039,2,TAP,PASS,先頭の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,250 hold=60ms",,2026-09-13T16:13:59.024Z
+TC-0039,P-F02-039,3,TAP,FAIL,検索結果カードのメニューの「編集」のタップが受け付けられる,"要素が見つかりません: label=編集&visible=true （一致件数 0）
+ERROR: 要素が見つかりません: label=編集&visible=true",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-0039-3-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-0039-3-FAIL.txt,2026-09-13T16:14:01.591Z
+TC-0039,P-F02-039,4,ASSERT_SCREEN,SKIPPED,定型文編集画面が表示される,前のステップが失敗したため未実行,,2026-09-13T16:14:02.197Z
+TC-0039,P-F02-039,5,TAP,SKIPPED,閉じるボタンのタップが受け付けられる,前のステップが失敗したため未実行,,2026-09-13T16:14:02.197Z
+TC-0039,P-F02-039,6,ASSERT_SCREEN,SKIPPED,検索画面へ戻る,前のステップが失敗したため未実行,,2026-09-13T16:14:02.197Z
+TC-0039,P-F02-039,7,ASSERT_DB,SKIPPED,タイトルが変わっていない,前のステップが失敗したため未実行,,2026-09-13T16:14:02.197Z
+TC-0362,P-F02-059,1,ASSERT_DB,PASS,snippetsテーブルが200件である,"""200""",,2026-09-13T16:14:16.396Z
+TC-0362,P-F02-059,2,TAP,PASS,2番目の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,456 hold=60ms",,2026-09-13T16:14:18.647Z
+TC-0362,P-F02-059,3,TAP,PASS,2番目のカード（定型文002）のメニューの「編集」のタップが受け付けられる,"tap 1557,493 hold=60ms",,2026-09-13T16:14:20.286Z
+TC-0362,P-F02-059,4,ASSERT_SCREEN,PASS,定型文編集画面が表示される,SC-SNIPPET-EDIT を確認,,2026-09-13T16:14:21.705Z
+TC-0362,P-F02-059,5,TAP,PASS,タイトル欄のタップが受け付けられる,"tap 1478,248 hold=60ms",,2026-09-13T16:14:23.463Z
+TC-0362,P-F02-059,6,ASSERT_SCREEN,PASS,タイトル入力画面が表示される,SC-SNIPPET-TITLE-INPUT を確認,,2026-09-13T16:14:24.876Z
+TC-0362,P-F02-059,7,CLEAR_TEXT,PASS,タイトル入力欄が空になる,deleted x20,,2026-09-13T16:14:30.622Z
+TC-0362,P-F02-059,8,PASTE_RAW,PASS,入力欄へ 定型文002改訂 が入力される,pasted: 定型文002改訂,,2026-09-13T16:14:32.322Z
+TC-0362,P-F02-059,9,TAP,PASS,完了ボタンのタップが受け付けられる,"tap 1623,198 hold=60ms",,2026-09-13T16:14:34.066Z
+TC-0362,P-F02-059,10,TAP,PASS,保存ボタンのタップが受け付けられる,"tap 1623,189 hold=60ms",,2026-09-13T16:14:35.788Z
+TC-0362,P-F02-059,11,ASSERT_SCREEN,PASS,ホーム画面へ戻る,SC-HOME を確認,,2026-09-13T16:14:37.415Z
+TC-0362,P-F02-059,12,ASSERT_SCREEN_LACKS,PASS,定型文の上限メッセージが表示されない,無い,,2026-09-13T16:14:39.044Z
+TC-0362,P-F02-059,13,ASSERT_DB,PASS,snippetsテーブルは200件のままである,"""200""",,2026-09-13T16:14:39.818Z
+TC-0362,P-F02-059,14,ASSERT_DB,PASS,sn_002のタイトルが 定型文002改訂 に更新されている,"""定型文002改訂""",,2026-09-13T16:14:40.591Z
+TC-0362,P-F02-059,15,ASSERT_VISIBLE,PASS,ホーム一覧に 定型文002改訂 が表示される,見えている（1462 456）,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-0362-15-snippet-edit-over-limit.png,2026-09-13T16:14:42.547Z
+TC-0365,P-F02-062,1,ASSERT_DB,PASS,snippetsテーブルが200件である,"""200""",,2026-09-13T16:14:56.664Z
+TC-0365,P-F02-062,2,ASSERT_VISIBLE,PASS,先頭カードに 定型文001 が表示される,見えている（1462 285）,,2026-09-13T16:14:58.877Z
+TC-0365,P-F02-062,3,TAP,PASS,先頭の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:15:01.070Z
+TC-0365,P-F02-062,4,TAP,PASS,先頭カードのメニューの「削除」のタップが受け付けられる,"tap 1557,360 hold=60ms",,2026-09-13T16:15:02.741Z
+TC-0365,P-F02-062,5,ASSERT_SCREEN_HAS,PASS,削除確認メッセージが表示される,含む,,2026-09-13T16:15:04.080Z
+TC-0365,P-F02-062,6,TAP,PASS,OKのタップが受け付けられる,"tap 1544,526 hold=60ms",,2026-09-13T16:15:05.729Z
+TC-0365,P-F02-062,7,ASSERT_DB,PASS,snippetsテーブルが199件になる,"""199""",,2026-09-13T16:15:06.485Z
+TC-0365,P-F02-062,8,ASSERT_DB,PASS,削除した sn_001 の行が無くなる,"""0""",,2026-09-13T16:15:07.259Z
+TC-0365,P-F02-062,9,ASSERT_NOT_VISIBLE,PASS,削除した 定型文001 がホーム一覧から消える,見えていない,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-0365-9-snippet-delete-over-limit.png,2026-09-13T16:15:09.226Z
+TC-0366,P-F02-063,1,ASSERT_DB,PASS,snippetsテーブルが50件である,"""50""",,2026-09-13T16:15:22.923Z
+TC-0366,P-F02-063,2,TAP,PASS,先頭の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:15:25.120Z
+TC-0366,P-F02-063,3,TAP,PASS,先頭カードのメニューの「削除」のタップが受け付けられる,"tap 1557,360 hold=60ms",,2026-09-13T16:15:26.786Z
+TC-0366,P-F02-063,4,ASSERT_SCREEN_HAS,PASS,削除確認メッセージが表示される,含む,,2026-09-13T16:15:28.127Z
+TC-0366,P-F02-063,5,TAP,PASS,OKのタップが受け付けられる,"tap 1544,526 hold=60ms",,2026-09-13T16:15:29.758Z
+TC-0366,P-F02-063,6,ASSERT_DB,PASS,snippetsテーブルが49件になる,"""49""",,2026-09-13T16:15:30.531Z
+TC-0366,P-F02-063,7,TAP,PASS,ホームの追加アイコンのタップが受け付けられる,"tap 1624,187 hold=60ms",,2026-09-13T16:15:32.744Z
+TC-0366,P-F02-063,8,ASSERT_SCREEN,PASS,上限案内が出ずに定型文作成画面が表示される,SC-SNIPPET-CREATE を確認,,2026-09-13T16:15:34.149Z
+TC-0366,P-F02-063,9,ASSERT_SCREEN_LACKS,PASS,定型文の上限メッセージが表示されない,無い,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-0366-9-snippet-limit-after-delete.png,2026-09-13T16:15:35.874Z
+TC-0375,P-F24-014,1,ASSERT_DB,PASS,shortcutsテーブルが60件である,"""60""",,2026-09-13T16:15:50.117Z
+TC-0375,P-F24-014,2,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T16:15:51.926Z
+TC-0375,P-F24-014,3,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T16:15:53.556Z
+TC-0375,P-F24-014,4,SCROLL_TO,PASS,ショートカット60の「・・・」が画面内に入る,safe after 0 scroll(s),,2026-09-13T16:15:55.163Z
+TC-0375,P-F24-014,5,TAP,PASS,ショートカット60の「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:15:57.218Z
+TC-0375,P-F24-014,6,TAP,PASS,ショートカット60のメニューの「編集」のタップが受け付けられる,"tap 1557,322 hold=60ms",,2026-09-13T16:15:58.890Z
+TC-0375,P-F24-014,7,ASSERT_SCREEN,PASS,ショートカット作成・編集画面が表示される,SC-SHORTCUT-EDIT を確認,,2026-09-13T16:16:00.323Z
+TC-0375,P-F24-014,8,ASSERT_VISIBLE,PASS,見出しが ショートカットを編集 である,見えている（1477 189）,,2026-09-13T16:16:01.740Z
+TC-0375,P-F24-014,9,CLEAR_TEXT,PASS,ショートカット名の入力欄が空になる,deleted x30,,2026-09-13T16:16:08.940Z
+TC-0375,P-F24-014,10,PASTE_RAW,PASS,ショートカット名に 名前変更テスト が入力される,pasted: 名前変更テスト,,2026-09-13T16:16:10.605Z
+TC-0375,P-F24-014,11,TAP,PASS,保存ボタンのタップが受け付けられる,"tap 1623,189 hold=60ms",,2026-09-13T16:16:12.432Z
+TC-0375,P-F24-014,12,ASSERT_SCREEN,PASS,ホーム画面へ戻る,SC-HOME を確認,,2026-09-13T16:16:14.018Z
+TC-0375,P-F24-014,13,ASSERT_SCREEN_LACKS,PASS,ショートカットの上限メッセージが表示されない,無い,,2026-09-13T16:16:15.594Z
+TC-0375,P-F24-014,14,ASSERT_DB,PASS,shortcutsテーブルは60件のままである,"""60""",,2026-09-13T16:16:16.370Z
+TC-0375,P-F24-014,15,ASSERT_DB,PASS,sc_60_60の名前が 名前変更テスト に更新されている,"""名前変更テスト""",,2026-09-13T16:16:17.145Z
+TC-0375,P-F24-014,16,ASSERT_VISIBLE,PASS,ショートカット一覧に 名前変更テスト が表示される,見えている（1462 285）,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-0375-16-shortcut-edit-over-limit.png,2026-09-13T16:16:19.057Z
+TC-0378,P-F24-017,1,ASSERT_DB,PASS,shortcutsテーブルが60件である,"""60""",,2026-09-13T16:16:32.921Z
+TC-0378,P-F24-017,2,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T16:16:34.659Z
+TC-0378,P-F24-017,3,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T16:16:36.250Z
+TC-0378,P-F24-017,4,SCROLL_TO,PASS,ショートカット60の「・・・」が画面内に入る,safe after 0 scroll(s),,2026-09-13T16:16:37.792Z
+TC-0378,P-F24-017,5,TAP,PASS,ショートカット60の「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:16:39.960Z
+TC-0378,P-F24-017,6,TAP,PASS,ショートカット60のメニューの「削除」のタップが受け付けられる,"tap 1557,360 hold=60ms",,2026-09-13T16:16:41.607Z
+TC-0378,P-F24-017,7,ASSERT_SCREEN_HAS,PASS,削除確認メッセージが表示される,含む,,2026-09-13T16:16:42.943Z
+TC-0378,P-F24-017,8,TAP,PASS,OKのタップが受け付けられる,"tap 1544,564 hold=60ms",,2026-09-13T16:16:44.590Z
+TC-0378,P-F24-017,9,ASSERT_DB,PASS,shortcutsテーブルが59件になる,"""59""",,2026-09-13T16:16:45.440Z
+TC-0378,P-F24-017,10,ASSERT_DB,PASS,削除したショートカットの値も削除される,"""0""",,2026-09-13T16:16:46.214Z
+TC-0378,P-F24-017,11,ASSERT_NOT_VISIBLE,PASS,削除した ショートカット60 が一覧から消える,見えていない,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-0378-11-shortcut-delete-over-limit.png,2026-09-13T16:16:48.116Z
+TC-0379,P-F24-018,1,ASSERT_DB,PASS,shortcutsテーブルが10件である,"""10""",,2026-09-13T16:17:02.201Z
+TC-0379,P-F24-018,2,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T16:17:04.024Z
+TC-0379,P-F24-018,3,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T16:17:05.516Z
+TC-0379,P-F24-018,4,SCROLL_TO,PASS,Mainショートカット02の「・・・」が画面内に入る,safe after 0 scroll(s),,2026-09-13T16:17:06.954Z
+TC-0379,P-F24-018,5,TAP,PASS,Mainショートカット02の「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:17:08.736Z
+TC-0379,P-F24-018,6,TAP,PASS,Mainショートカット02のメニューの「削除」のタップが受け付けられる,"tap 1557,360 hold=60ms",,2026-09-13T16:17:10.415Z
+TC-0379,P-F24-018,7,ASSERT_SCREEN_HAS,PASS,削除確認メッセージが表示される,含む,,2026-09-13T16:17:11.755Z
+TC-0379,P-F24-018,8,TAP,PASS,OKのタップが受け付けられる,"tap 1544,564 hold=60ms",,2026-09-13T16:17:13.386Z
+TC-0379,P-F24-018,9,ASSERT_DB,PASS,shortcutsテーブルが9件になる,"""9""",,2026-09-13T16:17:14.159Z
+TC-0379,P-F24-018,10,TAP,PASS,ホームの追加アイコンのタップが受け付けられる,"tap 1624,187 hold=60ms",,2026-09-13T16:17:16.053Z
+TC-0379,P-F24-018,11,ASSERT_SCREEN,PASS,上限案内が出ずにショートカット作成画面が表示される,SC-SHORTCUT-EDIT を確認,,2026-09-13T16:17:17.396Z
+TC-0379,P-F24-018,12,ASSERT_SCREEN_LACKS,PASS,ショートカットの上限メッセージが表示されない,無い,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-0379-12-shortcut-limit-after-delete.png,2026-09-13T16:17:19.054Z
+TC-0381,P-F24-021,1,ASSERT_DB,PASS,値2件ショートカットの値が2件である,"""2""",,2026-09-13T16:17:33.317Z
+TC-0381,P-F24-021,2,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T16:17:35.125Z
+TC-0381,P-F24-021,3,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T16:17:36.515Z
+TC-0381,P-F24-021,4,SCROLL_TO,PASS,値2件ショートカットの「・・・」が画面内に入る,safe after 0 scroll(s),,2026-09-13T16:17:37.889Z
+TC-0381,P-F24-021,5,TAP,PASS,値2件ショートカットの「・・・」のタップでメニューが開く,"tap 1618,493 hold=60ms",,2026-09-13T16:17:39.731Z
+TC-0381,P-F24-021,6,TAP,PASS,値2件ショートカットのメニューの「編集」のタップが受け付けられる,"tap 1557,530 hold=60ms",,2026-09-13T16:17:41.395Z
+TC-0381,P-F24-021,7,ASSERT_SCREEN,PASS,ショートカット作成・編集画面が表示される,SC-SHORTCUT-EDIT を確認,,2026-09-13T16:17:42.801Z
+TC-0381,P-F24-021,8,TAP,PASS,値を追加のタップが受け付けられる,"tap 1478,691 hold=60ms",,2026-09-13T16:17:44.576Z
+TC-0381,P-F24-021,9,ASSERT_SCREEN_HAS,PASS,値の上限メッセージが表示される,含む,,2026-09-13T16:17:45.920Z
+TC-0381,P-F24-021,10,TAP,PASS,OKのタップが受け付けられる,"tap 1544,555 hold=60ms",,2026-09-13T16:17:47.567Z
+TC-0381,P-F24-021,11,ASSERT_SCREEN,PASS,Paywall画面が表示される,SC-SUBSCRIPTION-PAYWALL を確認,,2026-09-13T16:17:49.875Z
+TC-0381,P-F24-021,12,ASSERT_DB,PASS,値2件ショートカットの値は2件のままである,"""2""",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-0381-12-paywall-from-shortcut-value-limit.png,2026-09-13T16:17:50.941Z
+TC-0382,P-F24-022,1,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T16:18:06.234Z
+TC-0382,P-F24-022,2,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T16:18:07.698Z
+TC-0382,P-F24-022,3,SCROLL_TO,PASS,値2件ショートカットの「・・・」が画面内に入る,safe after 0 scroll(s),,2026-09-13T16:18:09.119Z
+TC-0382,P-F24-022,4,TAP,PASS,値2件ショートカットの「・・・」のタップでメニューが開く,"tap 1618,493 hold=60ms",,2026-09-13T16:18:10.967Z
+TC-0382,P-F24-022,5,TAP,PASS,値2件ショートカットのメニューの「編集」のタップが受け付けられる,"tap 1557,530 hold=60ms",,2026-09-13T16:18:12.636Z
+TC-0382,P-F24-022,6,ASSERT_SCREEN,PASS,ショートカット作成・編集画面が表示される,SC-SHORTCUT-EDIT を確認,,2026-09-13T16:18:14.079Z
+TC-0382,P-F24-022,7,TAP,PASS,値を追加のタップが受け付けられる,"tap 1478,691 hold=60ms",,2026-09-13T16:18:15.855Z
+TC-0382,P-F24-022,8,ASSERT_SCREEN_HAS,PASS,値の上限メッセージが表示される,含む,,2026-09-13T16:18:17.203Z
+TC-0382,P-F24-022,9,TAP,PASS,キャンセルのタップが受け付けられる,"tap 1413,555 hold=60ms",,2026-09-13T16:18:18.830Z
+TC-0382,P-F24-022,10,ASSERT_SCREEN,PASS,ショートカット作成・編集画面に留まる,SC-SHORTCUT-EDIT を確認,,2026-09-13T16:18:20.219Z
+TC-0382,P-F24-022,11,ASSERT_NOT_VISIBLE,PASS,ショートカット値編集画面の値名欄が表示されない,見えていない,,2026-09-13T16:18:21.629Z
+TC-0382,P-F24-022,12,ASSERT_SCREEN_LACKS,PASS,Paywallの見出しが表示されない,無い,,2026-09-13T16:18:23.033Z
+TC-0382,P-F24-022,13,ASSERT_DB,PASS,値2件ショートカットの値は2件のままである,"""2""",,2026-09-13T16:18:23.838Z
+TC-0383,P-F24-023,1,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T16:18:39.200Z
+TC-0383,P-F24-023,2,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T16:18:40.596Z
+TC-0383,P-F24-023,3,SCROLL_TO,PASS,値2件ショートカットの「・・・」が画面内に入る,safe after 0 scroll(s),,2026-09-13T16:18:42.031Z
+TC-0383,P-F24-023,4,TAP,PASS,値2件ショートカットの「・・・」のタップでメニューが開く,"tap 1618,493 hold=60ms",,2026-09-13T16:18:43.907Z
+TC-0383,P-F24-023,5,TAP,PASS,値2件ショートカットのメニューの「編集」のタップが受け付けられる,"tap 1557,530 hold=60ms",,2026-09-13T16:18:45.547Z
+TC-0383,P-F24-023,6,ASSERT_SCREEN,PASS,ショートカット作成・編集画面が表示される,SC-SHORTCUT-EDIT を確認,,2026-09-13T16:18:46.987Z
+TC-0383,P-F24-023,7,TAP,PASS,値を追加のタップが受け付けられる,"tap 1478,691 hold=60ms",,2026-09-13T16:18:48.771Z
+TC-0383,P-F24-023,8,ASSERT_SCREEN,PASS,上限案内が出ずにショートカット値編集画面が表示される,SC-SHORTCUT-VALUE-EDIT を確認,,2026-09-13T16:18:50.212Z
+TC-0383,P-F24-023,9,PASTE_RAW,PASS,値名に 値名A3 が入力される,pasted: 値名A3,,2026-09-13T16:18:52.113Z
+TC-0383,P-F24-023,10,TAP,PASS,値の入力欄のタップが受け付けられる,"tap 1478,369 hold=60ms",,2026-09-13T16:18:53.897Z
+TC-0383,P-F24-023,11,ASSERT_SCREEN,PASS,ショートカットの値入力画面が表示される,SC-SHORTCUT-VALUE-TEXT-EDIT を確認,,2026-09-13T16:18:56.799Z
+TC-0383,P-F24-023,12,PASTE_RAW,PASS,値に 値A3 が入力される,pasted: 値A3,,2026-09-13T16:18:58.385Z
+TC-0383,P-F24-023,13,TAP,PASS,値入力画面の完了ボタンのタップが受け付けられる,"tap 1623,198 hold=60ms",,2026-09-13T16:19:00.063Z
+TC-0383,P-F24-023,14,TAP,PASS,値編集画面の完了ボタンのタップが受け付けられる,"tap 1623,198 hold=60ms",,2026-09-13T16:19:01.815Z
+TC-0383,P-F24-023,15,ASSERT_VISIBLE,PASS,値の一覧に 値名A3 の行が表示される,見えている（1478 703）,,2026-09-13T16:19:03.232Z
+TC-0383,P-F24-023,16,ASSERT_SCREEN_LACKS,PASS,値の上限メッセージが表示されない,無い,,2026-09-13T16:19:04.553Z
+TC-0383,P-F24-023,17,TAP,PASS,保存ボタンのタップが受け付けられる,"tap 1623,189 hold=60ms",,2026-09-13T16:19:06.337Z
+TC-0383,P-F24-023,18,ASSERT_SCREEN,PASS,ホーム画面へ戻る,SC-HOME を確認,,2026-09-13T16:19:07.775Z
+TC-0383,P-F24-023,19,ASSERT_DB,PASS,値2件ショートカットの値が3件になる,"""3""",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-0383-19-pro-shortcut-values-3.png,2026-09-13T16:19:08.852Z
+TC-0384,P-F24-024,1,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T16:19:24.047Z
+TC-0384,P-F24-024,2,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T16:19:25.527Z
+TC-0384,P-F24-024,3,SCROLL_TO,PASS,値3件ショートカットの「・・・」が画面内に入る,safe after 0 scroll(s),,2026-09-13T16:19:26.950Z
+TC-0384,P-F24-024,4,TAP,PASS,値3件ショートカットの「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:19:28.811Z
+TC-0384,P-F24-024,5,TAP,PASS,値3件ショートカットのメニューの「編集」のタップが受け付けられる,"tap 1557,322 hold=60ms",,2026-09-13T16:19:30.427Z
+TC-0384,P-F24-024,6,ASSERT_SCREEN,PASS,ショートカット作成・編集画面が表示される,SC-SHORTCUT-EDIT を確認,,2026-09-13T16:19:31.875Z
+TC-0384,P-F24-024,7,CLEAR_TEXT,PASS,ショートカット名の入力欄が空になる,deleted x30,,2026-09-13T16:19:39.139Z
+TC-0384,P-F24-024,8,PASTE_RAW,PASS,ショートカット名に 値3件名前変更 が入力される,pasted: 値3件名前変更,,2026-09-13T16:19:40.831Z
+TC-0384,P-F24-024,9,TAP,PASS,保存ボタンのタップが受け付けられる,"tap 1623,189 hold=60ms",,2026-09-13T16:19:42.706Z
+TC-0384,P-F24-024,10,ASSERT_SCREEN,PASS,ホーム画面へ戻る,SC-HOME を確認,,2026-09-13T16:19:44.138Z
+TC-0384,P-F24-024,11,ASSERT_SCREEN_LACKS,PASS,値の上限メッセージが表示されない,無い,,2026-09-13T16:19:45.565Z
+TC-0384,P-F24-024,12,ASSERT_DB,PASS,sc_v3の名前が 値3件名前変更 に更新されている,"""値3件名前変更""",,2026-09-13T16:19:46.350Z
+TC-0384,P-F24-024,13,ASSERT_DB,PASS,sc_v3の値は3件のままである,"""3""",,2026-09-13T16:19:47.125Z
+TC-0384,P-F24-024,14,ASSERT_VISIBLE,PASS,ショートカット一覧に 値3件名前変更 が表示される,見えている（1462 285）,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-0384-14-shortcut-values-over-limit-edit.png,2026-09-13T16:19:48.893Z
+TC-0385,P-F24-025,1,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T16:20:03.952Z
+TC-0385,P-F24-025,2,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T16:20:05.395Z
+TC-0385,P-F24-025,3,SCROLL_TO,PASS,値3件ショートカットの「・・・」が画面内に入る,safe after 0 scroll(s),,2026-09-13T16:20:06.788Z
+TC-0385,P-F24-025,4,TAP,PASS,値3件ショートカットの「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:20:08.648Z
+TC-0385,P-F24-025,5,TAP,PASS,値3件ショートカットのメニューの「編集」のタップが受け付けられる,"tap 1557,322 hold=60ms",,2026-09-13T16:20:10.316Z
+TC-0385,P-F24-025,6,ASSERT_SCREEN,PASS,ショートカット作成・編集画面が表示される,SC-SHORTCUT-EDIT を確認,,2026-09-13T16:20:11.760Z
+TC-0385,P-F24-025,7,TAP,PASS,値を追加のタップが受け付けられる,"tap 1478,760 hold=60ms",,2026-09-13T16:20:13.508Z
+TC-0385,P-F24-025,8,ASSERT_SCREEN_HAS,PASS,上限を超えて値を持つショートカットでも値の上限メッセージが表示される,含む,,2026-09-13T16:20:14.846Z
+TC-0385,P-F24-025,9,TAP,PASS,キャンセルのタップが受け付けられる,"tap 1413,555 hold=60ms",,2026-09-13T16:20:16.476Z
+TC-0385,P-F24-025,10,ASSERT_NOT_VISIBLE,PASS,ショートカット値編集画面の値名欄が表示されない,見えていない,,2026-09-13T16:20:17.884Z
+TC-0385,P-F24-025,11,ASSERT_DB,PASS,sc_v3の値は3件のままである,"""3""",,2026-09-13T16:20:18.667Z
+TC-0386,P-F24-026,1,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T16:20:33.921Z
+TC-0386,P-F24-026,2,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T16:20:35.377Z
+TC-0386,P-F24-026,3,SCROLL_TO,PASS,値3件ショートカットの「・・・」が画面内に入る,safe after 0 scroll(s),,2026-09-13T16:20:36.751Z
+TC-0386,P-F24-026,4,TAP,PASS,値3件ショートカットの「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:20:38.620Z
+TC-0386,P-F24-026,5,TAP,PASS,値3件ショートカットのメニューの「編集」のタップが受け付けられる,"tap 1557,322 hold=60ms",,2026-09-13T16:20:40.291Z
+TC-0386,P-F24-026,6,ASSERT_SCREEN,PASS,ショートカット作成・編集画面が表示される,SC-SHORTCUT-EDIT を確認,,2026-09-13T16:20:41.712Z
+TC-0386,P-F24-026,7,TAP_IN,PASS,値名B3の行の右端にある削除アイコンが押される,"tap 1624,703 hold=60ms",,2026-09-13T16:20:43.422Z
+TC-0386,P-F24-026,8,ASSERT_SCREEN_HAS,PASS,値の削除確認メッセージが表示される,含む,,2026-09-13T16:20:44.779Z
+TC-0386,P-F24-026,9,TAP,PASS,OKのタップが受け付けられる,"tap 1544,526 hold=60ms",,2026-09-13T16:20:46.422Z
+TC-0386,P-F24-026,10,ASSERT_NOT_VISIBLE,PASS,値の一覧から 値名B3 の行が消える,見えていない,,2026-09-13T16:20:47.841Z
+TC-0386,P-F24-026,11,TAP,PASS,保存ボタンのタップが受け付けられる,"tap 1623,189 hold=60ms",,2026-09-13T16:20:49.628Z
+TC-0386,P-F24-026,12,ASSERT_SCREEN,PASS,ホーム画面へ戻る,SC-HOME を確認,,2026-09-13T16:20:51.056Z
+TC-0386,P-F24-026,13,ASSERT_SCREEN_LACKS,PASS,値の上限メッセージが表示されない,無い,,2026-09-13T16:20:52.487Z
+TC-0386,P-F24-026,14,ASSERT_DB,PASS,sc_v3の値が2件になる,"""2""",,2026-09-13T16:20:53.272Z
+TC-0386,P-F24-026,15,ASSERT_DB,PASS,削除した値名B3の行が無くなる,"""0""",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-0386-15-shortcut-values-over-limit-delete.png,2026-09-13T16:20:54.329Z
+TC-0387,P-F24-027,1,ASSERT_CLIPBOARD,PASS,クリップボードの初期値が INITIAL である,"""INITIAL""",,2026-09-13T16:21:08.935Z
+TC-0387,P-F24-027,2,TAP,PASS,ホームの切替トグルのタップが受け付けられる,"tap 1491,187 hold=60ms",,2026-09-13T16:21:10.744Z
+TC-0387,P-F24-027,3,ASSERT_VISIBLE,PASS,切替トグルのラベルが 定型文を表示 に変わる,見えている（1491 187）,,2026-09-13T16:21:12.212Z
+TC-0387,P-F24-027,4,ASSERT_SCREEN_LACKS,PASS,ショートカット一覧に「無効」の表示が無い,無い,,2026-09-13T16:21:13.652Z
+TC-0387,P-F24-027,5,ASSERT_VISIBLE,PASS,値3件ショートカットの2件目の値が表示される,見えている（1478 394）,,2026-09-13T16:21:15.097Z
+TC-0387,P-F24-027,6,ASSERT_NOT_VISIBLE,PASS,畳まれた3件目の値は表示されない,見えていない,,2026-09-13T16:21:16.557Z
+TC-0387,P-F24-027,7,TAP_NEAR,PASS,値3件ショートカットの展開ボタンのタップが受け付けられる,"tap 1340,444 hold=60ms",,2026-09-13T16:21:20.546Z
+TC-0387,P-F24-027,8,ASSERT_VISIBLE,PASS,展開すると3件目の値が表示される,見えている（1478 439）,,2026-09-13T16:21:21.999Z
+TC-0387,P-F24-027,9,TAP,PASS,3件目の値 値名B3 のタップが受け付けられる,"tap 1478,439 hold=60ms",,2026-09-13T16:21:23.852Z
+TC-0387,P-F24-027,10,WAIT,PASS,コピー処理の完了を待つ,waited 800ms,,2026-09-13T16:21:25.260Z
+TC-0387,P-F24-027,11,ASSERT_CLIPBOARD,PASS,クリップボードが 値B3 と完全一致する,"""値B3""",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-0387-11-clipboard.png,2026-09-13T16:21:26.418Z
+TC-1000,P-F06-001;P-F06-004;P-F06-005;P-F06-006;P-F06-007;P-F06-022,1,ASSERT_CLIPBOARD,PASS,クリップボードの初期値が CLIP-INIT である,"""CLIP-INIT""",,2026-09-13T16:21:41.342Z
+TC-1000,P-F06-001;P-F06-004;P-F06-005;P-F06-006;P-F06-007;P-F06-022,2,ASSERT_SCREEN,PASS,ホーム画面が表示されている,SC-HOME を確認,,2026-09-13T16:21:42.965Z
+TC-1000,P-F06-001;P-F06-004;P-F06-005;P-F06-006;P-F06-007;P-F06-022,3,ASSERT_ORDER,FAIL,一覧の上から A 日付系 / B 時刻系 の順に並ぶ,"0番目が不一致: 期待 ""A 日付系"" / 実際 ""ショートカットを表示""（一致件数 6）",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-1000-3-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-1000-3-FAIL.txt,2026-09-13T16:21:45.795Z
+TC-1000,P-F06-001;P-F06-004;P-F06-005;P-F06-006;P-F06-007;P-F06-022,4,ASSERT_SCREEN_HAS,SKIPPED,一覧の本文が ${TODAY:yyyy/MM/dd}|${TODAY:yyyy}|${TODAY:MM}|${TODAY:dd}|${TODAY:EEE} と表示される,前のステップが失敗したため未実行,,2026-09-13T16:21:46.400Z
+TC-1000,P-F06-001;P-F06-004;P-F06-005;P-F06-006;P-F06-007;P-F06-022,5,TAP,SKIPPED,1番目のカードのコピーボタンが押される,前のステップが失敗したため未実行,,2026-09-13T16:21:46.400Z
+TC-1000,P-F06-001;P-F06-004;P-F06-005;P-F06-006;P-F06-007;P-F06-022,6,WAIT,SKIPPED,コピー処理の完了を待つ,前のステップが失敗したため未実行,,2026-09-13T16:21:46.400Z
+TC-1000,P-F06-001;P-F06-004;P-F06-005;P-F06-006;P-F06-007;P-F06-022,7,ASSERT_CLIPBOARD,SKIPPED,クリップボードが ${TODAY:yyyy/MM/dd}|${TODAY:yyyy}|${TODAY:MM}|${TODAY:dd}|${TODAY:EEE} と完全一致する,前のステップが失敗したため未実行,,2026-09-13T16:21:46.400Z
+TC-1015,P-F06-032,1,ASSERT_CLIPBOARD,PASS,クリップボードの初期値が CLIP-INIT である,"""CLIP-INIT""",,2026-09-13T16:22:00.702Z
+TC-1015,P-F06-032,2,ASSERT_SCREEN,PASS,ホーム画面が表示される,SC-HOME を確認,,2026-09-13T16:22:02.342Z
+TC-1015,P-F06-032,3,ASSERT_ORDER,FAIL,一覧の1番目が G 繰り返し である,"0番目が不一致: 期待 ""G 繰り返し"" / 実際 ""ショートカットを表示""（一致件数 5）",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-1015-3-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-1015-3-FAIL.txt,2026-09-13T16:22:05.142Z
+TC-1015,P-F06-032,4,ASSERT_SCREEN_HAS,SKIPPED,一覧の本文に カスタム変数 stamp の値がそのまま表示され {{today}} がトークンのまま残る,前のステップが失敗したため未実行,,2026-09-13T16:22:05.745Z
+TC-1015,P-F06-032,5,ASSERT_SCREEN_LACKS,SKIPPED,カスタム変数の値に含まれる {{today}} が日付へ置換された文字列は画面内に存在しない,前のステップが失敗したため未実行,,2026-09-13T16:22:05.745Z
+TC-1015,P-F06-032,6,TAP_NEAR,SKIPPED,定型文「H 入れ子」のコピーボタンのタップが受け付けられる,前のステップが失敗したため未実行,,2026-09-13T16:22:05.745Z
+TC-1015,P-F06-032,7,WAIT,SKIPPED,コピー処理の完了を待つ,前のステップが失敗したため未実行,,2026-09-13T16:22:05.745Z
+TC-1015,P-F06-032,8,ASSERT_CLIPBOARD,SKIPPED,クリップボードが 本日は{{today}}です と完全一致する,前のステップが失敗したため未実行,,2026-09-13T16:22:05.745Z
+TC-1015,P-F06-032,9,ASSERT_DB,SKIPPED,sv_nested の本文が {{stamp}} のまま変わらない,前のステップが失敗したため未実行,,2026-09-13T16:22:05.745Z
+TC-1200,P-F10-001;P-F10-002,1,ASSERT_SCREEN,PASS,ホーム画面が表示されている,SC-HOME を確認,,2026-09-13T16:22:21.373Z
+TC-1200,P-F10-001;P-F10-002,2,TAP,PASS,先頭の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:22:23.397Z
+TC-1200,P-F10-001;P-F10-002,3,TAP,PASS,定型文編集画面が開く,"tap 1557,322 hold=60ms",,2026-09-13T16:22:25.028Z
+TC-1200,P-F10-001;P-F10-002,4,ASSERT_SCREEN,PASS,定型文編集画面が表示されている,SC-SNIPPET-EDIT を確認,,2026-09-13T16:22:26.475Z
+TC-1200,P-F10-001;P-F10-002,5,WAIT,PASS,プレビューの生成を待つ,waited 1000ms,,2026-09-13T16:22:28.082Z
+TC-1200,P-F10-001;P-F10-002,6,ASSERT_SCREEN_HAS,PASS,プレビューにMainの変数値で置換された本文が表示される,含む,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-1200-6-preview.png,2026-09-13T16:22:29.913Z
+TC-1200,P-F10-001;P-F10-002,7,ASSERT_SCREEN_HAS,PASS,本文入力欄には {{client_name}} が未展開のまま表示される,含む,,2026-09-13T16:22:31.359Z
+TC-1200,P-F10-001;P-F10-002,8,TAP,PASS,編集画面が閉じてホームへ戻る,"tap 1333,189 hold=60ms",,2026-09-13T16:22:33.170Z
+TC-1200,P-F10-001;P-F10-002,9,ASSERT_SCREEN,PASS,ホーム画面が表示されている,SC-HOME を確認,,2026-09-13T16:22:34.645Z
+TC-1201,P-F10-003,1,TAP,PASS,先頭の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:22:50.353Z
+TC-1201,P-F10-003,2,TAP,PASS,定型文編集画面が開く,"tap 1557,322 hold=60ms",,2026-09-13T16:22:52.036Z
+TC-1201,P-F10-003,3,ASSERT_SCREEN,PASS,定型文編集画面が表示されている,SC-SNIPPET-EDIT を確認,,2026-09-13T16:22:53.488Z
+TC-1201,P-F10-003,4,WAIT,PASS,プレビューの生成を待つ,waited 1000ms,,2026-09-13T16:22:55.095Z
+TC-1201,P-F10-003,5,ASSERT_VISIBLE,PASS,プレビューのプロファイルチップに Main が並ぶ,見えている（1344 631）,,2026-09-13T16:22:56.536Z
+TC-1201,P-F10-003,6,ASSERT_VISIBLE,PASS,プレビューのプロファイルチップに A社用 が並ぶ,見えている（1401 631）,,2026-09-13T16:22:57.950Z
+TC-1201,P-F10-003,7,ASSERT_VISIBLE,PASS,プレビューのプロファイルチップに B社用 が並ぶ,見えている（1460 631）,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-1201-7-chips.png,2026-09-13T16:22:59.696Z
+TC-1202,P-F10-004,1,TAP,PASS,検索画面が開く,"tap 1581,187 hold=60ms",,2026-09-13T16:23:15.637Z
+TC-1202,P-F10-004,2,TAP,PASS,プロファイルチップA社用が選択される,"tap 1400,233 hold=60ms",,2026-09-13T16:23:17.692Z
+TC-1202,P-F10-004,3,WAIT,PASS,一覧の再描画を待つ,waited 800ms,,2026-09-13T16:23:19.102Z
+TC-1202,P-F10-004,4,ASSERT_ORDER,FAIL,一覧の上から 今日の積み上げ / 進捗報告 の順に並ぶ,"1番目が不一致: 期待 ""進捗報告（2026/09/14）"" / 実際 ""要約プロンプト""（一致件数 3）",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-1202-4-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-1202-4-FAIL.txt,2026-09-13T16:23:21.818Z
+TC-1202,P-F10-004,5,TAP,SKIPPED,2番目の定型文カードの「・・・」のタップでメニューが開く,前のステップが失敗したため未実行,,2026-09-13T16:23:22.423Z
+TC-1202,P-F10-004,6,TAP,SKIPPED,2番目のカードの編集画面が開く,前のステップが失敗したため未実行,,2026-09-13T16:23:22.423Z
+TC-1202,P-F10-004,7,ASSERT_SCREEN,SKIPPED,定型文編集画面が表示されている,前のステップが失敗したため未実行,,2026-09-13T16:23:22.423Z
+TC-1202,P-F10-004,8,WAIT,SKIPPED,プレビューの生成を待つ,前のステップが失敗したため未実行,,2026-09-13T16:23:22.423Z
+TC-1202,P-F10-004,9,ASSERT_VISIBLE,SKIPPED,プレビューのプロファイルチップに A社用 が並ぶ,前のステップが失敗したため未実行,,2026-09-13T16:23:22.423Z
+TC-1202,P-F10-004,10,ASSERT_SCREEN_LACKS,SKIPPED,画面内のどこにも B社用 が無い,前のステップが失敗したため未実行,,2026-09-13T16:23:22.423Z
+TC-1202,P-F10-004,11,TAP,SKIPPED,編集画面が閉じて検索画面へ戻る,前のステップが失敗したため未実行,,2026-09-13T16:23:22.423Z
+TC-1202,P-F10-004,12,ASSERT_SCREEN,SKIPPED,検索画面が表示されている,前のステップが失敗したため未実行,,2026-09-13T16:23:22.423Z
+TC-1203,P-F10-005,1,ASSERT_DB,PASS,無効なプロファイルが2件ある,"""2""",,2026-09-13T16:23:36.302Z
+TC-1203,P-F10-005,2,TAP,PASS,先頭の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:23:38.063Z
+TC-1203,P-F10-005,3,TAP,PASS,定型文編集画面が開く,"tap 1557,322 hold=60ms",,2026-09-13T16:23:39.725Z
+TC-1203,P-F10-005,4,ASSERT_SCREEN,PASS,定型文編集画面が表示されている,SC-SNIPPET-EDIT を確認,,2026-09-13T16:23:41.174Z
+TC-1203,P-F10-005,5,WAIT,PASS,プレビューの生成を待つ,waited 1000ms,,2026-09-13T16:23:42.783Z
+TC-1203,P-F10-005,6,ASSERT_VISIBLE,PASS,有効なプロファイル A社用 がチップに並ぶ,見えている（1401 616）,,2026-09-13T16:23:44.202Z
+TC-1203,P-F10-005,7,ASSERT_SCREEN_LACKS,PASS,画面内のどこにも C社用 が無い,無い,,2026-09-13T16:23:45.584Z
+TC-1203,P-F10-005,8,ASSERT_SCREEN_LACKS,PASS,画面内のどこにも D社用 が無い,無い,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-1203-8-chips.png,2026-09-13T16:23:47.287Z
+TC-1204,P-F10-006,1,TAP,PASS,先頭の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:24:02.659Z
+TC-1204,P-F10-006,2,TAP,PASS,定型文編集画面が開く,"tap 1557,322 hold=60ms",,2026-09-13T16:24:04.328Z
+TC-1204,P-F10-006,3,WAIT,PASS,プレビューの生成を待つ,waited 1000ms,,2026-09-13T16:24:05.937Z
+TC-1204,P-F10-006,4,ASSERT_SCREEN_HAS,PASS,Main選択時のプレビューに 株式会社サンプル が表示される,含む,,2026-09-13T16:24:07.346Z
+TC-1204,P-F10-006,5,TAP,PASS,プロファイルチップA社用が選択される,"tap 1401,631 hold=60ms",,2026-09-13T16:24:09.179Z
+TC-1204,P-F10-006,6,WAIT,PASS,プレビューの再生成を待つ,waited 1000ms,,2026-09-13T16:24:10.790Z
+TC-1204,P-F10-006,7,ASSERT_SCREEN_HAS,PASS,A社用選択時のプレビューに 株式会社エー が表示される,含む,,2026-09-13T16:24:12.213Z
+TC-1204,P-F10-006,8,ASSERT_SCREEN_LACKS,PASS,画面内のどこにも 株式会社サンプル が無い,無い,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-1204-8-preview.png,2026-09-13T16:24:14.023Z
+TC-1206,P-F10-008;P-F10-009;P-F10-011,1,ASSERT_CLIPBOARD,PASS,クリップボードの初期値が CLIP-INIT である,"""CLIP-INIT""",,2026-09-13T16:24:28.971Z
+TC-1206,P-F10-008;P-F10-009;P-F10-011,2,TAP,PASS,2番目の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,429 hold=60ms",,2026-09-13T16:24:31.159Z
+TC-1206,P-F10-008;P-F10-009;P-F10-011,3,TAP,PASS,2番目のカードの編集画面が開く,"tap 1557,466 hold=60ms",,2026-09-13T16:24:32.821Z
+TC-1206,P-F10-008;P-F10-009;P-F10-011,4,ASSERT_SCREEN,PASS,定型文編集画面が表示されている,SC-SNIPPET-EDIT を確認,,2026-09-13T16:24:34.256Z
+TC-1206,P-F10-008;P-F10-009;P-F10-011,5,WAIT,PASS,プレビューの生成を待つ,waited 1000ms,,2026-09-13T16:24:35.864Z
+TC-1206,P-F10-008;P-F10-009;P-F10-011,6,ASSERT_SCREEN_HAS,PASS,プレビューに展開済みタイトル F ${TODAY:yyyy/MM/dd}の記録 が表示される,含む,,2026-09-13T16:24:37.229Z
+TC-1206,P-F10-008;P-F10-009;P-F10-011,7,ASSERT_SCREEN_HAS,PASS,タイトル入力欄には {{today}} が未展開のまま表示される,含む,,2026-09-13T16:24:38.614Z
+TC-1206,P-F10-008;P-F10-009;P-F10-011,8,TAP,PASS,プレビューのコピーボタンが押される,"tap 1606,578 hold=60ms",,2026-09-13T16:24:40.409Z
+TC-1206,P-F10-008;P-F10-009;P-F10-011,9,WAIT,PASS,コピー処理の完了を待つ,waited 1000ms,,2026-09-13T16:24:42.020Z
+TC-1206,P-F10-008;P-F10-009;P-F10-011,10,ASSERT_CLIPBOARD,PASS,クリップボードが 展開済みタイトル+改行+展開済み本文 と完全一致する,"""F 2026/09/14の記録\n月に実施""",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-1206-10-clipboard.png,2026-09-13T16:24:43.184Z
+TC-1207,P-F10-010;P-F10-012,1,ASSERT_CLIPBOARD,PASS,クリップボードの初期値が CLIP-INIT である,"""CLIP-INIT""",,2026-09-13T16:24:57.507Z
+TC-1207,P-F10-010;P-F10-012,2,TAP,PASS,検索画面が開く,"tap 1581,187 hold=60ms",,2026-09-13T16:24:59.514Z
+TC-1207,P-F10-010;P-F10-012,3,TAP,PASS,プロファイルチップA社用が選択される,"tap 1400,233 hold=60ms",,2026-09-13T16:25:01.552Z
+TC-1207,P-F10-010;P-F10-012,4,WAIT,PASS,一覧の再描画を待つ,waited 800ms,,2026-09-13T16:25:02.961Z
+TC-1207,P-F10-010;P-F10-012,5,TAP,PASS,2番目の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,459 hold=60ms",,2026-09-13T16:25:04.913Z
+TC-1207,P-F10-010;P-F10-012,6,TAP,PASS,2番目のカードの編集画面が開く,"tap 1557,495 hold=60ms",,2026-09-13T16:25:06.554Z
+TC-1207,P-F10-010;P-F10-012,7,ASSERT_SCREEN,PASS,定型文編集画面が表示されている,SC-SNIPPET-EDIT を確認,,2026-09-13T16:25:07.974Z
+TC-1207,P-F10-010;P-F10-012,8,WAIT,PASS,プレビューの生成を待つ,waited 1000ms,,2026-09-13T16:25:09.583Z
+TC-1207,P-F10-010;P-F10-012,9,ASSERT_SCREEN_HAS,FAIL,タイトル入力欄には {{today}} が未展開のまま表示される,"画面内に見つからない（表示中: gearshape.fill /  / 定型文編集 / 保存 / 要約プロンプト,  / 以下を要約してください。,  / プロンプト,  / プロファイルを選択（全てのプロファイル）,  / タイトルもコピーする / 0 / オフの場合は内容のみをコピーします / プレビュー）",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-1207-9-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-1207-9-FAIL.txt,2026-09-13T16:25:12.135Z
+TC-1207,P-F10-010;P-F10-012,10,ASSERT_SCREEN_LACKS,SKIPPED,画面内のどこにも展開済みタイトル 進捗報告（${TODAY:yyyy/MM/dd}） が無い,前のステップが失敗したため未実行,,2026-09-13T16:25:12.740Z
+TC-1207,P-F10-010;P-F10-012,11,TAP,SKIPPED,プレビューのコピーボタンが押される,前のステップが失敗したため未実行,,2026-09-13T16:25:12.740Z
+TC-1207,P-F10-010;P-F10-012,12,WAIT,SKIPPED,コピー処理の完了を待つ,前のステップが失敗したため未実行,,2026-09-13T16:25:12.740Z
+TC-1207,P-F10-010;P-F10-012,13,ASSERT_CLIPBOARD,SKIPPED,クリップボードが本文だけと完全一致する,前のステップが失敗したため未実行,,2026-09-13T16:25:12.740Z
+TC-1208,P-F10-013;P-F10-014,1,ASSERT_DB,PASS,sn_greet の copyCount が 0 である,"""0""",,2026-09-13T16:25:26.334Z
+TC-1208,P-F10-013;P-F10-014,2,TAP,PASS,先頭の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:25:28.287Z
+TC-1208,P-F10-013;P-F10-014,3,TAP,PASS,定型文編集画面が開く,"tap 1557,322 hold=60ms",,2026-09-13T16:25:29.934Z
+TC-1208,P-F10-013;P-F10-014,4,WAIT,PASS,プレビューの生成を待つ,waited 1000ms,,2026-09-13T16:25:31.545Z
+TC-1208,P-F10-013;P-F10-014,5,TAP,PASS,プレビューのコピーボタンが押される,"tap 1606,593 hold=60ms",,2026-09-13T16:25:33.385Z
+TC-1208,P-F10-013;P-F10-014,6,WAIT,PASS,コピー処理の完了を待つ,waited 1000ms,,2026-09-13T16:25:34.995Z
+TC-1208,P-F10-013;P-F10-014,7,ASSERT_CLIPBOARD,PASS,クリップボードが展開済み文字列と完全一致する,"""あいさつ\nご担当者様\nいつもお世話になっております。株式会社サンプルの山田太郎です。""",,2026-09-13T16:25:35.859Z
+TC-1208,P-F10-013;P-F10-014,8,ASSERT_DB,PASS,copyCount が 0 のまま変わらない,"""0""",,2026-09-13T16:25:36.607Z
+TC-1208,P-F10-013;P-F10-014,9,ASSERT_DB,PASS,updatedAt が変わらない,"""2026-02-01T00:00:00.000Z""",,2026-09-13T16:25:37.378Z
+TC-1208,P-F10-013;P-F10-014,10,ASSERT_DB,PASS,本文がトークンを含んだまま変わらない,"""1""",,2026-09-13T16:25:38.122Z
+TC-1209,P-F10-015,1,ASSERT_DB,PASS,var_six の valid が 0 である,"""0""",,2026-09-13T16:25:52.250Z
+TC-1209,P-F10-015,2,TAP,PASS,先頭の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:25:54.026Z
+TC-1209,P-F10-015,3,TAP,PASS,定型文編集画面が開く,"tap 1557,322 hold=60ms",,2026-09-13T16:25:55.720Z
+TC-1209,P-F10-015,4,ASSERT_SCREEN,PASS,定型文編集画面が表示されている,SC-SNIPPET-EDIT を確認,,2026-09-13T16:25:57.146Z
+TC-1209,P-F10-015,5,WAIT,PASS,プレビューの生成を待つ,waited 1000ms,,2026-09-13T16:25:58.758Z
+TC-1209,P-F10-015,6,ASSERT_SCREEN_HAS,PASS,プレビューで var_one だけが置換され var_six はトークンのまま表示される,含む,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-1209-6-preview.png,2026-09-13T16:26:00.417Z
+TC-1210,P-F10-016,1,TAP,PASS,先頭の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:26:16.333Z
+TC-1210,P-F10-016,2,TAP,PASS,定型文編集画面が開く,"tap 1557,322 hold=60ms",,2026-09-13T16:26:18.013Z
+TC-1210,P-F10-016,3,ASSERT_SCREEN,PASS,定型文編集画面が表示されている,SC-SNIPPET-EDIT を確認,,2026-09-13T16:26:19.460Z
+TC-1210,P-F10-016,4,WAIT,PASS,プレビューの生成を待つ,waited 1000ms,,2026-09-13T16:26:21.071Z
+TC-1210,P-F10-016,5,TAP,PASS,プレビューのコピーボタンが押される,"tap 1606,593 hold=60ms",,2026-09-13T16:26:22.903Z
+TC-1210,P-F10-016,6,ASSERT_VISIBLE,PASS,コピー直後にcheckmark-circleのアイコンが現れる,見えている（1606 593）,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-1210-6-copied.png,2026-09-13T16:26:24.618Z
+TC-1210,P-F10-016,7,ASSERT_CLIPBOARD,PASS,クリップボードが展開済み文字列と完全一致する,"""あいさつ\nご担当者様\nいつもお世話になっております。株式会社サンプルの山田太郎です。""",,2026-09-13T16:26:25.493Z
+TC-1210,P-F10-016,8,WAIT,PASS,コピー済み表示の2秒が経過するのを待つ,waited 2500ms,,2026-09-13T16:26:28.602Z
+TC-1210,P-F10-016,9,ASSERT_NOT_VISIBLE,PASS,checkmark-circleのアイコンが消える,見えていない,,2026-09-13T16:26:29.965Z
+TC-1306,P-F11-007,1,ASSERT_CLIPBOARD,PASS,クリップボードの初期値が CLIP-INIT である,"""CLIP-INIT""",,2026-09-13T16:26:44.891Z
+TC-1306,P-F11-007,2,ASSERT_COUNT,PASS,（タイトルなし）の行がボタンとして公開されない,0件,,2026-09-13T16:26:46.422Z
+TC-1306,P-F11-007,3,TAP,PASS,（タイトルなし）の行をタップする,"tap 1462,285 hold=60ms",,2026-09-13T16:26:48.442Z
+TC-1306,P-F11-007,4,WAIT,PASS,タップ後の状態を待つ,waited 800ms,,2026-09-13T16:26:49.853Z
+TC-1306,P-F11-007,5,ASSERT_CLIPBOARD,PASS,クリップボードが初期値 CLIP-INIT のまま変わらない,"""CLIP-INIT""",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-1306-5-clipboard.png,2026-09-13T16:26:51.014Z
+TC-1310,P-F11-012,1,ASSERT_CLIPBOARD,PASS,クリップボードの初期値が CLIP-INIT である,"""CLIP-INIT""",,2026-09-13T16:27:05.959Z
+TC-1310,P-F11-012,2,ASSERT_ORDER,FAIL,一覧の上から 絵文字入りタイトル / 複数行本文 の順に並ぶ,"0番目が不一致: 期待 ""絵文字🎯と記号<>&\"""" / 実際 ""ショートカットを表示""（一致件数 4）",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-1310-2-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-1310-2-FAIL.txt,2026-09-13T16:27:08.830Z
+TC-1310,P-F11-012,3,TAP,SKIPPED,2番目のカードのコピーボタンが押される,前のステップが失敗したため未実行,,2026-09-13T16:27:09.434Z
+TC-1310,P-F11-012,4,WAIT,SKIPPED,コピー処理の完了を待つ,前のステップが失敗したため未実行,,2026-09-13T16:27:09.434Z
+TC-1310,P-F11-012,5,ASSERT_CLIPBOARD,SKIPPED,クリップボードがタイトル+改行+3行の本文と完全一致する,前のステップが失敗したため未実行,,2026-09-13T16:27:09.434Z
+TC-1402,P-F12-004,1,ASSERT_DB,PASS,sn_greet の copyCount が 0 である,"""0""",,2026-09-13T16:27:23.073Z
+TC-1402,P-F12-004,2,TAP,PASS,先頭の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:27:25.107Z
+TC-1402,P-F12-004,3,TAP,PASS,定型文編集画面が開く,"tap 1557,322 hold=60ms",,2026-09-13T16:27:26.785Z
+TC-1402,P-F12-004,4,ASSERT_SCREEN,PASS,定型文編集画面が表示されている,SC-SNIPPET-EDIT を確認,,2026-09-13T16:27:28.218Z
+TC-1402,P-F12-004,5,WAIT,PASS,プレビューの生成を待つ,waited 1000ms,,2026-09-13T16:27:29.829Z
+TC-1402,P-F12-004,6,TAP,PASS,プレビューのコピーボタンが押される,"tap 1606,593 hold=60ms",,2026-09-13T16:27:31.608Z
+TC-1402,P-F12-004,7,WAIT,PASS,コピー処理の完了を待つ,waited 1000ms,,2026-09-13T16:27:33.215Z
+TC-1402,P-F12-004,8,ASSERT_CLIPBOARD,PASS,クリップボードが 展開済みタイトル+改行+展開済み本文 と完全一致する,"""あいさつ\nご担当者様\nいつもお世話になっております。株式会社サンプルの山田太郎です。""",,2026-09-13T16:27:34.087Z
+TC-1402,P-F12-004,9,ASSERT_DB,PASS,sn_greet の copyCount が 0 のまま変わらない,"""0""",,2026-09-13T16:27:34.840Z
+TC-1402,P-F12-004,10,TAP,PASS,編集画面が閉じてホームへ戻る,"tap 1333,189 hold=60ms",,2026-09-13T16:27:36.606Z
+TC-1402,P-F12-004,11,ASSERT_SCREEN,PASS,ホーム画面が表示されている,SC-HOME を確認,,2026-09-13T16:27:38.064Z
+TC-2008,P-F01-008,1,ASSERT_ORDER,FAIL,一覧が上からAAA/BBB/CCC/DDDの順で並ぶ,"0番目が不一致: 期待 ""AAA"" / 実際 ""ショートカットを表示""（一致件数 5）",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-2008-1-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-2008-1-FAIL.txt,2026-09-13T16:27:53.702Z
+TC-2008,P-F01-008,2,ASSERT_PREF,SKIPPED,永続設定 @snippet_sort_preference の値が title である,前のステップが失敗したため未実行,,2026-09-13T16:27:54.307Z
+TC-2010,P-F01-010,1,ASSERT_SCREEN_HAS,PASS,空状態メッセージ「定型文がありません」が表示される,含む,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-2010-1-empty.png,2026-09-13T16:28:08.980Z
+TC-2010,P-F01-010,2,ASSERT_COUNT,FAIL,タイトルボタンが0件である,1件,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-2010-2-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-2010-2-FAIL.txt,2026-09-13T16:28:11.395Z
+TC-2011,P-F01-011,1,ASSERT_VISIBLE,PASS,定型文「唯一の定型文」が画面内にある,見えている（1462 285）,,2026-09-13T16:28:25.964Z
+TC-2011,P-F01-011,2,ASSERT_COUNT,FAIL,タイトルボタンが1件である,2件,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-2011-2-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-2011-2-FAIL.txt,2026-09-13T16:28:28.448Z
+TC-2104,P-F07-005,1,ASSERT_SCREEN,PASS,ホーム画面が表示されている,SC-HOME を確認,,2026-09-13T16:28:43.611Z
+TC-2104,P-F07-005,2,TAP,PASS,ホームの検索アイコンがタップされる,"tap 1581,187 hold=60ms",,2026-09-13T16:28:45.628Z
+TC-2104,P-F07-005,3,ASSERT_SCREEN,PASS,検索画面が開く,SC-SEARCH を確認,,2026-09-13T16:28:47.179Z
+TC-2104,P-F07-005,4,TYPE,PASS,検索欄に「zzzznomatch」が入力される,pasted: zzzznomatch,,2026-09-13T16:28:50.746Z
+TC-2104,P-F07-005,5,WAIT,PASS,デバウンス満了まで待つ,waited 800ms,,2026-09-13T16:28:52.153Z
+TC-2104,P-F07-005,6,ASSERT_SCREEN_HAS,PASS,空状態メッセージ「定型文がありません」が表示される,含む,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-2104-6-no-hit.png,2026-09-13T16:28:53.839Z
+TC-2104,P-F07-005,7,ASSERT_COUNT,PASS,タイトルに「プロンプト」を含むボタンが0件である,0件,,2026-09-13T16:28:55.232Z
+TC-2116,P-F07-017,1,ASSERT_SCREEN,PASS,ホーム画面が表示されている,SC-HOME を確認,,2026-09-13T16:29:11.439Z
+TC-2116,P-F07-017,2,TAP,PASS,ホームヘッダの検索アイコンがタップされる,"tap 1581,187 hold=60ms",,2026-09-13T16:29:13.491Z
+TC-2116,P-F07-017,3,ASSERT_SCREEN,PASS,検索画面が開く,SC-SEARCH を確認,,2026-09-13T16:29:15.123Z
+TC-2116,P-F07-017,4,TYPE,PASS,検索欄に「記号」が入力される,pasted: 記号,,2026-09-13T16:29:18.737Z
+TC-2116,P-F07-017,5,WAIT,PASS,デバウンス満了まで待つ,waited 800ms,,2026-09-13T16:29:20.148Z
+TC-2116,P-F07-017,6,ASSERT_TEXT,PASS,タイトルが絵文字と記号を含む文字列として完全一致する,"絵文字🎯と記号<>&""",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-2116-6-emoji.png,2026-09-13T16:29:21.885Z
+TC-2200,P-F08-001,1,ASSERT_SCREEN,PASS,ホーム画面が表示されている,SC-HOME を確認,,2026-09-13T16:29:36.816Z
+TC-2200,P-F08-001,2,ASSERT_SCREEN_HAS,PASS,未分類かつタイトル無しの定型文が一覧にある,含む,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-2200-2-all-chip.png,2026-09-13T16:29:38.714Z
+TC-2200,P-F08-001,3,ASSERT_COUNT,FAIL,タイトルを持つ定型文が3件表示されている,4件,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-2200-3-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-2200-3-FAIL.txt,2026-09-13T16:29:41.451Z
+TC-2200,P-F08-001,4,ASSERT_SCREEN_HAS,SKIPPED,プロンプトカテゴリの定型文が一覧にある,前のステップが失敗したため未実行,,2026-09-13T16:29:42.057Z
+TC-2206,P-F08-009,1,ASSERT_DB,PASS,アクティブプロファイルはMainである,"""Main""",,2026-09-13T16:29:56.319Z
+TC-2206,P-F08-009,2,ASSERT_DB,PASS,snippet_profilesは1行だけである,"""1""",,2026-09-13T16:29:57.091Z
+TC-2206,P-F08-009,3,ASSERT_SCREEN_LACKS,PASS,A社用限定の進捗報告がホームの一覧に無い,無い,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-2206-3-profile-filter.png,2026-09-13T16:29:58.917Z
+TC-2206,P-F08-009,4,ASSERT_COUNT,FAIL,タイトルを持つ定型文が3件表示されている,4件,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-2206-4-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-2206-4-FAIL.txt,2026-09-13T16:30:01.612Z
+TC-2311,P-F09-013,1,ASSERT_ORDER,FAIL,タイトルを持つ定型文があいさつ/今日の積み上げ/要約プロンプトの順に並ぶ,"0番目が不一致: 期待 ""あいさつ"" / 実際 ""ショートカットを表示""（一致件数 4）",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-2311-1-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-2311-1-FAIL.txt,2026-09-13T16:30:18.265Z
+TC-2311,P-F09-013,2,SCROLL,SKIPPED,一覧を下へスクロールする,前のステップが失敗したため未実行,,2026-09-13T16:30:18.870Z
+TC-2311,P-F09-013,3,ASSERT_ORDER,SKIPPED,要約プロンプトの本文より下にタイトルNULLの定型文の本文が並ぶ,前のステップが失敗したため未実行,,2026-09-13T16:30:18.871Z
+TC-2312,P-F09-014,1,ASSERT_ORDER,PASS,タイトルNULLの定型文の本文が要約プロンプトの本文より上に並ぶ,カテゴリもタイトルも持たない定型文。 / 以下を要約してください。,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-2312-1-null-first-1.png,2026-09-13T16:30:33.817Z
+TC-2312,P-F09-014,2,ASSERT_ORDER,FAIL,タイトルを持つ定型文が要約プロンプト/今日の積み上げ/あいさつの順に並ぶ,"0番目が不一致: 期待 ""要約プロンプト"" / 実際 ""ショートカットを表示""（一致件数 4）",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-2312-2-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-2312-2-FAIL.txt,2026-09-13T16:30:36.474Z
+TC-2324,P-F09-012,1,ASSERT_DB,PASS,タイトルが同名の定型文が2件ある,"""2""",,2026-09-13T16:30:50.400Z
+TC-2324,P-F09-012,2,ASSERT_ORDER,FAIL,タイトル昇順でZZZ/同名/同名の順に並ぶ,"0番目が不一致: 期待 ""ZZZ"" / 実際 ""ショートカットを表示""（一致件数 4）",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-2324-2-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-item-menu/evidence/TC-2324-2-FAIL.txt,2026-09-13T16:30:53.022Z
+TC-2324,P-F09-012,3,ASSERT_ORDER,SKIPPED,同名の2件は作成日時の新しい方（新しい方の本文。）が古い方（古い方の本文。）より上に並ぶ,前のステップが失敗したため未実行,,2026-09-13T16:30:53.626Z
+TC-5003,P-F02-E01,1,TAP,PASS,先頭の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:31:08.060Z
+TC-5003,P-F02-E01,2,TAP,PASS,定型文編集画面が開く,"tap 1557,322 hold=60ms",,2026-09-13T16:31:09.724Z
+TC-5003,P-F02-E01,3,ASSERT_SCREEN,PASS,定型文編集の見出しが表示される,SC-SNIPPET-EDIT を確認,,2026-09-13T16:31:11.114Z
+TC-5003,P-F02-E01,4,TAP,PASS,内容入力画面が開く,"tap 1478,318 hold=60ms",,2026-09-13T16:31:12.876Z
+TC-5003,P-F02-E01,5,ASSERT_SCREEN,PASS,内容入力の見出しが表示される,SC-SNIPPET-CONTENT-INPUT を確認,,2026-09-13T16:31:14.338Z
+TC-5003,P-F02-E01,6,TAP,PASS,閉じるボタンのタップが受け付けられる,"tap 1333,198 hold=60ms",,2026-09-13T16:31:16.175Z
+TC-5003,P-F02-E01,7,ASSERT_SCREEN,PASS,定型文編集の見出しが再び表示される,SC-SNIPPET-EDIT を確認,,2026-09-13T16:31:17.589Z
+TC-5004,P-F02-E02,1,TAP,PASS,先頭の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:31:32.829Z
+TC-5004,P-F02-E02,2,TAP,PASS,定型文編集画面が開く,"tap 1557,322 hold=60ms",,2026-09-13T16:31:34.504Z
+TC-5004,P-F02-E02,3,TAP,PASS,カテゴリ選択画面が開く,"tap 1478,389 hold=60ms",,2026-09-13T16:31:36.216Z
+TC-5004,P-F02-E02,4,ASSERT_SCREEN,PASS,カテゴリ選択の見出し「カテゴリを選択」が表示される,SC-CATEGORY-SELECT を確認,,2026-09-13T16:31:37.528Z
+TC-5004,P-F02-E02,5,TAP,PASS,カテゴリ行をタップのタップが受け付けられる,"tap 1478,250 hold=60ms",,2026-09-13T16:31:39.225Z
+TC-5004,P-F02-E02,6,ASSERT_SCREEN,PASS,定型文編集の見出しが再び表示される,SC-SNIPPET-EDIT を確認,,2026-09-13T16:31:40.643Z
+TC-5005,P-F02-E03,1,TAP,PASS,先頭の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:31:55.804Z
+TC-5005,P-F02-E03,2,TAP,PASS,定型文編集画面が開く,"tap 1557,322 hold=60ms",,2026-09-13T16:31:57.473Z
+TC-5005,P-F02-E03,3,TAP,PASS,カテゴリ選択画面が開く,"tap 1478,389 hold=60ms",,2026-09-13T16:31:59.276Z
+TC-5005,P-F02-E03,4,ASSERT_SCREEN,PASS,カテゴリ選択の見出し「カテゴリを選択」が表示される,SC-CATEGORY-SELECT を確認,,2026-09-13T16:32:00.659Z
+TC-5005,P-F02-E03,5,TAP,PASS,閉じるボタンのタップが受け付けられる,"tap 1333,198 hold=60ms",,2026-09-13T16:32:02.353Z
+TC-5005,P-F02-E03,6,ASSERT_SCREEN,PASS,定型文編集の見出しが再び表示される,SC-SNIPPET-EDIT を確認,,2026-09-13T16:32:03.738Z
+TC-5006,P-F02-E04,1,TAP,PASS,先頭の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:32:19.143Z
+TC-5006,P-F02-E04,2,TAP,PASS,定型文編集画面が開く,"tap 1557,322 hold=60ms",,2026-09-13T16:32:20.748Z
+TC-5006,P-F02-E04,3,TAP,PASS,プロファイル選択画面が開く,"tap 1478,446 hold=60ms",,2026-09-13T16:32:22.552Z
+TC-5006,P-F02-E04,4,ASSERT_SCREEN,PASS,プロファイル選択の説明文が表示される,SC-SNIPPET-PROFILE-SELECT を確認,,2026-09-13T16:32:23.941Z
+TC-5006,P-F02-E04,5,TAP,PASS,保存ボタンのタップが受け付けられる,"tap 1623,198 hold=60ms",,2026-09-13T16:32:25.645Z
+TC-5006,P-F02-E04,6,ASSERT_SCREEN,PASS,定型文編集の見出しが再び表示される,SC-SNIPPET-EDIT を確認,,2026-09-13T16:32:27.047Z
+TC-5007,P-F02-E05,1,TAP,PASS,先頭の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:32:42.485Z
+TC-5007,P-F02-E05,2,TAP,PASS,定型文編集画面が開く,"tap 1557,322 hold=60ms",,2026-09-13T16:32:44.155Z
+TC-5007,P-F02-E05,3,TAP,PASS,プロファイル選択画面が開く,"tap 1478,446 hold=60ms",,2026-09-13T16:32:45.978Z
+TC-5007,P-F02-E05,4,ASSERT_SCREEN,PASS,プロファイル選択の説明文が表示される,SC-SNIPPET-PROFILE-SELECT を確認,,2026-09-13T16:32:47.307Z
+TC-5007,P-F02-E05,5,TAP,PASS,閉じるボタンのタップが受け付けられる,"tap 1333,198 hold=60ms",,2026-09-13T16:32:49.009Z
+TC-5007,P-F02-E05,6,ASSERT_SCREEN,PASS,定型文編集の見出しが再び表示される,SC-SNIPPET-EDIT を確認,,2026-09-13T16:32:50.425Z
+TC-5008,P-F03-E01,1,TAP,PASS,先頭の定型文カードの「・・・」のタップでメニューが開く,"tap 1618,285 hold=60ms",,2026-09-13T16:33:05.747Z
+TC-5008,P-F03-E01,2,TAP,PASS,定型文編集画面が開く,"tap 1557,322 hold=60ms",,2026-09-13T16:33:07.392Z
+TC-5008,P-F03-E01,3,TAP,PASS,カテゴリ選択画面が開く,"tap 1478,389 hold=60ms",,2026-09-13T16:33:09.204Z
+TC-5008,P-F03-E01,4,TAP,PASS,カテゴリ作成画面が開く,"tap 1478,363 hold=60ms",,2026-09-13T16:33:10.896Z
+TC-5008,P-F03-E01,5,ASSERT_SCREEN,PASS,カテゴリ作成画面の「カスタムRGB」が表示される,SC-CATEGORY-EDIT を確認,,2026-09-13T16:33:12.422Z
+TC-5008,P-F03-E01,6,TAP,PASS,閉じるボタンのタップが受け付けられる,"tap 1333,198 hold=60ms",,2026-09-13T16:33:14.320Z
+TC-5008,P-F03-E01,7,ASSERT_SCREEN,PASS,カテゴリ選択の見出し「カテゴリを選択」が再び表示される,SC-CATEGORY-SELECT を確認,,2026-09-13T16:33:15.701Z

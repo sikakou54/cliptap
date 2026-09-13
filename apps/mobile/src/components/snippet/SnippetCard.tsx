@@ -2,14 +2,15 @@
  * スニペットカードコンポーネント
  *
  * 一覧画面で表示される個別のスニペットカード。
- * タップでコピー、長押しで展開、アクションボタンで編集・削除。
+ * 右下のコピーボタンで本文を、タイトルのタップでタイトルだけをコピーする。
+ * 本文のタップと左下の展開ボタンで展開し、右上の「・・・」メニューから編集・削除する。
  *
  * 主な機能:
  * - ワンタップコピー（触覚フィードバック付き）
  * - コンテンツの展開/折りたたみ
  * - 変数の自動解決（{{変数名}} → 実際の値）
  * - カテゴリバッジ表示
- * - 編集・削除ボタン
+ * - 右上の「・・・」メニューからの編集・削除
  *
  * パフォーマンス最適化:
  * - React.memoによるメモ化
@@ -30,6 +31,7 @@ import { useTheme } from '@lib/themeSystem';
 import { useTranslation } from '@cliptap/shared';
 import { SnippetWithDisplay, Category } from '@cliptap/shared';
 import { CategoryBadge } from '@components/category/CategoryBadge';
+import { ItemActionMenu } from '@components/common/ItemActionMenu';
 import { UI_CONSTANTS } from '@constants/ui';
 import { useSnippetCard } from '@hooks/components/useSnippetCard';
 
@@ -37,8 +39,8 @@ import { useSnippetCard } from '@hooks/components/useSnippetCard';
  * SnippetCardのProps
  * @property snippet - 表示するスニペットデータ
  * @property onPress - タップ時のコールバック（コピー処理）
- * @property onEdit - 編集ボタンタップ時のコールバック
- * @property onDelete - 削除ボタンタップ時のコールバック
+ * @property onEdit - メニューで「編集」が選ばれたときのコールバック
+ * @property onDelete - メニューで「削除」が選ばれ、確認ダイアログでOKされたときのコールバック
  * @property onPressTitle - タイトルタップ時のコールバック（タイトルのみコピー、省略可）
  * @property disableCopy - コピー機能を無効化（省略可、デフォルト: false）
  * @property category - カテゴリオブジェクト（省略可：親から渡される場合、パフォーマンス最適化のため）
@@ -113,43 +115,49 @@ const SnippetCardComponent = ({
           paddingBottom: 60,
         }
       ]}>
-        {/* タイトル（タップでタイトルのみをコピー） */}
-        <TouchableOpacity
-          style={styles.titleContainer}
-          onPress={handleCopyTitle}
-          disabled={!isTitleCopyEnabled || isCopyingTitle}
-          activeOpacity={isTitleCopyEnabled ? 0.7 : 1}
-          hitSlop={UI_CONSTANTS.HIT_SLOP.SMALL}
-          /* TouchableOpacityはラベルを与えると子のテキストを読み上げなくなるため、
-             ラベルはタイトル本文のままにし、コピー操作はヒントで補足する */
-          accessibilityRole={isTitleCopyEnabled ? 'button' : undefined}
-          accessibilityLabel={displayTitle ?? undefined}
-          accessibilityHint={isTitleCopyEnabled ? t('snippet.copy_title') : undefined}
-        >
-          <Text
-            style={[
-              styles.title,
-              {
-                color: colors.text,
-                fontSize: responsiveFontSizes.base,
-              }
-            ]}
-            numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.SINGLE}
-            ellipsizeMode="tail"
+        {/* タイトル行。タイトルと、右端の「・・・」メニュー */}
+        <View style={styles.titleRow}>
+          {/* タイトル（タップでタイトルのみをコピー） */}
+          <TouchableOpacity
+            style={styles.titleContainer}
+            onPress={handleCopyTitle}
+            disabled={!isTitleCopyEnabled || isCopyingTitle}
+            activeOpacity={isTitleCopyEnabled ? 0.7 : 1}
+            hitSlop={UI_CONSTANTS.HIT_SLOP.SMALL}
+            /* TouchableOpacityはラベルを与えると子のテキストを読み上げなくなるため、
+               ラベルはタイトル本文のままにし、コピー操作はヒントで補足する */
+            accessibilityRole={isTitleCopyEnabled ? 'button' : undefined}
+            accessibilityLabel={displayTitle}
+            accessibilityHint={isTitleCopyEnabled ? t('snippet.copy_title') : undefined}
           >
-            {displayTitle}
-          </Text>
+            <Text
+              style={[
+                styles.title,
+                {
+                  color: colors.text,
+                  fontSize: responsiveFontSizes.base,
+                }
+              ]}
+              numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.SINGLE}
+              ellipsizeMode="tail"
+            >
+              {displayTitle}
+            </Text>
 
-          {/* コピーアイコン（タップでコピーできることを示す。コピー完了時は2秒間チェックマーク） */}
-          {isTitleCopyEnabled && (
-            <Ionicons
-              name={isTitleCopied ? 'checkmark' : 'copy-outline'}
-              size={isTablet ? 18 : 14}
-              color={isTitleCopied ? colors.success : colors.textSecondary}
-              style={styles.titleCopyIcon}
-            />
-          )}
-        </TouchableOpacity>
+            {/* コピーアイコン（タップでコピーできることを示す。コピー完了時は2秒間チェックマーク） */}
+            {isTitleCopyEnabled && (
+              <Ionicons
+                name={isTitleCopied ? 'checkmark' : 'copy-outline'}
+                size={isTablet ? 18 : 14}
+                color={isTitleCopied ? colors.success : colors.textSecondary}
+                style={styles.titleCopyIcon}
+              />
+            )}
+          </TouchableOpacity>
+
+          {/* 「・・・」メニュー（編集・削除）。タイトルのコピー操作と混ざらないよう、タイトルのタップ領域の外に置く */}
+          <ItemActionMenu itemName={displayTitle} onEdit={handleEdit} onDelete={handleDelete} />
+        </View>
 
         {/* カテゴリバッジ */}
         {category && (
@@ -206,36 +214,8 @@ const SnippetCardComponent = ({
         />
       </TouchableOpacity>
 
-      {/* アクションボタン */}
+      {/* コピーボタン */}
       <View style={styles.actionButtons}>
-        <TouchableOpacity
-          style={[
-            styles.roundButton,
-            { borderColor: colors.border }
-          ]}
-          onPress={handleDelete}
-        >
-          <Ionicons
-            name="trash-outline"
-            size={isTablet ? 22 : 18}
-            color={colors.error}
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.roundButton,
-            { borderColor: colors.border }
-          ]}
-          onPress={handleEdit}
-        >
-          <Ionicons
-            name="create-outline"
-            size={isTablet ? 22 : 18}
-            color={colors.text}
-          />
-        </TouchableOpacity>
-
         <TouchableOpacity
           style={[
             styles.roundButton,
@@ -287,8 +267,14 @@ const styles = StyleSheet.create({
   mainContent: {
     gap: UI_CONSTANTS.GAP.SM,
   },
+  /* タイトルと「・・・」メニューを横に並べる。間を空けて、タイトルのコピーアイコンと押し間違えにくくする */
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: UI_CONSTANTS.GAP.LG,
+  },
   titleContainer: {
-    width: '100%',
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
   },
