@@ -927,16 +927,20 @@ class KeyboardViewController: UIInputViewController {
         settingsButton.addTarget(self, action: #selector(settingsButtonTapped), for: .touchUpInside)
 
         NSLayoutConstraint.activate([
-            /* フィルターコンテナ: 画面上部に配置（横向き時のノッチ側を避けるためセーフエリア基準） */
-            filterContainerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
+            /* フィルターコンテナ: 画面上部に配置（横向き時のノッチ側を避けるためセーフエリア基準）。
+               高さはタップ領域の最小44ptにし、中のボタンは36ptのまま縦中央に置く。
+               iOSは親ビューの外側へのタッチを子へ届けないため、行が36ptのままだと
+               表示切替トグルが判定を44ptへ広げても、上下2ptずつしか効かない。
+               行を上下4ptずつ広げた分は、上の余白と一覧までの間隔を4ptずつ詰めて相殺し、見た目の位置は変えない */
+            filterContainerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 4),
             filterContainerView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 8),
             filterContainerView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -8),
-            filterContainerView.heightAnchor.constraint(equalToConstant: 36),
+            filterContainerView.heightAnchor.constraint(equalToConstant: 44),
 
-            /* 環境ドロップダウンボタン: 左端に固定、固定幅92pt */
+            /* 環境ドロップダウンボタン: 左端に固定、固定幅92pt・高さ36ptで縦中央 */
             profileDropdownButton.leadingAnchor.constraint(equalTo: filterContainerView.leadingAnchor),
-            profileDropdownButton.topAnchor.constraint(equalTo: filterContainerView.topAnchor),
-            profileDropdownButton.bottomAnchor.constraint(equalTo: filterContainerView.bottomAnchor),
+            profileDropdownButton.centerYAnchor.constraint(equalTo: filterContainerView.centerYAnchor),
+            profileDropdownButton.heightAnchor.constraint(equalToConstant: 36),
             profileDropdownButton.widthAnchor.constraint(equalToConstant: 92),
 
             /* シェブロンアイコン: ボタンの右端に固定配置 */
@@ -947,8 +951,8 @@ class KeyboardViewController: UIInputViewController {
 
             /* カテゴリドロップダウンボタン: 環境ドロップダウンの右隣（幅は下の categoryDropdownWidthConstraint で指定） */
             categoryDropdownButton.leadingAnchor.constraint(equalTo: profileDropdownButton.trailingAnchor, constant: 8),
-            categoryDropdownButton.topAnchor.constraint(equalTo: filterContainerView.topAnchor),
-            categoryDropdownButton.bottomAnchor.constraint(equalTo: filterContainerView.bottomAnchor),
+            categoryDropdownButton.centerYAnchor.constraint(equalTo: filterContainerView.centerYAnchor),
+            categoryDropdownButton.heightAnchor.constraint(equalToConstant: 36),
 
             /* カテゴリドロップダウンの右端がボタン群に重ならないための上限（必須） */
             categoryDropdownButton.trailingAnchor.constraint(lessThanOrEqualTo: shortcutToggle.leadingAnchor, constant: -8),
@@ -959,23 +963,24 @@ class KeyboardViewController: UIInputViewController {
             categoryChevronImageView.widthAnchor.constraint(equalToConstant: 12),
             categoryChevronImageView.heightAnchor.constraint(equalToConstant: 12),
 
-            /* 設定ボタン: 右端に固定、固定幅36pt */
+            /* 設定ボタン: 右端に固定、固定幅36pt・高さ36ptで縦中央 */
             settingsButton.trailingAnchor.constraint(equalTo: filterContainerView.trailingAnchor),
-            settingsButton.topAnchor.constraint(equalTo: filterContainerView.topAnchor),
-            settingsButton.bottomAnchor.constraint(equalTo: filterContainerView.bottomAnchor),
+            settingsButton.centerYAnchor.constraint(equalTo: filterContainerView.centerYAnchor),
+            settingsButton.heightAnchor.constraint(equalToConstant: 36),
             settingsButton.widthAnchor.constraint(equalToConstant: 36),
 
             /* 表示切替トグル: ソートボタンの左隣。ピル形なので高さは行いっぱいに広げず、
-               32ptで縦中央に置く。タップ判定はListModeToggleが44ptまで広げる */
+               32ptで縦中央に置く。タップ判定はListModeToggleが44ptまで広げ、
+               行（親ビュー）を44ptにしてあるので、広げた判定がそのまま効く */
             shortcutToggle.trailingAnchor.constraint(equalTo: sortButton.leadingAnchor, constant: -4),
             shortcutToggle.centerYAnchor.constraint(equalTo: filterContainerView.centerYAnchor),
             shortcutToggle.widthAnchor.constraint(equalToConstant: ListModeToggle.trackWidth),
             shortcutToggle.heightAnchor.constraint(equalToConstant: ListModeToggle.trackHeight),
 
-            /* ソートボタン: 設定ボタンの左隣、固定幅36pt */
+            /* ソートボタン: 設定ボタンの左隣、固定幅36pt・高さ36ptで縦中央 */
             sortButton.trailingAnchor.constraint(equalTo: settingsButton.leadingAnchor, constant: -4),
-            sortButton.topAnchor.constraint(equalTo: filterContainerView.topAnchor),
-            sortButton.bottomAnchor.constraint(equalTo: filterContainerView.bottomAnchor),
+            sortButton.centerYAnchor.constraint(equalTo: filterContainerView.centerYAnchor),
+            sortButton.heightAnchor.constraint(equalToConstant: 36),
             sortButton.widthAnchor.constraint(equalToConstant: 36),
 
             /* ソートバッジ: ボタン右上に配置、8x8ptの円 */
@@ -1022,7 +1027,8 @@ class KeyboardViewController: UIInputViewController {
         /* 下端をセーフエリアに合わせる: ホームインジケータ帯に入るとOSのジェスチャがスワイプを奪い、
            その領域から始めたドラッグがスクロールにならないため */
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: filterContainerView.bottomAnchor, constant: 8),
+            /* 間隔はフィルター行を44ptに広げた分だけ詰めてあり、一覧の位置は広げる前と同じ */
+            tableView.topAnchor.constraint(equalTo: filterContainerView.bottomAnchor, constant: 4),
             tableView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
@@ -1279,7 +1285,7 @@ class KeyboardViewController: UIInputViewController {
         NSLayoutConstraint.activate([
             /* Shortcut View: フィルター行の下（定型文一覧と同じ位置・同じ余白）。
                フィルター行を覆わないことで、トグルと環境の切り替えが常に触れる */
-            shortcutView.topAnchor.constraint(equalTo: filterContainerView.bottomAnchor, constant: 8),
+            shortcutView.topAnchor.constraint(equalTo: filterContainerView.bottomAnchor, constant: 4),
             shortcutView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             shortcutView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             shortcutView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -2820,6 +2826,12 @@ extension UIColor {
  *
  * 【タップ領域】
  * トラックは32ptでHIGの44ptに届かないため、判定だけを44ptまで広げる。
+ * iOSは親ビューの外側へのタッチを子へ届けないため、置く行（親ビュー）の高さも44pt以上にすること。
+ *
+ * 【押している間の見た目】
+ * 指が触れている間は全体を薄くし、押せたことをすぐに示す。ノブが動くのは指を離して切り替えが終わってからで、
+ * それまで何も変わらないと押せたか分からず、二度押しで元へ戻ってしまう。
+ * 薄さはアプリのトグル（TouchableOpacityの既定値0.2）と揃える。
  *
  * 【ファイル配置について】
  * 新しいSwiftファイルを追加するとproject.pbxprojの更新が必要になるため、
@@ -2865,6 +2877,9 @@ final class ListModeToggle: UIControl {
 
     /// 切り替えにかける時間（秒）
     private static let animationDuration: TimeInterval = 0.1
+
+    /// 押している間の不透明度。アプリのトグル（TouchableOpacityの既定値）と同値
+    private static let pressedAlpha: CGFloat = 0.2
 
     /// ショートカットを表示しているか（trueならノブが右）
     private(set) var isShowingShortcuts = false
@@ -2917,6 +2932,13 @@ final class ListModeToggle: UIControl {
     override func layoutSubviews() {
         super.layoutSubviews()
         layoutKnob()
+    }
+
+    /// 押している間は全体を薄くする（離す・指が外へ出ると元に戻る）
+    override var isHighlighted: Bool {
+        didSet {
+            alpha = isHighlighted ? Self.pressedAlpha : 1
+        }
     }
 
     /// タップ判定の範囲を最小タップ領域まで広げる
