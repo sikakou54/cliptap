@@ -10,7 +10,7 @@
  * - ATT権限リクエスト（iOS）
  * - アダプター初期化（init()）
  * - 多言語システム初期化
- * - スプラッシュスクリーン表示制御
+ * - スプラッシュスクリーン表示制御（起動時App Open広告の準備の決着を待って閉じる）
  *
  * @see app/_layout.tsx - ルートレイアウトUI
  */
@@ -55,6 +55,10 @@ export interface UseAdapterInitializationReturn {
   isTabletDevice: boolean;
   /** スプラッシュスクリーン非表示ハンドラ */
   hideSplash: () => void;
+  /** 起動時App Open広告の準備が決着したか（スプラッシュはこれを待って閉じる） */
+  isAppOpenAdSettled: boolean;
+  /** 起動時App Open広告の準備の決着を受け取るハンドラ */
+  handleAppOpenAdSettled: () => void;
 }
 
 
@@ -68,6 +72,8 @@ export function useAdapterInitialization(): UseAdapterInitializationReturn {
   /* ======================================== */
   const [isAdaptersReady, setIsAdaptersReady] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
+  /** 起動時App Open広告の準備が決着したか（ロード完了、または表示しないと決まった） */
+  const [isAppOpenAdSettled, setIsAppOpenAdSettled] = useState(false);
 
   /* ======================================== */
   /* Hooks */
@@ -162,10 +168,17 @@ export function useAdapterInitialization(): UseAdapterInitializationReturn {
     setShowSplash(false);
   }, []);
 
+  /* 起動時App Open広告の準備が決着したら、スプラッシュを閉じてよい */
+  const handleAppOpenAdSettled = useCallback(() => {
+    setIsAppOpenAdSettled(true);
+  }, []);
+
   return {
     isAdaptersReady,
     showSplash,
     isTabletDevice,
     hideSplash,
+    isAppOpenAdSettled,
+    handleAppOpenAdSettled,
   };
 }

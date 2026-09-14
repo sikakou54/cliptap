@@ -43,7 +43,7 @@ const SPLASH_FADE_MS = 500;
 /**
  * SplashScreenのProps
  * @property onFinish - スプラッシュ終了時のコールバック（メインコンテンツ表示開始）
- * @property isLoading - 初期化処理中フラグ（trueの間はフェードアウトを待機）
+ * @property isLoading - 初期化中、または起動時広告の準備待ちのフラグ（trueの間はフェードアウトを待機）
  * @property onReady - コンポーネント準備完了コールバック（ネイティブスプラッシュ非表示用）
  */
 interface SplashScreenProps {

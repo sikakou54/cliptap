@@ -4,7 +4,7 @@
  * @description
  * 無料プランの利用者に対して、アプリのコールドスタート時に一度だけ
  * AdMobのApp Open広告（アプリの起動画面を収益化するための全画面フォーマット）を表示する。
- * 広告はスプラッシュの表示が完全に終わってから、ホーム画面の上に表示する。
+ * 広告はスプラッシュの表示中にロードし、スプラッシュが閉じ終わった直後にホーム画面の上へ表示する。
  *
  * 【インタースティシャルではなくApp Open広告を使う理由】
  * Googleはアプリ起動時の全画面表示専用にApp Open広告を用意しており、
@@ -13,30 +13,40 @@
  *
  * 【表示条件（すべて満たしたときだけ表示する）】
  * 1. 広告ユニットIDが設定されていること
- * 2. 初回起動ではないこと（インストール直後はATT許可ダイアログと連続してしまうため出さない）
- * 3. 開発者メニューで広告を非表示にしていないこと（開発ビルドのみ）
- * 4. 無料プランであることが確定していること（未確定・権利確認失敗の間は表示しない）
- * 5. このプロセスでまだ一度も表示を試みていないこと（＝コールドスタート直後の1回だけ）
- * 6. スプラッシュの表示が終わっていること
- * 7. 上限時間内にロードが完了し、その時点でアプリが前面にあること
+ * 2. 開発者メニューで広告を非表示にしていないこと（開発ビルドのみ）
+ * 3. 無料プランであることが確定していること（未確定・権利確認失敗の間は表示しない）
+ * 4. このプロセスでまだ一度も表示を試みていないこと（＝コールドスタート直後の1回だけ）
+ * 5. 上限時間内にロードが完了していること
+ * 6. スプラッシュが閉じ終わった時点でアプリが前面にあること
  *
- * 1〜3は加入状態を待たずに判定できるため先に行う。
+ * 1〜2は加入状態を待たずに判定できるため先に行う。
  *
- * 【スプラッシュが終わってから表示する理由】
+ * 【初回起動でも表示する】
+ * インストール直後の起動も対象にする。iOSの初回はATT許可ダイアログに続けて全画面広告が出る。
+ * Googleのベストプラクティスは「アプリを数回使ってから最初のApp Open広告を出す」ことを推奨しており、
+ * これに沿わないことを承知で利用者が選んだ出し方である。
+ *
+ * 【スプラッシュを広告の準備まで延ばす理由】
+ * ロードを待たずにスプラッシュを閉じると、ホーム画面を見せたあとに遅れて全画面広告が割り込む。
+ * そこでスプラッシュは「決着」（ロードが完了した、または表示しないと決まった）を待ってから閉じ、
+ * 閉じ終わった直後に表示する。決着は onSettled で呼び出し元へ知らせる。
+ * 加入状態が確定するまではFreeかどうか分からないため、Proでも確定まではスプラッシュが続く。
+ *
+ * 【スプラッシュが閉じてから表示する理由】
  * スプラッシュの演出を最後まで見せることを優先している。
  * Googleのガイドは読み込み画面の上での表示を推奨し、アプリの画面へ移ったあとの表示を避けるよう求めている。
  * 従わない場合は配信を止められることがあると明記されているため、変更時は仕様書§8.19を確認すること。
- * 広告の準備はスプラッシュの表示中から並行して進め、ホーム画面が見えてから広告が出るまでの間を短くする。
  *
  * 【上限時間を設ける理由】
- * ホーム画面を操作し始めた利用者の前に、遅れて全画面広告が割り込まないようにするため。
+ * 広告の取得が遅いときに、スプラッシュがいつまでも閉じないのを防ぐため。
+ * 上限を過ぎたらスプラッシュを閉じ、遅れてロードが完了しても表示しない。
  *
  * 【時間による間隔を設けない理由】
- * コールドスタート1回につき最大1回という制限（条件5）だけで頻度を抑える。
+ * コールドスタート1回につき最大1回という制限（条件4）だけで頻度を抑える。
  * アプリを開き直すたびに表示されるが、これはApp Open広告が想定している出し方である。
  *
  * 【起動を止めない】
- * 判定・初期化・ロード・表示のどこで失敗しても広告を諦めるだけで、起動や業務機能には影響しない。
+ * 判定・初期化・ロード・表示のどこで失敗しても広告を諦めてスプラッシュを閉じるだけで、起動や業務機能には影響しない。
  * 外部サービスの失敗でローカル業務機能を止めないという方針に従う。
  *
  * @see docs/機能仕様書.md §8.19 広告・トラッキング同意
@@ -45,7 +55,6 @@
 
 import { useEffect, useState } from 'react';
 import { AppState, Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import mobileAds, { AppOpenAd, AdEventType, TestIds } from 'react-native-google-mobile-ads';
 import { Logger, useSharedSubscription } from '@cliptap/shared';
 import { useTracking } from '@hooks/useTracking';
@@ -68,18 +77,13 @@ const AD_UNIT_IDS = {
 };
 
 /**
- * 表示を試みてよい上限時間
+ * ロードの完了を待つ上限時間
  *
- * ゲートのマウントから数え、この時間内に表示できなければ広告を諦める。
+ * ゲートのマウントから数え、この時間内にロードできなければ広告を諦めてスプラッシュを閉じる。
+ * スプラッシュを広告のために延ばしてよい上限でもある。
  * 加入状態の確定・SDK初期化・広告ロードの合計に対する上限で、Google公式のApp Openサンプルと同じ5秒とする。
  */
-const SHOW_TIMEOUT_MS = 5000;
-
-/** 初回起動を通過済みかどうかの保存キー */
-const FIRST_LAUNCH_DONE_KEY = '@app_open_ad_first_launch_done';
-
-/** 初回起動を通過済みであることを表す値 */
-const FIRST_LAUNCH_DONE_VALUE = '1';
+const LOAD_TIMEOUT_MS = 5000;
 
 /* ========================================
    プロセス単位の状態
@@ -103,11 +107,19 @@ let hasStartedThisProcess = false;
 let isFinishedThisProcess = false;
 
 /**
- * スプラッシュの表示が終わったか
+ * このプロセスで広告の準備が決着したか
  *
- * ロード完了のイベントはReactの外で受け取るため、表示してよいかの判定用にプロセス単位で写しておく。
+ * ロードが完了した、または処理を終えた（isFinishedThisProcess）ときに true になる。
+ * スプラッシュはこれを待ってから閉じる。
  */
-let isSplashFinishedThisProcess = false;
+let isSettledThisProcess = false;
+
+/**
+ * 決着を知らせる先（マウント中のゲートの onSettled）
+ *
+ * ロード完了のイベントはReactの外で受け取るため、知らせる先をプロセス単位で写しておく。
+ */
+let notifySettled: (() => void) | null = null;
 
 /**
  * 生成済みのAppOpenAdインスタンス
@@ -127,8 +139,10 @@ type PreflightResult = 'eligible' | 'skip';
 
 /** useAppOpenAd の引数 */
 export interface UseAppOpenAdParams {
-  /** スプラッシュの表示が完全に終わったか（広告はこれが true になってから表示する） */
+  /** スプラッシュの表示が完全に終わったか（広告はこれが true になった直後に表示する） */
   isSplashFinished: boolean;
+  /** 広告の準備が決着したとき（ロード完了、または表示しないと決まったとき）に呼ぶ。スプラッシュはこれを待って閉じる */
+  onSettled: () => void;
 }
 
 /* ========================================
@@ -143,7 +157,7 @@ export interface UseAppOpenAdParams {
  *
  * @param params - UseAppOpenAdParams
  */
-export function useAppOpenAd({ isSplashFinished }: UseAppOpenAdParams): void {
+export function useAppOpenAd({ isSplashFinished, onSettled }: UseAppOpenAdParams): void {
   const { isLoading, isSubscribed, verificationFailed, shouldShowAds } = useSharedSubscription();
   const { getTrackingStatus } = useTracking();
 
@@ -151,10 +165,26 @@ export function useAppOpenAd({ isSplashFinished }: UseAppOpenAdParams): void {
   const [preflight, setPreflight] = useState<PreflightResult | null>(null);
 
   /**
+   * 決着を知らせる先の登録
+   *
+   * 登録より先に決着していた場合（決着後の再マウントなど）は、ここですぐに知らせてスプラッシュを止めない。
+   * 下の打ち切りの effect と分けているのは、onSettled が変わったときに
+   * そちらの後始末（広告を諦める処理）まで走らせないため。
+   */
+  useEffect(() => {
+    notifySettled = onSettled;
+    if (isSettledThisProcess) onSettled();
+
+    return () => {
+      notifySettled = null;
+    };
+  }, [onSettled]);
+
+  /**
    * 上限時間の打ち切りと、加入状態を待たない事前判定
    *
    * 加入状態が永久に確定しない、SDK初期化が返ってこない、といった場合でも
-   * 遅れて広告が出ないよう、マウント時に1回だけ打ち切りを仕掛ける。
+   * スプラッシュが閉じるよう、マウント時に1回だけ打ち切りを仕掛ける。
    */
   useEffect(() => {
     /* 同一プロセスで判定済みならもう出さない */
@@ -162,8 +192,11 @@ export function useAppOpenAd({ isSplashFinished }: UseAppOpenAdParams): void {
     hasStartedThisProcess = true;
 
     const timeoutId = setTimeout(() => {
-      finish('Timed out before the ad could be shown', true);
-    }, SHOW_TIMEOUT_MS);
+      /* ロードが間に合っていれば、スプラッシュが閉じるのを待って表示する。
+         ここで打ち切ると、スプラッシュを待たせたのに広告が出なくなる */
+      if (adInstance?.loaded) return;
+      finish('Timed out before the ad was loaded', true);
+    }, LOAD_TIMEOUT_MS);
 
     void runPreflight().then((result) => {
       if (result === 'skip') {
@@ -184,7 +217,7 @@ export function useAppOpenAd({ isSplashFinished }: UseAppOpenAdParams): void {
    * 加入状態の確定を待ってから広告をロードする
    *
    * 未確定のまま進めるとPro利用者へ全画面広告を出す事故につながるため、
-   * isLoading の間は必ず待つ。ロードはスプラッシュの表示中から始めてよい。
+   * isLoading の間は必ず待つ。ロードはスプラッシュの表示中に行う。
    */
   useEffect(() => {
     if (preflight !== 'eligible' || isLoading || isFinishedThisProcess) return;
@@ -200,14 +233,12 @@ export function useAppOpenAd({ isSplashFinished }: UseAppOpenAdParams): void {
   }, [preflight, isLoading, isSubscribed, verificationFailed, shouldShowAds, getTrackingStatus]);
 
   /**
-   * スプラッシュの終了を待って表示する
+   * スプラッシュが閉じ終わった直後に表示する
    *
-   * ロードがスプラッシュより先に終わっていた場合は、ここで表示する。
-   * ロードのほうが遅い場合は、ロード完了のイベントで表示される。
+   * スプラッシュは決着を待って閉じるため、ここに来た時点でロードは完了しているか、
+   * 表示しないと決まっている（その場合 presentAd は何もしない）。
    */
   useEffect(() => {
-    isSplashFinishedThisProcess = isSplashFinished;
-
     if (isSplashFinished && adInstance) {
       presentAd(adInstance);
     }
@@ -217,6 +248,18 @@ export function useAppOpenAd({ isSplashFinished }: UseAppOpenAdParams): void {
 /* ========================================
    内部処理
    ======================================== */
+
+/**
+ * 広告の準備が決着したことを知らせる
+ *
+ * ロード完了時と finish から呼ばれる。2回目以降の呼び出しは何もしない。
+ */
+function settle(): void {
+  if (isSettledThisProcess) return;
+  isSettledThisProcess = true;
+
+  notifySettled?.();
+}
 
 /**
  * このプロセスでの広告の処理を終える
@@ -229,6 +272,9 @@ export function useAppOpenAd({ isSplashFinished }: UseAppOpenAdParams): void {
 function finish(reason: string, isAbnormal = false): void {
   if (isFinishedThisProcess) return;
   isFinishedThisProcess = true;
+
+  /* 表示した・表示しないと決めた・諦めた、のどれでもスプラッシュを待たせる理由はなくなる */
+  settle();
 
   if (isAbnormal) {
     /* 本番のLoggerは追加引数を捨てるため、理由はメッセージへ埋め込む */
@@ -257,7 +303,7 @@ function resolveAdUnitId(): string {
 /**
  * 加入状態を待たずに判定できる条件をまとめて確認する
  *
- * ここで弾ける起動は課金サービスの応答を待たずに決着する。
+ * ここで弾ける起動は課金サービスの応答を待たずに決着し、スプラッシュもすぐに閉じられる。
  */
 async function runPreflight(): Promise<PreflightResult> {
   if (!resolveAdUnitId()) {
@@ -266,10 +312,7 @@ async function runPreflight(): Promise<PreflightResult> {
     return 'skip';
   }
 
-  if (await isFirstLaunch()) return 'skip';
-
-  /* 開発者メニューで広告を非表示にしている（開発ビルドのみ）。
-     初回起動の印を残してから判定し、スイッチを戻したときに初回扱いへ戻らないようにする */
+  /* 開発者メニューで広告を非表示にしている（開発ビルドのみ） */
   if (await isDevAdsDisabled()) return 'skip';
 
   return 'eligible';
@@ -278,7 +321,7 @@ async function runPreflight(): Promise<PreflightResult> {
 /**
  * SDK初期化と広告のロードを行う
  *
- * ロードが完了したら presentAd で表示を試みる。
+ * ロードが完了したら決着を知らせる。表示はスプラッシュが閉じ終わってから行う。
  * 例外は握りつぶして広告を諦める。広告の失敗で起動が止まってはならない。
  *
  * @param getTrackingStatus - ATT許可状態を取得する
@@ -305,7 +348,8 @@ async function loadAppOpenAd(getTrackingStatus: () => Promise<string>): Promise<
     const unsubscribe = ad.addAdEventsListener(({ type, payload }) => {
       switch (type) {
         case AdEventType.LOADED:
-          presentAd(ad);
+          /* スプラッシュを閉じてよいことだけを知らせ、表示はスプラッシュが閉じ終わってから行う */
+          settle();
           break;
 
         case AdEventType.CLOSED:
@@ -342,15 +386,15 @@ function getOrCreateAd(adUnitId: string, requestNonPersonalizedAdsOnly: boolean)
 }
 
 /**
- * ロード済みの広告を、スプラッシュが終わっていれば表示する
+ * ロード済みの広告を表示する
  *
- * ロード完了時とスプラッシュ終了時の両方から呼ばれ、両方が揃った時点で1回だけ表示する。
+ * スプラッシュが閉じ終わったときに呼ばれ、表示するのは1回だけ。
  * show() はロード未完了だと同期例外を投げるため、呼び出し前に loaded を確認する。
  *
  * @param ad - 表示するAppOpenAd
  */
 function presentAd(ad: AppOpenAd): void {
-  if (isFinishedThisProcess || !isSplashFinishedThisProcess || !ad.loaded) return;
+  if (isFinishedThisProcess || !ad.loaded) return;
 
   /* 起動直後に別アプリへ移られた場合、裏で提示しても見られないまま消費されるだけになる。
      戻ってきた利用者に文脈のない全画面広告を見せることにもなるため、前面のときだけ表示する */
@@ -367,40 +411,5 @@ function presentAd(ad: AppOpenAd): void {
     });
   } catch (error) {
     Logger.warn(`[useAppOpenAd] show() threw for the App Open ad: ${String(error)}`);
-  }
-}
-
-/**
- * インストール後の初回起動かを判定する
- *
- * 記録が無い場合を初回起動とみなし、通過済みの印を残したうえで初回として扱う。
- * インストール直後はATT許可ダイアログが出るため、続けて全画面広告を出すと
- * アプリの中身を一度も見せないまま全画面を2枚踏ませることになる。
- * 読み出しや保存に失敗した場合は表示してよい側へ倒す（起動を止めない方針に合わせる）。
- */
-async function isFirstLaunch(): Promise<boolean> {
-  try {
-    const raw = await AsyncStorage.getItem(FIRST_LAUNCH_DONE_KEY);
-    if (raw === FIRST_LAUNCH_DONE_VALUE) return false;
-
-    await recordFirstLaunchDone();
-    return true;
-  } catch (error) {
-    Logger.error('[useAppOpenAd] Failed to read the first launch marker:', error);
-    return false;
-  }
-}
-
-/**
- * 初回起動を通過したことを記録する
- *
- * 保存に失敗した場合は次の起動も初回として扱われ、広告が1回余分に出ないだけで
- * 起動そのものには影響しない。
- */
-async function recordFirstLaunchDone(): Promise<void> {
-  try {
-    await AsyncStorage.setItem(FIRST_LAUNCH_DONE_KEY, FIRST_LAUNCH_DONE_VALUE);
-  } catch (error) {
-    Logger.error('[useAppOpenAd] Failed to record the first launch marker:', error);
   }
 }

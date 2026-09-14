@@ -154,7 +154,14 @@ function AppContent({ isTabletDevice }: { isTabletDevice: boolean }) {
 }
 
 export default function RootLayout() {
-  const { isAdaptersReady, showSplash, isTabletDevice, hideSplash } = useAdapterInitialization();
+  const {
+    isAdaptersReady,
+    showSplash,
+    isTabletDevice,
+    hideSplash,
+    isAppOpenAdSettled,
+    handleAppOpenAdSettled,
+  } = useAdapterInitialization();
 
   return (
     <>
@@ -166,8 +173,8 @@ export default function RootLayout() {
             <AuthProvider>
               <SubscriptionProvider>
                 {/* 起動時App Open広告の表示判定（加入状態を見るためSubscriptionProviderの内側に置く。描画はしない。
-                    広告はスプラッシュの表示が完全に終わってから出す） */}
-                <AppOpenAdGate isSplashFinished={!showSplash} />
+                    広告の準備が決着したらスプラッシュを閉じ、閉じ終わった直後に広告を出す） */}
+                <AppOpenAdGate isSplashFinished={!showSplash} onSettled={handleAppOpenAdSettled} />
                 <AppContent isTabletDevice={isTabletDevice} />
               </SubscriptionProvider>
             </AuthProvider>
@@ -175,11 +182,13 @@ export default function RootLayout() {
         </View>
       )}
 
-      {/* スプラッシュスクリーン（初期化中に表示。起動時広告は待たない） */}
+      {/* スプラッシュスクリーン（初期化と、起動時広告の準備の決着を待って閉じる。
+          広告の準備はロード完了か、出さないと決まるまでで、上限5秒。ゲートは初期化の完了後にマウントされるため、
+          それまでは isAdaptersReady で待つ） */}
       {showSplash && (
         <SplashScreen
           onFinish={hideSplash}
-          isLoading={!isAdaptersReady}
+          isLoading={!isAdaptersReady || !isAppOpenAdSettled}
         />
       )}
     </>

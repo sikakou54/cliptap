@@ -49,7 +49,7 @@ import { useItemLimitGuard } from '@hooks/useItemLimitGuard';
  * 定型文の並べ替えはSortPreferenceAdapter経由で保存しているが、あれはWebとも共有する仕組みで、
  * ショートカットはモバイルだけの機能。共有インターフェースへショートカット用の口を足すと
  * Webに使われないメソッドが増えるため、ここで直接保存する
- * （モバイル固有の保存をフック内で行う例は useAppOpenAd にもある）。
+ * （モバイル固有の保存をAsyncStorageへ直接行う例は src/utils/devAdsOverride.ts にもある）。
  */
 const SORT_PREFERENCE_KEY = '@shortcut_sort_preference';
 
