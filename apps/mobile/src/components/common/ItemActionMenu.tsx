@@ -2,8 +2,9 @@
  * 一覧カードの「・・・」メニュー
  *
  * 定型文カードとショートカットカードの右上に置く「・・・」ボタンと、
- * 押したときにボタンの真下（入り切らなければ真上）へ出す「編集」「削除」のメニュー。
- * 背景は暗くせず、メニューの外側のタップとAndroidの戻る操作で閉じる。
+ * 押したときに画面の下から出す「編集」「削除」「キャンセル」のボトムシート。
+ * 開くときは下からせり上げる（100ms）。
+ * キャンセル、シートの外側のタップ、Androidの戻る操作で閉じる。
  * 削除の確認ダイアログは呼び出し側が出す。
  *
  * 【読み上げラベルに項目名を含める理由】
@@ -11,24 +12,24 @@
  * E2Eテストもこのラベルでカードを特定する。ボタンはタイトルと同じ行にあり、
  * 「基準の要素より下にある対象」を探す TAP_NEAR では拾えないためである。
  *
- * @see src/hooks/components/useItemActionMenu.ts - 位置の計算と、選んだ操作の実行
+ * 【背景を暗くしない理由】
+ * シートの後ろに色を付けた全面の層を置くと、iOSシミュレータで、同じ起動中に2回目以降に開いたシートの項目が
+ * アクセシビリティツリーに出なくなり、E2Eテストが項目を見つけられなかった。
+ * 色の層を押せない別の層に分けても同じで、色を付けなければ出る（2026-09-14 に確認。原因は未特定）。
+ * そのため背景は透明のままにし、シートは上端の影で一覧から浮かせる。
+ *
+ * @see src/hooks/components/useItemActionMenu.ts - シートの開閉とせり上げ、選んだ操作の実行
  * @see src/components/snippet/SnippetCard.tsx - 使用元（定型文）
  * @see src/components/shortcut/ShortcutCard.tsx - 使用元（ショートカット）
  */
 
-import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Modal, Pressable, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '@cliptap/shared';
 import { useTheme } from '@lib/themeSystem';
 import { UI_CONSTANTS } from '@constants/ui';
-import {
-  MENU_ITEM_HEIGHT,
-  MENU_PADDING_VERTICAL,
-  useItemActionMenu,
-} from '@hooks/components/useItemActionMenu';
-
-/** メニューの最小幅（pt）。項目名が短くても押しやすい幅を確保する */
-const MENU_MIN_WIDTH = 160;
+import { useItemActionMenu } from '@hooks/components/useItemActionMenu';
 
 /* ========================================
    Props定義
@@ -37,8 +38,8 @@ const MENU_MIN_WIDTH = 160;
 /**
  * ItemActionMenuのProps
  * @property itemName - 操作対象の名前（読み上げラベルに使う）
- * @property onEdit - メニューで「編集」が選ばれたときに呼ぶ
- * @property onDelete - メニューで「削除」が選ばれたときに呼ぶ
+ * @property onEdit - シートで「編集」が選ばれたときに呼ぶ
+ * @property onDelete - シートで「削除」が選ばれたときに呼ぶ
  */
 interface ItemActionMenuProps {
   itemName: string;
@@ -50,13 +51,17 @@ export function ItemActionMenu({ itemName, onEdit, onDelete }: ItemActionMenuPro
   const { t } = useTranslation();
   const { colors, isTablet, responsiveFontSizes } = useTheme();
 
+  /* シートの下端をホームインジケータ・ナビゲーションバーに重ねないための下インセット。
+     RNのModalはウィンドウ全体を覆うため、ウィンドウのインセットがそのまま使える */
+  const insets = useSafeAreaInsets();
+
   /* フックからロジックを取得 */
   const {
-    triggerRef,
     visible,
-    position,
+    translateY,
     handleOpen,
     handleClose,
+    handleSheetLayout,
     handleSelectEdit,
     handleSelectDelete,
     handleDismiss,
@@ -68,7 +73,6 @@ export function ItemActionMenu({ itemName, onEdit, onDelete }: ItemActionMenuPro
           accessibilityRole は付けない。E2Eテストは role=button のラベル付き要素を定型文タイトルの並びとして確かめており、
           付けるとタイトルとこのボタンが交互に並んで並び順の確認が壊れる（アプリの他のアイコンボタンも役割を付けていない） */}
       <TouchableOpacity
-        ref={triggerRef}
         onPress={handleOpen}
         hitSlop={UI_CONSTANTS.HIT_SLOP.LARGE}
         accessibilityLabel={t('common.more_actions', { name: itemName })}
@@ -80,9 +84,8 @@ export function ItemActionMenu({ itemName, onEdit, onDelete }: ItemActionMenuPro
         />
       </TouchableOpacity>
 
-      {/* メニュー。アニメーションは100ms以内の規約に収めるため付けない。
-          Androidは edge-to-edge が有効なため、statusBarTranslucent を付けなくてもModalが全画面になり、
-          measureInWindow で測った座標と揃う（付けると edge-to-edge を切ったときにステータスバーの分ずれる） */}
+      {/* ボトムシート。せり上げはフック側で100ms以内に動かすため、Modal自体のアニメーションは付けない
+          （Modalの slide は約0.3秒かかり、規約の100msを超える） */}
       <Modal
         visible={visible}
         transparent
@@ -90,7 +93,7 @@ export function ItemActionMenu({ itemName, onEdit, onDelete }: ItemActionMenuPro
         onRequestClose={handleClose}
         onDismiss={handleDismiss}
       >
-        {/* 背景（色は付けない。タップで閉じる） */}
+        {/* シートの外側のタップで閉じる層（色は付けない。理由は冒頭のコメント） */}
         <Pressable
           style={StyleSheet.absoluteFill}
           onPress={handleClose}
@@ -98,15 +101,16 @@ export function ItemActionMenu({ itemName, onEdit, onDelete }: ItemActionMenuPro
           accessibilityLabel={t('common.close')}
         />
 
-        {/* メニュー本体（ボタンの右端に揃えて、真下または真上に置く） */}
-        <View
+        {/* シート本体（画面の下端に置き、下からせり上げる） */}
+        <Animated.View
+          onLayout={handleSheetLayout}
           style={[
-            styles.menu,
-            position,
+            styles.sheet,
             {
-              backgroundColor: colors.surfaceElevated,
-              borderColor: colors.border,
+              backgroundColor: colors.surface,
               shadowColor: colors.shadow,
+              paddingBottom: insets.bottom + UI_CONSTANTS.SPACING.SM,
+              transform: [{ translateY }],
             },
           ]}
         >
@@ -126,7 +130,7 @@ export function ItemActionMenu({ itemName, onEdit, onDelete }: ItemActionMenuPro
             </Text>
           </TouchableOpacity>
 
-          {/* 削除（取り消せない操作のため、一番下に赤字で置く。アイコンもゴミ箱を同じ赤で出す） */}
+          {/* 削除（取り消せない操作のため、操作の項目の一番下に赤字で置く。アイコンもゴミ箱を同じ赤で出す） */}
           <TouchableOpacity
             style={styles.item}
             onPress={handleSelectDelete}
@@ -141,33 +145,57 @@ export function ItemActionMenu({ itemName, onEdit, onDelete }: ItemActionMenuPro
               {t('common.delete')}
             </Text>
           </TouchableOpacity>
-        </View>
+
+          {/* キャンセル（何もせず閉じる。区切り線で操作の項目と分け、中央に置く） */}
+          <TouchableOpacity
+            style={[styles.item, styles.cancelItem, { borderTopColor: colors.border }]}
+            onPress={handleClose}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.cancel')}
+          >
+            <Text
+              style={[styles.itemText, { color: colors.text, fontSize: responsiveFontSizes.base }]}
+              numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.SINGLE}
+            >
+              {t('common.cancel')}
+            </Text>
+          </TouchableOpacity>
+        </Animated.View>
       </Modal>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  /** メニュー本体（位置・背景色・枠線の色・影の色は使用箇所で重ねる） */
-  menu: {
+  /**
+   * シート本体。画面の下端に固定する（背景色・影の色・下の余白・せり上げの位置は使用箇所で重ねる）
+   * 背景を暗くしないため、上端の影で一覧から浮かせる
+   */
+  sheet: {
     position: 'absolute',
-    minWidth: MENU_MIN_WIDTH,
-    paddingVertical: MENU_PADDING_VERTICAL,
-    borderRadius: UI_CONSTANTS.BORDER_RADIUS.MD,
-    borderWidth: UI_CONSTANTS.BORDER_WIDTH.THIN,
-    /* 背景を暗くしないため、影で一覧から浮かせる */
-    shadowOffset: { width: 0, height: 4 },
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingTop: UI_CONSTANTS.SPACING.SM,
+    borderTopLeftRadius: UI_CONSTANTS.BORDER_RADIUS.XXL,
+    borderTopRightRadius: UI_CONSTANTS.BORDER_RADIUS.XXL,
+    shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowRadius: 12,
+    elevation: 16,
   },
   /* アイコンと項目名を横に並べる（並べ替えメニュー SortMenu.option と同じ間隔） */
   item: {
-    minHeight: MENU_ITEM_HEIGHT,
+    minHeight: UI_CONSTANTS.BUTTON_HEIGHT.LARGE,
     flexDirection: 'row',
     alignItems: 'center',
     gap: UI_CONSTANTS.GAP.MD,
     paddingHorizontal: UI_CONSTANTS.SPACING.LG,
+  },
+  /** キャンセル（区切り線の色は使用箇所で重ねる） */
+  cancelItem: {
+    justifyContent: 'center',
+    borderTopWidth: UI_CONSTANTS.BORDER_WIDTH.THIN,
   },
   itemText: {
     fontWeight: UI_CONSTANTS.FONT_WEIGHT.MEDIUM,

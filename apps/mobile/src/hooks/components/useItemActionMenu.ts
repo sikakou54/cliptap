@@ -1,60 +1,35 @@
 /**
  * 一覧カードの「・・・」メニューのロジックフック
  *
- * 押された「・・・」ボタンの位置を測り、その真下（入り切らなければ真上）にメニューを出す。
- * 項目が選ばれたら、メニューを閉じてから編集・削除を実行する。
+ * 「編集」「削除」を並べたボトムシートを開閉する。
+ * 開くときは画面の下からせり上げ、閉じるときは即座に消す。
+ * 項目が選ばれたら、シートを閉じてから編集・削除を実行する。
  *
  * @see components/common/ItemActionMenu.tsx - UIコンポーネント
  */
 
-import { useCallback, useRef, useState, type RefObject } from 'react';
-import { Platform, View, useWindowDimensions } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { UI_CONSTANTS } from '@constants/ui';
+import { useCallback, useRef, useState } from 'react';
+import { Animated, Platform, useWindowDimensions, type LayoutChangeEvent } from 'react-native';
 
 /* ========================================
    定数
    ======================================== */
 
-/** メニュー項目1つの高さ（pt）。タップ領域の最小44ptに合わせる */
-export const MENU_ITEM_HEIGHT = 44;
-
-/** メニューの上下の内側の余白（pt） */
-export const MENU_PADDING_VERTICAL = UI_CONSTANTS.GAP.XS;
-
-/** 「・・・」ボタンとメニューの間の距離（pt） */
-const MENU_GAP = UI_CONSTANTS.GAP.XS;
-
 /**
- * メニューの高さの見積もり（pt）
+ * シートをせり上げる時間（ms）
  *
- * 下に入り切るかの判定にだけ使う。項目2つと上下の余白、枠線から求める。
- * 文字を大きくして実際の高さがこれを超えても、上に出すときは下端を基準に置くため、
- * メニューがボタンに重なることはない。
+ * アニメーションは100ms以内の規約に収める。UI_CONSTANTS.ANIMATION_DURATION は220ms以上のため使わない。
  */
-const MENU_HEIGHT_ESTIMATE =
-  MENU_ITEM_HEIGHT * 2 + MENU_PADDING_VERTICAL * 2 + UI_CONSTANTS.BORDER_WIDTH.THIN * 2;
+const SHEET_SLIDE_MS = 100;
 
 /* ========================================
    型定義
    ======================================== */
 
 /**
- * メニューの表示位置（Modalの中での絶対配置の値）
- * @property top - 下に出すときの上端（上に出すときは持たない）
- * @property bottom - 上に出すときの下端（下に出すときは持たない）
- * @property right - 右端。「・・・」ボタンの右端に揃える
- */
-export interface MenuPosition {
-  top?: number;
-  bottom?: number;
-  right: number;
-}
-
-/**
  * useItemActionMenuのProps
- * @property onEdit - メニューで「編集」が選ばれたときに呼ぶ
- * @property onDelete - メニューで「削除」が選ばれたときに呼ぶ
+ * @property onEdit - シートで「編集」が選ばれたときに呼ぶ
+ * @property onDelete - シートで「削除」が選ばれたときに呼ぶ
  */
 export interface UseItemActionMenuProps {
   onEdit: () => void;
@@ -66,13 +41,13 @@ export interface UseItemActionMenuProps {
  */
 export interface UseItemActionMenuReturn {
   /* 状態 */
-  triggerRef: RefObject<View | null>;
   visible: boolean;
-  position: MenuPosition;
+  translateY: Animated.Value;
 
   /* ハンドラ */
   handleOpen: () => void;
   handleClose: () => void;
+  handleSheetLayout: (event: LayoutChangeEvent) => void;
   handleSelectEdit: () => void;
   handleSelectDelete: () => void;
   handleDismiss: () => void;
@@ -82,47 +57,61 @@ export interface UseItemActionMenuReturn {
  * 一覧カードの「・・・」メニューのロジックフック
  *
  * @param props - 編集・削除が選ばれたときのコールバック
- * @returns メニューに必要な状態とハンドラ
+ * @returns ボトムシートに必要な状態とハンドラ
  */
 export function useItemActionMenu({
   onEdit,
   onDelete,
 }: UseItemActionMenuProps): UseItemActionMenuReturn {
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
 
-  const triggerRef = useRef<View>(null);
   const [visible, setVisible] = useState(false);
-  const [position, setPosition] = useState<MenuPosition>({ right: 0 });
 
-  /* iOSでメニューが閉じ切るまで保留している操作 */
+  /* シートの定位置からの下向きのずれ（0で定位置） */
+  const [translateY] = useState(() => new Animated.Value(0));
+
+  /* iOSでシートが閉じ切るまで保留している操作 */
   const pendingActionRef = useRef<(() => void) | null>(null);
 
   /**
-   * ボタンの位置を測ってメニューを開く
+   * シートを開く
+   *
+   * @remarks
+   * シートの高さは表示してから測るため、測る前の最初のフレームでシートが定位置に一瞬出ないよう、
+   * 画面の高さ分だけ下（画面外）に置いてから表示する。せり上げは handleSheetLayout で始める。
    */
   const handleOpen = useCallback(() => {
-    triggerRef.current?.measureInWindow((x, y, width, height) => {
-      const right = windowWidth - (x + width);
-      const top = y + height + MENU_GAP;
-      /* 画面下端のカードでは、ホームインジケータにかからない範囲に入り切るかで上下を決める */
-      const fitsBelow =
-        top + MENU_HEIGHT_ESTIMATE <= windowHeight - insets.bottom - UI_CONSTANTS.GAP.MD;
-
-      setPosition(fitsBelow ? { top, right } : { bottom: windowHeight - y + MENU_GAP, right });
-      setVisible(true);
-    });
-  }, [windowWidth, windowHeight, insets.bottom]);
+    translateY.setValue(windowHeight);
+    setVisible(true);
+  }, [translateY, windowHeight]);
 
   /**
-   * 何も選ばずにメニューを閉じる（外側のタップ・Androidの戻る操作）
+   * シートの高さが決まったら、シートの高さ分だけ下からせり上げる
+   *
+   * @remarks
+   * 高さは文字の大きさの設定で変わるため、固定値にせず実際の高さを使う。
+   */
+  const handleSheetLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      translateY.setValue(event.nativeEvent.layout.height);
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: SHEET_SLIDE_MS,
+        useNativeDriver: true,
+      }).start();
+    },
+    [translateY]
+  );
+
+  /**
+   * 何も選ばずにシートを閉じる（キャンセル・外側のタップ・Androidの戻る操作）
    */
   const handleClose = useCallback(() => {
     setVisible(false);
   }, []);
 
   /**
-   * メニューを閉じてから操作を実行する
+   * シートを閉じてから操作を実行する
    *
    * @remarks
    * iOSでは、Modalが閉じている途中に編集画面（モーダル表示）へ遷移すると画面が開かないことがあるため、
@@ -153,7 +142,7 @@ export function useItemActionMenu({
   }, [closeThenRun, onDelete]);
 
   /**
-   * メニューが閉じ切ったとき（iOSのみ呼ばれる）に、保留していた操作を実行する
+   * シートが閉じ切ったとき（iOSのみ呼ばれる）に、保留していた操作を実行する
    */
   const handleDismiss = useCallback(() => {
     const action = pendingActionRef.current;
@@ -162,11 +151,11 @@ export function useItemActionMenu({
   }, []);
 
   return {
-    triggerRef,
     visible,
-    position,
+    translateY,
     handleOpen,
     handleClose,
+    handleSheetLayout,
     handleSelectEdit,
     handleSelectDelete,
     handleDismiss,

@@ -267,19 +267,22 @@ const styles = StyleSheet.create({
   mainContent: {
     gap: UI_CONSTANTS.GAP.SM,
   },
-  /* タイトルと「・・・」メニューを横に並べる。間を空けて、タイトルのコピーアイコンと押し間違えにくくする */
+  /* タイトルと「・・・」メニューを横に並べる。長いタイトルではコピーアイコンが「・・・」に近づくため、間を空けて押し間違えにくくする */
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: UI_CONSTANTS.GAP.LG,
   },
+  /* タップ領域は行いっぱいのまま（タイトルの右の空いた所を押してもタイトルをコピーする） */
   titleContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
   },
+  /* 行いっぱいに伸ばさず文字の幅に留め、コピーアイコンをタイトルの末尾に付ける。
+     長いタイトルは縮めて末尾を省略し、アイコンは残す */
   title: {
-    flex: 1,
+    flexShrink: 1,
     fontWeight: UI_CONSTANTS.FONT_WEIGHT.SEMIBOLD,
   },
   titleCopyIcon: {

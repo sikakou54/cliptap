@@ -447,7 +447,11 @@ case "safecheck":
      * 「存在するか」と「安全域にあるか」を1回の読み取りで判定する。
      * 2回に分けると、遷移中に片方だけ空振りして
      * 「存在しないのにスクロールする」事故が起きる。
-     *   終了コード 0 = 安全域にある / 1 = 画面内だが安全域の外 / 3 = 存在しない
+     *   終了コード 0 = 安全域にある（またはスクロールできる一覧が無い） / 1 = 画面内だが安全域の外 / 3 = 存在しない
+     *
+     * 安全域の外でも、画面外の要素が1つも無ければスクロールで動かせるものは無いため、安全域にあるとして扱う。
+     * 画面下端に固定したボトムシートの項目でスクロールすると、スワイプがシートの外側のタップになり、
+     * 押す前にシートを閉じてしまう。
      */
     guard args.count >= 3 else { fail("usage: ui safecheck <locator>") }
     let sc = Locator.parse(args[2])
@@ -455,7 +459,8 @@ case "safecheck":
     guard hits.count > sc.index else { exit(3) }
     let n = hits[sc.index]
     print("\(Int(n.center.x)) \(Int(n.center.y))")
-    exit(safeRect.contains(n.center) ? 0 : 1)
+    let hasOffscreen = nodes.contains { !screenRect.contains($0.center) }
+    exit(safeRect.contains(n.center) || !hasOffscreen ? 0 : 1)
 
 case "findbelow":
     /*
