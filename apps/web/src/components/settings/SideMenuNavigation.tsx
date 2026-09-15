@@ -102,6 +102,34 @@ export function SideMenuNavigation({
         <span className="text-sm">{t('settings.web_specific.close_file')}</span>
       </button>
 
+      <div className="my-2 border-t border-gray-200 dark:border-[#2A2A2A]" />
+
+      <a
+        href="terms.html"
+        target="_blank"
+        rel="noreferrer"
+        onClick={onClose}
+        className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 transition-colors hover:bg-gray-50 dark:text-[#A0A0A0] dark:hover:bg-[#2A2A2A]"
+      >
+        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 3h7l5 5v13H7a2 2 0 01-2-2V5a2 2 0 012-2zm7 0v5h5M9 13h6M9 17h6" />
+        </svg>
+        <span className="text-sm">{t('settings.terms')}</span>
+      </a>
+
+      <a
+        href="privacy.html"
+        target="_blank"
+        rel="noreferrer"
+        onClick={onClose}
+        className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 transition-colors hover:bg-gray-50 dark:text-[#A0A0A0] dark:hover:bg-[#2A2A2A]"
+      >
+        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3l7 3v5c0 4.55-2.99 8.74-7 10-4.01-1.26-7-5.45-7-10V6l7-3zm0 5v4m0 4h.01" />
+        </svg>
+        <span className="text-sm">{t('settings.privacy')}</span>
+      </a>
+
       {/* 広告バナー（Freeプランのみ表示） */}
       {!isSubscribed && (
         <div className="mt-auto pt-4">

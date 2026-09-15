@@ -11,9 +11,10 @@ interface SearchBarProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   onClose: () => void;
+  placeholderKey?: string;
 }
 
-export function SearchBar({ searchQuery, setSearchQuery, onClose }: SearchBarProps) {
+export function SearchBar({ searchQuery, setSearchQuery, onClose, placeholderKey = 'snippet.search_placeholder' }: SearchBarProps) {
   const { t } = useTranslation();
 
   /* 検索バー（スニペット検索用、虫眼鏡アイコンと閉じるボタン付き） */
@@ -34,7 +35,7 @@ export function SearchBar({ searchQuery, setSearchQuery, onClose }: SearchBarPro
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={t('snippet.search_placeholder')}
+          placeholder={t(placeholderKey)}
           autoFocus
           className="w-full pl-10 pr-10 py-1.5 text-sm border border-gray-300 dark:border-[#2A2A2A] rounded-lg focus:outline-none bg-white dark:bg-[#1A1A1A] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#707070]"
         />
@@ -51,4 +52,3 @@ export function SearchBar({ searchQuery, setSearchQuery, onClose }: SearchBarPro
     </div>
   );
 }
-

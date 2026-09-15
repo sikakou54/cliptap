@@ -15,6 +15,8 @@ import { useHomeScreen } from '@hooks/screens/useHomeScreen';
 import { SnippetEditModal } from '@components/snippet/SnippetEditModal';
 import { DashboardHeader } from '@components/dashboard/DashboardHeader';
 import { SnippetGrid } from '@components/dashboard/SnippetGrid';
+import { ShortcutGrid } from '@components/shortcut/ShortcutGrid';
+import { ShortcutEditModal } from '@components/shortcut/ShortcutEditModal';
 import { AccountLinkModal } from '@components/auth/AccountLinkModal';
 import { SideMenu } from '@components/settings/SideMenu';
 import { ImportFileModal } from '@components/import';
@@ -44,13 +46,17 @@ export function Dashboard() {
     selectedCategory,
     copiedId,
     copiedTitleId,
+    copiedShortcutValueId,
     showProfileDropdown,
     showSearchBar,
     gridColumns,
+    listMode,
+    searchProfileId,
 
     isMobileMenuOpen,
 
     snippetModal,
+    shortcutModal,
     exportScreen,
     importScreen,
 
@@ -58,26 +64,35 @@ export function Dashboard() {
     handleSortChange,
 
     filteredSnippets,
+    filteredShortcuts,
     categories,
+    filterCategories,
     validProfiles,
     variables,
     profileVariables,
     activeProfile,
+    activeProfileId,
+    defaultProfileId,
 
     setSearchQuery,
     setSelectedCategory,
     setShowSearchBar,
     setGridColumns,
     setShowProfileDropdown,
+    setListMode,
+    setSearchProfileId,
 
     handleCopySnippet,
     handleCopySnippetTitle,
     handleDeleteSnippet,
+    handleCopyShortcutValue,
+    handleDeleteShortcut,
     handleSelectProfile,
     handleToggleMobileMenu,
     handleCloseMobileMenu,
     getCategoryColor,
     getCategoryName,
+    getSearchResultCount,
   } = useHomeScreen();
 
   /**
@@ -143,33 +158,50 @@ export function Dashboard() {
           setSearchQuery={setSearchQuery}
           showSearchBar={showSearchBar}
           setShowSearchBar={setShowSearchBar}
-          categories={categories}
+          categories={filterCategories}
           selectedCategory={selectedCategory}
           setSelectedCategory={setSelectedCategory}
           onToggleMobileMenu={handleToggleMobileMenu}
-          onCreate={snippetModal.handleCreate}
+          onCreate={listMode === 'shortcut' ? shortcutModal.handleCreate : snippetModal.handleCreate}
           gridColumns={gridColumns}
           setGridColumns={setGridColumns}
           currentSort={currentSort}
           onSortChange={handleSortChange}
+          listMode={listMode}
+          onListModeChange={setListMode}
+          searchProfileId={searchProfileId}
+          getSearchResultCount={getSearchResultCount}
+          onSearchProfileSelect={setSearchProfileId}
         />
 
         {/* メインコンテンツ（定型文グリッド）
             pt-36でヘッダー分の上部マージンを確保（固定ヘッダーの下にコンテンツが表示されるように）。 */}
-        <main className="px-6 py-6 pt-36">
-          <SnippetGrid
-            filteredSnippets={filteredSnippets}
-            gridColumns={gridColumns}
-            copiedId={copiedId}
-            copiedTitleId={copiedTitleId}
-            categories={categories}
-            getCategoryColor={getCategoryColor}
-            getCategoryName={getCategoryName}
-            onCopy={handleCopySnippet}
-            onCopyTitle={handleCopySnippetTitle}
-            onEdit={snippetModal.handleEdit}
-            onDelete={handleDeleteSnippet}
-          />
+        <main className="px-6 py-6 pt-44 md:pt-36">
+          {listMode === 'snippet' ? (
+            <SnippetGrid
+              filteredSnippets={filteredSnippets}
+              gridColumns={gridColumns}
+              copiedId={copiedId}
+              copiedTitleId={copiedTitleId}
+              categories={categories}
+              getCategoryColor={getCategoryColor}
+              getCategoryName={getCategoryName}
+              onCopy={handleCopySnippet}
+              onCopyTitle={handleCopySnippetTitle}
+              onEdit={snippetModal.handleEdit}
+              onDelete={handleDeleteSnippet}
+            />
+          ) : (
+            <ShortcutGrid
+              shortcuts={filteredShortcuts}
+              gridColumns={gridColumns}
+              copiedValueId={copiedShortcutValueId}
+              categories={categories}
+              onCopyValue={handleCopyShortcutValue}
+              onEdit={shortcutModal.handleEdit}
+              onDelete={handleDeleteShortcut}
+            />
+          )}
         </main>
       </div>
 
@@ -223,6 +255,19 @@ export function Dashboard() {
           onClose={snippetModal.closeEditModal}
         />
       )}
+
+      <ShortcutEditModal
+        isOpen={shortcutModal.isOpen}
+        shortcut={shortcutModal.shortcut}
+        categories={categories}
+        profiles={validProfiles}
+        profileVariables={profileVariables}
+        variables={variables}
+        activeProfileId={activeProfileId}
+        defaultProfileId={defaultProfileId}
+        onSave={shortcutModal.handleSave}
+        onClose={shortcutModal.handleClose}
+      />
 
       {/* 復元ファイル選択モーダル（.cliptapファイル選択とパスワード入力）
           ファイルの検証後に全削除の確認を出し、同意すると全データを置き換える。

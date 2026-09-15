@@ -7,16 +7,24 @@
  */
 import { useEffect } from 'react';
 
+let activeLocks = 0;
+let originalOverflow = '';
+
 export function useBodyScrollLock(isLocked: boolean): void {
   useEffect(() => {
-    /* ロック状態に応じてbodyのoverflowスタイルを切り替え */
-    /* 'hidden'を設定するとスクロールバーが消え、スクロール不可になる */
-    document.body.style.overflow = isLocked ? 'hidden' : '';
+    if (!isLocked) return undefined;
 
-    /* クリーンアップ: コンポーネントアンマウント時にスクロールを復元 */
-    /* これを忘れると、モーダルを閉じた後もスクロールできない状態が続いてしまう */
+    if (activeLocks === 0) {
+      originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+    }
+    activeLocks += 1;
+
     return () => {
-      document.body.style.overflow = '';
+      activeLocks = Math.max(0, activeLocks - 1);
+      if (activeLocks === 0) {
+        document.body.style.overflow = originalOverflow;
+      }
     };
   }, [isLocked]);
 }

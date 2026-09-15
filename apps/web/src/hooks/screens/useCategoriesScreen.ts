@@ -115,7 +115,11 @@ function isValidRGB(value: string): boolean {
  *
  * @returns 画面に必要な全ての状態とハンドラ
  */
-export function useCategoriesScreen(): UseCategoriesScreenReturn {
+interface UseCategoriesScreenOptions {
+  onCreated?: (category: Category) => void;
+}
+
+export function useCategoriesScreen({ onCreated }: UseCategoriesScreenOptions = {}): UseCategoriesScreenReturn {
   const { t } = useTranslation();
   const { categories, createCategory, updateCategory, deleteCategory } = useCategories();
 
@@ -285,10 +289,11 @@ export function useCategoriesScreen(): UseCategoriesScreenReturn {
           color: colorToSave,
         });
       } else {
-        createCategory({
+        const created = createCategory({
           name: name.trim(),
           color: colorToSave,
         });
+        onCreated?.(created);
       }
 
       setShowModal(false);
@@ -299,7 +304,7 @@ export function useCategoriesScreen(): UseCategoriesScreenReturn {
     } finally {
       setIsSubmitting(false);
     }
-  }, [name, useCustomColor, isCustomColorValid, getCustomColor, color, editingId, updateCategory, createCategory, resetForm, t]);
+  }, [name, useCustomColor, isCustomColorValid, getCustomColor, color, editingId, updateCategory, createCategory, resetForm, t, onCreated]);
 
   /** カテゴリ削除 */
   const handleDelete = useCallback(async (id: string) => {

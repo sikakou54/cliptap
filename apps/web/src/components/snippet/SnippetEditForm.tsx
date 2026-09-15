@@ -8,6 +8,7 @@ import { useRef, forwardRef, useImperativeHandle } from 'react';
 import { useTranslation, INPUT_LIMITS } from '@cliptap/shared';
 import type { Category, Profile } from '@cliptap/shared';
 import { ProfileMultiSelect } from '@components/profile/ProfileMultiSelect';
+import { QuickCategoryCreateButton } from '@components/category/QuickCategoryCreateButton';
 
 export interface SnippetEditFormRef {
   titleInputRef: React.RefObject<HTMLInputElement | null>;
@@ -109,7 +110,10 @@ export const SnippetEditForm = forwardRef<SnippetEditFormRef, SnippetEditFormPro
           スニペットを分類するカテゴリを選択。
           空文字列（未分類）を選択可能。categories配列から動的に生成。 */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-[#A0A0A0] mb-2">{t('snippet.category')}</label>
+        <div className="mb-2 flex items-center justify-between">
+          <label className="text-sm font-medium text-gray-700 dark:text-[#A0A0A0]">{t('snippet.category')}</label>
+          <QuickCategoryCreateButton onCreated={onCategoryChange} />
+        </div>
         <select
           value={categoryId || ''}
           onChange={(e) => onCategoryChange(e.target.value || null)}
@@ -164,4 +168,3 @@ export const SnippetEditForm = forwardRef<SnippetEditFormRef, SnippetEditFormPro
     </div>
   );
 });
-

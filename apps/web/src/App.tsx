@@ -15,7 +15,7 @@
 import React from 'react';
 import { useTranslation } from '@cliptap/shared';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth, ProfileProvider, VariableProvider, CategoryProvider, SnippetProvider } from '@cliptap/shared';
+import { AuthProvider, useAuth, ProfileProvider, VariableProvider, CategoryProvider, SnippetProvider, ShortcutProvider } from '@cliptap/shared';
 import { Home } from '@pages/Home';
 import { Dashboard } from '@pages/Dashboard';
 import { CategoryManage } from '@pages/CategoryManage';
@@ -108,10 +108,12 @@ function Main() {
           <CategoryProvider>
             {/* スニペット管理のコンテキスト */}
             <SnippetProvider>
-              {/* ルーター（HashRouter: ブラウザの履歴APIを使用せず、ハッシュベースのルーティング） */}
-              <Router>
-                <AppRoutes />
-              </Router>
+              <ShortcutProvider>
+                {/* ルーター（HashRouter: ブラウザの履歴APIを使用せず、ハッシュベースのルーティング） */}
+                <Router>
+                  <AppRoutes />
+                </Router>
+              </ShortcutProvider>
             </SnippetProvider>
           </CategoryProvider>
         </VariableProvider>

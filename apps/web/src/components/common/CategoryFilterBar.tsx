@@ -18,6 +18,7 @@ interface CategoryFilterBarProps {
   selectedCategory: string | null;
   allLabel: string;
   uncategorizedLabel: string;
+  showUncategorized?: boolean;
   onSelectCategory: (categoryId: string | null) => void;
 }
 
@@ -26,6 +27,7 @@ function CategoryFilterBarComponent({
   selectedCategory,
   allLabel,
   uncategorizedLabel,
+  showUncategorized = true,
   onSelectCategory,
 }: CategoryFilterBarProps) {
   const [localSelected, setLocalSelected] = useState(selectedCategory);
@@ -56,15 +58,17 @@ function CategoryFilterBarComponent({
         {allLabel}
       </button>
       {/* 未分類ボタン */}
-      <button
-        onClick={() => handleSelect('uncategorized')}
-        className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap ${localSelected === 'uncategorized'
-          ? 'bg-blue-600 text-white'
-          : 'bg-gray-100 dark:bg-[#2A2A2A] text-gray-700 dark:text-[#A0A0A0] hover:bg-gray-200 dark:hover:bg-[#333333]'
-          }`}
-      >
-        {uncategorizedLabel}
-      </button>
+      {showUncategorized && (
+        <button
+          onClick={() => handleSelect('uncategorized')}
+          className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap ${localSelected === 'uncategorized'
+            ? 'bg-blue-600 text-white'
+            : 'bg-gray-100 dark:bg-[#2A2A2A] text-gray-700 dark:text-[#A0A0A0] hover:bg-gray-200 dark:hover:bg-[#333333]'
+            }`}
+        >
+          {uncategorizedLabel}
+        </button>
+      )}
       {/* 各カテゴリボタン（選択時はカテゴリ色を背景に使用） */}
       {categories.map((category) => (
         /* カテゴリフィルターボタン */

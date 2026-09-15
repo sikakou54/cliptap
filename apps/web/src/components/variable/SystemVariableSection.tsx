@@ -18,6 +18,7 @@ import {
 import { SystemVariableItem } from './SystemVariableItem';
 import { SystemVariableFormatModal } from './SystemVariableFormatModal';
 import type { SystemVariable } from '@hooks/screens/useVariablesScreen';
+import { showConfirm } from '@utils/alerts';
 
 interface SystemVariableSectionProps {
   systemVariables: readonly SystemVariable[];
@@ -31,11 +32,28 @@ export function SystemVariableSection({ systemVariables }: SystemVariableSection
   const [editingKey, setEditingKey] = useState<SystemVariableKey | null>(null);
   const locale = normalizeLocale(navigator.language);
 
+  const handleResetAll = () => {
+    showConfirm('variables.format_reset_all_confirm', () => {
+      SystemVariableFormatService.deleteAll();
+      setFormats(SystemVariableFormatService.loadRegistry());
+      setEditingKey(null);
+    });
+  };
+
   /* システム変数セクション（タイトルと変数一覧） */
   return (
     <div>
       {/* セクションタイトル */}
-      <h2 className="text-sm font-medium text-gray-500 dark:text-[#707070] mb-3">{t('snippet.system_variables')}</h2>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h2 className="text-sm font-medium text-gray-500 dark:text-[#707070]">{t('snippet.system_variables')}</h2>
+        <button
+          type="button"
+          onClick={handleResetAll}
+          className="rounded-lg px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30"
+        >
+          {t('variables.format_reset_all')}
+        </button>
+      </div>
       {/* システム変数一覧コンテナ */}
       <div className="bg-white dark:bg-[#1A1A1A] rounded-xl shadow-sm border border-gray-200 dark:border-[#2A2A2A] overflow-hidden">
         {systemVariables.map((variable, index) => (

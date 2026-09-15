@@ -12,6 +12,8 @@ import { ProfileDropdown } from './ProfileDropdown';
 import { SearchBar } from './SearchBar';
 import { GridColumnsSelector } from './GridColumnsSelector';
 import { SortMenu } from './SortMenu';
+import { ListModeToggle, type WebListMode } from './ListModeToggle';
+import { SearchProfileBar } from './SearchProfileBar';
 
 interface DashboardHeaderProps {
   validProfiles: Profile[];
@@ -32,6 +34,11 @@ interface DashboardHeaderProps {
   setGridColumns: (cols: 1 | 2 | 3) => void;
   currentSort: SnippetSortBy;
   onSortChange: (sort: SnippetSortBy) => void;
+  listMode: WebListMode;
+  onListModeChange: (mode: WebListMode) => void;
+  searchProfileId: string | null;
+  getSearchResultCount: (profileId: string) => number;
+  onSearchProfileSelect: (profileId: string) => void;
 }
 
 export function DashboardHeader({
@@ -53,6 +60,11 @@ export function DashboardHeader({
   setGridColumns,
   currentSort,
   onSortChange,
+  listMode,
+  onListModeChange,
+  searchProfileId,
+  getSearchResultCount,
+  onSearchProfileSelect,
 }: DashboardHeaderProps) {
   const { t } = useTranslation();
 
@@ -81,13 +93,18 @@ export function DashboardHeader({
             {/* 環境切り替えドロップダウン
                 現在の環境を表示し、クリックで他の環境に切り替え可能。
                 環境ごとに変数の値が異なるため、スニペットの表示内容も変わる。 */}
-            <ProfileDropdown
-              validProfiles={validProfiles}
-              activeProfile={activeProfile}
-              showProfileDropdown={showProfileDropdown}
-              setShowProfileDropdown={setShowProfileDropdown}
-              handleProfileSelect={handleProfileSelect}
-            />
+            <div className={showSearchBar ? 'hidden sm:block' : 'block'}>
+              <ProfileDropdown
+                validProfiles={validProfiles}
+                activeProfile={activeProfile}
+                showProfileDropdown={showProfileDropdown}
+                setShowProfileDropdown={setShowProfileDropdown}
+                handleProfileSelect={handleProfileSelect}
+              />
+            </div>
+            <div className="hidden md:block">
+              <ListModeToggle mode={listMode} onChange={onListModeChange} />
+            </div>
           </div>
 
           {/* 中央：検索バー（表示時のみ）
@@ -101,6 +118,7 @@ export function DashboardHeader({
                 setShowSearchBar(false);
                 setSearchQuery('');
               }}
+              placeholderKey={listMode === 'shortcut' ? 'shortcut.search_placeholder' : 'snippet.search_placeholder'}
             />
           )}
 
@@ -134,7 +152,7 @@ export function DashboardHeader({
             <button
               onClick={onCreate}
               className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
-              aria-label={t('snippet.create')}
+              aria-label={t(listMode === 'shortcut' ? 'shortcut.create' : 'snippet.create')}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -143,18 +161,31 @@ export function DashboardHeader({
           </div>
         </div>
 
+        <div className="mt-3 md:hidden">
+          <ListModeToggle mode={listMode} onChange={onListModeChange} />
+        </div>
+
         {/* カテゴリフィルターバー（全カテゴリ・未分類・各カテゴリのボタン）
             選択したカテゴリに応じてスニペットをフィルタリング。
             「すべて」で全カテゴリ表示、「未分類」でカテゴリ未設定のスニペットのみ表示。 */}
-        <CategoryFilterBar
-          categories={categories}
-          selectedCategory={selectedCategory}
-          allLabel={t('category.all')}
-          uncategorizedLabel={t('category.uncategorized')}
-          onSelectCategory={setSelectedCategory}
-        />
+        {showSearchBar && searchQuery.trim() !== '' ? (
+          <SearchProfileBar
+            profiles={validProfiles}
+            selectedProfileId={searchProfileId}
+            getResultCount={getSearchResultCount}
+            onSelect={onSearchProfileSelect}
+          />
+        ) : (
+          <CategoryFilterBar
+            categories={categories}
+            selectedCategory={selectedCategory}
+            allLabel={t('category.all')}
+            uncategorizedLabel={t('category.uncategorized')}
+            showUncategorized={false}
+            onSelectCategory={setSelectedCategory}
+          />
+        )}
       </div>
     </header>
   );
 }
-
