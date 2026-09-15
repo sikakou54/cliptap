@@ -93,21 +93,6 @@ export const extractVariables = (text: string): string[] => {
 };
 
 /**
- * 正規表現の特殊文字をエスケープ
- *
- * @param {string} value - エスケープ対象の文字列
- * @returns {string} エスケープされた文字列
- *
- * @private
- *
- * @remarks
- * $& は置換パターンでマッチした文字列全体を表す
- */
-const escapeRegExp = (value: string) => {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-};
-
-/**
  * テキスト内の変数を展開
  *
  * @param {string} text - 展開対象のテキスト
@@ -130,6 +115,14 @@ const escapeRegExp = (value: string) => {
  * - 同じ変数が複数箇所にある場合、すべて同じ値に置換されます
  * - システム変数は常に現在日時で展開されます
  *
+ * 【解決と置換を分ける理由】
+ * リゾルバが非同期になり得るため、置換関数の中では値を解決できない。
+ * そこで先にトークンごとの値をすべて解決し、元のテキストを1回だけ走査して置き換える。
+ * 置換は関数で渡し、値の中の `$&` や `$$` を置換パターンとして解釈させない。
+ * また、展開した値に `{{name}}` が含まれていても再展開しない。
+ * 一覧表示の展開（VariableService.expandTextSync）とキーボードの展開（iOS・Android）が
+ * この挙動のため、コピーだけ結果が変わらないように揃える。
+ *
  * @throws {Error} カスタムリゾルバがエラーをスローした場合
  */
 export const replaceVariables = async (
@@ -146,10 +139,13 @@ export const replaceVariables = async (
 
   if (matches.length === 0) return text;
 
-  let result = text;
+  /* トークン（括弧を含む元の文字列）ごとの置換後の値。同じトークンは1回だけ解決する */
+  const replacements = new Map<string, string>();
 
   for (const match of matches) {
     const token = match[0];
+    if (replacements.has(token)) continue;
+
     const variableName = match[1]?.trim() ?? '';
 
     let replacement: string | null | undefined = resolveSystemVariableValue(
@@ -164,13 +160,9 @@ export const replaceVariables = async (
       replacement = (resolved instanceof Promise ? await resolved : resolved) ?? null;
     }
 
-    if (replacement === null || replacement === undefined) {
-      replacement = token;
-    }
-
-    const regex = new RegExp(escapeRegExp(token), 'g');
-    result = result.replace(regex, replacement);
+    /* 解決できない変数は元のトークンのまま残す */
+    replacements.set(token, replacement ?? token);
   }
 
-  return result;
+  return text.replace(new RegExp(VARIABLE_PATTERN), (token) => replacements.get(token) ?? token);
 };

@@ -92,13 +92,11 @@ const TEST_VARIABLES = dummyTemplates.custom_variables;
  * ダミーデータのショートカット値
  *
  * @remarks
- * - value: 挿入する値（保存する文字列）
- * - variable: 参照するカスタム変数名（空文字なら参照しない）
+ * - value: 挿入する値（保存する文字列。変数トークン {{name}} をそのまま書ける）
  */
 interface DummyShortcutValue {
   name: string;
   value: string;
-  variable: string;
 }
 
 /**
@@ -276,19 +274,15 @@ async function seedProfiles(): Promise<Map<string, string>> {
  * 変数メタデータの作成自体は残る。
  *
  * @param {Map<string, string>} profileMap - プロファイル名とIDのマッピング
- * @returns 変数名とIDのマッピング（ショートカット値からの参照を張るために使う）
  */
 async function seedVariables(
   profileMap: Map<string, string>
-): Promise<Map<string, string>> {
-  /* ショートカット値からの参照を張るため、作成した変数の名前とIDを返す */
-  const variableMap = new Map<string, string>();
-
+): Promise<void> {
   /* 標準値はデフォルトプロファイル（Main）に格納するため、先に取得しておく */
   const defaultProfile = ProfileMapper.getDefault();
   if (!defaultProfile) {
     Logger.error('[Seed] Default profile not found, cannot seed variables');
-    return variableMap;
+    return;
   }
 
   for (const variableData of TEST_VARIABLES) {
@@ -300,8 +294,6 @@ async function seedVariables(
         icon: variableData.icon,      /* アイコン名（例: "business-outline"） */
         type: 'custom',               /* 変数タイプ（カスタム変数として作成） */
       });
-
-      variableMap.set(variableData.name, variable.id);
 
       Logger.info(`[Seed] Created variable: ${variableData.name}`);
 
@@ -341,8 +333,6 @@ async function seedVariables(
       Logger.error(`[Seed] Failed to create variable ${variableData.name}:`, error);
     }
   }
-
-  return variableMap;
 }
 
 /**
@@ -355,18 +345,16 @@ async function seedVariables(
  * 限定したはずのショートカットが全体へ広がるため。
  * 一部だけ解決できなかったものは、解決できた分に紐づけて作り、解決できなかった名前をログに残す。
  * カテゴリは任意のため、未指定・解決できない場合は未分類（null）として登録する。
- * 値はカスタム変数への参照も張れる（参照中はその変数の値が挿入される。§8.24）。
+ * 値には変数トークン（{{name}}）をそのまま書ける。表示・コピー・キーボードからの挿入の時点で展開される（§8.24）。
  *
  * 1件の失敗で残りを諦めないため、ループ内で個別に catch して継続する。
  *
  * @param profileMap - プロファイル名とIDのマッピング
  * @param categoryMap - カテゴリ名とIDのマッピング
- * @param variableMap - 変数名とIDのマッピング（値のカスタム変数参照に使う）
  */
 async function seedShortcuts(
   profileMap: Map<string, string>,
-  categoryMap: Map<string, string>,
-  variableMap: Map<string, string>
+  categoryMap: Map<string, string>
 ): Promise<void> {
   /* 標準プロファイル「Main」はdatabase.tsが作るためprofileMapに含まれない。
      dummy.jsonが "Main" を指したときの解決先として先に取得しておく */
@@ -411,10 +399,7 @@ async function seedShortcuts(
         name: shortcutData.name,                                     /* ショートカット名 */
         values: shortcutData.values.map((value) => ({
           name: value.name,                                          /* 値名 */
-          value: value.value,                                        /* 挿入する値 */
-          variableId: value.variable                                 /* カスタム変数への参照（未指定はnull） */
-            ? variableMap.get(value.variable) ?? null
-            : null,
+          value: value.value,                                        /* 挿入する値（変数トークンは未展開のまま） */
         })),
       });
 
@@ -480,10 +465,10 @@ export async function runSeed(): Promise<void> {
     const profileMap = await seedProfiles();
 
     /* 4. カスタム変数を作成し、各プロファイル別の値も設定 */
-    const variableMap = await seedVariables(profileMap);
+    await seedVariables(profileMap);
 
     /* 5. ショートカットを作成（プロファイルとカテゴリの両方を解決するため最後に行う） */
-    await seedShortcuts(profileMap, categoryMap, variableMap);
+    await seedShortcuts(profileMap, categoryMap);
 
     Logger.info('[Seed] Test data seeding completed successfully!');
   } catch (error) {

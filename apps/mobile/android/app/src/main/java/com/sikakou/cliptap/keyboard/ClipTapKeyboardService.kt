@@ -1300,7 +1300,13 @@ class ClipTapKeyboardService : InputMethodService() {
      *
      * 【何をするか】
      * 1. 使用回数の多い順に値を並べ替える
-     * 2. 一覧を値用のアダプターへ差し替える
+     * 2. 値の表示に使う変数マップと書式を、選択中のプロファイルで読み直してアダプターへ渡す
+     * 3. 一覧を値用のアダプターへ差し替える
+     *
+     * 【変数マップをここで読み直す理由】
+     * 保持中の variablesMap は入力画面を開き直しても更新されないことがあり、
+     * メインアプリで変数の値を変えた後も古い値で表示されてしまう。値一覧を開くたびに読み直す。
+     * アダプターの差し替え（adapter の代入）で全行が作り直されるため、マップは差し替えより前に渡す。
      *
      * 【見出しと戻るボタンを置かない】
      * 値一覧にも見出しの行と戻るボタンは置かない。ショートカット一覧へは、
@@ -1314,6 +1320,8 @@ class ClipTapKeyboardService : InputMethodService() {
     private fun showShortcutValues(shortcut: Shortcut) {
         val values = shortcutService.rankedValues(shortcut.values)
 
+        shortcutValueAdapter.variablesMap = loadCurrentVariablesMap()
+        shortcutValueAdapter.systemVariableFormats = SystemVariableFormatMapper.getInstance(this).getAll()
         shortcutRecyclerView.adapter = shortcutValueAdapter
         shortcutValueAdapter.submitList(values)
 
@@ -1381,7 +1389,8 @@ class ClipTapKeyboardService : InputMethodService() {
      *
      * 【何をするか】
      * 1. currentInputConnectionを取得（テキストフィールドへの接続）
-     * 2. ShortcutService.insertValue()で値を挿入（振動と使用回数の加算も行う）
+     * 2. 選択中のプロファイルの変数マップを読み直す（表示と同じく、メインアプリでの変更を反映するため）
+     * 3. ShortcutService.insertValue()で変数を展開して挿入（振動と使用回数の加算も行う）
      *
      * 【二重挿入の判定をここに置かない理由】
      * 呼び出し元の行タップ（onShortcutValueClicked）で既に判定している。
@@ -1402,9 +1411,24 @@ class ClipTapKeyboardService : InputMethodService() {
             return false
         }
 
-        shortcutService.insertValue(value, ic)
+        shortcutService.insertValue(value, ic, loadCurrentVariablesMap())
         if (com.sikakou.cliptap.BuildConfig.DEBUG) Log.d(TAG, "✅ Shortcut value inserted successfully")
         return true
+    }
+
+    /**
+     * 選択中のプロファイルの変数マップをDBから読み直す
+     *
+     * 【保持中の variablesMap を使わない理由】
+     * variablesMap は入力画面の生成時とプロファイル切替時にしか更新されず、
+     * メインアプリで変数の値を変えた後も古いまま残ることがある。
+     * ショートカット値の表示と挿入は、開いた時点・挿入した時点の値にそろえる。
+     *
+     * @return 変数名 → 値のマップ（プロファイルが未確定なら空。カスタム変数は展開されず元の形で残る）
+     */
+    private fun loadCurrentVariablesMap(): Map<String, String> {
+        val profileId = currentProfile?.id ?: return emptyMap()
+        return variableService.getVariablesMap(profileId)
     }
 
     /**

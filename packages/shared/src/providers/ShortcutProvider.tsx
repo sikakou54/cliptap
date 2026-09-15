@@ -7,10 +7,9 @@
  *
  * @remarks
  * ショートカットは0件以上のプロファイルに紐づく（0件は全プロファイル向け。定型文と同じ）。
- * 保持するのは常にアクティブなプロファイルから見える分（紐づくもの＋0件のもの）だけとする。
- * カスタム変数を参照している値はプロファイルを切り替えると解決結果が変わるため、切替時に読み直す。
- * 作成・更新の戻り値とIDでの取得も、一覧と同じくアクティブなプロファイルを基準に解決する。
- * そのためProfileProviderの内側へ置くこと。
+ * 保持するのは常にアクティブなプロファイルから見える分（紐づくもの＋0件のもの）だけとし、切替時に読み直す。
+ * 値は変数トークン（{{name}}）を未展開のまま保持し、コピーする時点で展開する。
+ * どちらもアクティブなプロファイルを使うため、ProfileProviderの内側へ置くこと。
  *
  * @module ShortcutProvider
  */
@@ -21,6 +20,7 @@ import { ShortcutService } from '../services/ShortcutService';
 import { Logger } from '../utils/logger';
 import { useDatabase } from './DatabaseProvider';
 import { useProfiles } from './ProfileProvider';
+import { createCustomResolver, getCurrentLocale } from './variableCopyContext';
 import type { CreateShortcutInput, Shortcut, ShortcutValue, UpdateShortcutInput } from '../schema';
 
 /* ======================================== */
@@ -33,7 +33,7 @@ import type { CreateShortcutInput, Shortcut, ShortcutValue, UpdateShortcutInput 
 export interface ShortcutContextValue {
   /** アクティブなプロファイルから見えるショートカット一覧（sortOrder順） */
   shortcuts: Shortcut[];
-  /** 一覧の絞り込みと値の参照解決の基準となるプロファイルID（アクティブなプロファイル。未確定ならnull） */
+  /** 一覧の絞り込みと、値の変数を展開する基準となるプロファイルID（アクティブなプロファイル。未確定ならnull） */
   activeProfileId: string | null;
   /** データ読み込み中フラグ */
   loading: boolean;
@@ -47,9 +47,9 @@ export interface ShortcutContextValue {
   updateShortcut: (input: UpdateShortcutInput) => Shortcut;
   /** ショートカット削除 */
   deleteShortcut: (id: string) => void;
-  /** ショートカット値をクリップボードへコピーする（使用回数も加算する） */
-  copyShortcutValue: (value: ShortcutValue) => Promise<void>;
-  /** IDで取得（値の参照はアクティブなプロファイルを基準に解決する） */
+  /** ショートカット値の変数を展開してクリップボードへコピーする（使用回数も加算する。profileId省略時はアクティブなプロファイルで展開） */
+  copyShortcutValue: (value: ShortcutValue, profileId?: string) => Promise<void>;
+  /** IDで取得（値は保存されている文字列のまま） */
   getById: (id: string) => Shortcut | null;
 }
 
@@ -134,12 +134,11 @@ export function ShortcutProvider({ children }: ShortcutProviderProps) {
    */
   const createShortcut = useCallback(
     (input: CreateShortcutInput): Shortcut => {
-      /* 戻り値の値は一覧と同じくアクティブなプロファイルで解決する */
-      const shortcut = ShortcutService.create(input, activeProfileId);
+      const shortcut = ShortcutService.create(input);
       loadShortcuts();
       return shortcut;
     },
-    [loadShortcuts, activeProfileId]
+    [loadShortcuts]
   );
 
   /**
@@ -150,12 +149,11 @@ export function ShortcutProvider({ children }: ShortcutProviderProps) {
    */
   const updateShortcut = useCallback(
     (input: UpdateShortcutInput): Shortcut => {
-      /* 戻り値の値は一覧と同じくアクティブなプロファイルで解決する */
-      const shortcut = ShortcutService.update(input, activeProfileId);
+      const shortcut = ShortcutService.update(input);
       loadShortcuts();
       return shortcut;
     },
-    [loadShortcuts, activeProfileId]
+    [loadShortcuts]
   );
 
   /**
@@ -179,9 +177,9 @@ export function ShortcutProvider({ children }: ShortcutProviderProps) {
    *
    * @remarks
    * 挿入する値だけをコピーする（値名は含めない）。
-   * ショートカット値は変数トークン（{{name}}）の展開対象ではない。
-   * コピーするのはMapperが解決済みの value（カスタム変数を参照中はその変数の値）であり、
-   * 保存文字列の storedValue ではない。
+   * 保存されている値の変数トークン（{{name}}）を、コピーする時点のプロファイルと日時で展開する。
+   * 基準は画面から渡されたプロファイル（検索画面のチップ）で、省略時はアクティブなプロファイルとする
+   * （定型文の copySnippet と同じ）。展開に失敗した場合は、未展開の値をコピーする（§8.6）。
    *
    * 使用回数は定型文（SnippetProvider.copySnippet）と同じく、コピーでも加算する。
    * 加算条件がフルアクセス許可に依存する拡張キーボードは、
@@ -192,12 +190,22 @@ export function ShortcutProvider({ children }: ShortcutProviderProps) {
    * 再取得ではなく手元で進めるのは、コピーのたびに一覧が組み直されて
    * 指の下で行が動くのを避けるため。
    */
-  const copyShortcutValue = useCallback(async (value: ShortcutValue): Promise<void> => {
+  const copyShortcutValue = useCallback(async (value: ShortcutValue, profileId?: string): Promise<void> => {
     if (!hasClipboardAdapter()) {
       throw new Error('Clipboard adapter is not registered');
     }
 
-    await getClipboardAdapter().copy(value.value);
+    let text = value.value;
+    try {
+      text = await ShortcutService.prepareValueForClipboard(value.value, {
+        locale: getCurrentLocale(),
+        customResolver: createCustomResolver(profileId),
+      });
+    } catch (err) {
+      Logger.warn('[ShortcutProvider] Failed to expand variables, copying the stored value:', err);
+    }
+
+    await getClipboardAdapter().copy(text);
 
     ShortcutService.recordUse(value.id, value.shortcutId);
     setShortcuts((prev) =>
@@ -218,12 +226,9 @@ export function ShortcutProvider({ children }: ShortcutProviderProps) {
 
   /**
    * IDでショートカットを取得
-   * @remarks 複数のプロファイルに紐づくショートカットは本体から基準を決められないため、一覧と同じくアクティブなプロファイルで解決する
+   * @remarks 値は保存されている文字列のまま返す（編集画面の初期値に使うため展開しない）
    */
-  const getById = useCallback(
-    (id: string): Shortcut | null => ShortcutService.getById(id, activeProfileId),
-    [activeProfileId]
-  );
+  const getById = useCallback((id: string): Shortcut | null => ShortcutService.getById(id), []);
 
   /* ======================================== */
   /* Context Value */

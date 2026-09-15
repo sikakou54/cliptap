@@ -679,8 +679,7 @@ export async function migrateV6ToV7(db: DbAdapter): Promise<void> {
  * 名前は紐づくプロファイル内で一意ですが、紐づけが別テーブルにあるためDB制約では表せず、
  * 判定もShortcutServiceが行います。
  *
- * 値は`shortcut_values.value`に文字列で持ち、`variableId`を設定した値は
- * カスタム変数を参照して解決します。
+ * 値は`shortcut_values.value`に文字列で持ち、変数トークン（`{{name}}`）は未展開のまま保存します。
  * V8はまだリリースしていないため（`release/prod`はV5）、新しい段を作らずこの段の定義を更新しています。
  * 同じ理由で、配布中の`apps/web/public/starter_v8_*.cliptap`はファイル名が変わりません。
  * 版据置でDDLを変えたときは404で検知できないため、必ず再生成すること。

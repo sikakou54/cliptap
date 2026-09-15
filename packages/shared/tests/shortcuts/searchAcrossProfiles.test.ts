@@ -2,8 +2,10 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { setMainDbAdapter } from '../../src/adapters/DbAdapter';
 import { CREATE_INDEXES, CREATE_TABLES } from '../../src/database/schema';
 import { ProfileVariableMapper } from '../../src/mappers/ProfileMapper';
+import { ProfileService } from '../../src/services/ProfileService';
 import { ShortcutService } from '../../src/services/ShortcutService';
 import { VariableService } from '../../src/services/VariableService';
+import { attachDisplayValues } from '../../src/shortcuts/display';
 import { searchShortcuts } from '../../src/shortcuts/search';
 import {
   createMemoryDbAdapter,
@@ -14,10 +16,11 @@ import {
  * 検索画面のショートカット検索は、定型文と同じくプロファイルを跨ぐ（§8.7）。
  *
  * 画面（apps/mobile/src/hooks/screens/useSearchShortcuts.ts）は、有効な各プロファイルについて
- * getByProfileId で取得した一覧を searchShortcuts で絞り込み、一覧とチップの件数に使う。
- * カスタム変数を参照する値はプロファイルごとに解決結果が変わるため、
+ * getByProfileId で取得した一覧へ、そのプロファイルで変数を展開した表示用の値を持たせ、
+ * searchShortcuts で絞り込んで一覧とチップの件数に使う。
+ * 変数を含む値はプロファイルごとに展開結果が変わるため、
  * 同じショートカットでもプロファイルによって一致したりしなかったりする。
- * 取得と絞り込みを組み合わせたときの一致の範囲をここで固定する。
+ * 取得・展開・絞り込みを組み合わせたときの一致の範囲をここで固定する。
  *
  * @remarks
  * このディレクトリのテストは型チェックの対象外。紐づけは必ずIDの配列で渡す
@@ -48,14 +51,22 @@ describe('プロファイルを跨ぐショートカット検索', () => {
     return db;
   };
 
-  /** 指定プロファイルで検索語に一致したショートカット名を、表示順で取り出す */
-  const matchedNames = (profileId: string, query: string): string[] =>
-    searchShortcuts(ShortcutService.getByProfileId(profileId), query).map(
-      (shortcut) => shortcut.name
+  /** 指定プロファイルで検索語に一致したショートカット名を、表示順で取り出す（画面と同じく展開後の値で照合する） */
+  const matchedNames = (profileId: string, query: string): string[] => {
+    const profileVariablesMap = ProfileService.getProfileVariablesMap(profileId);
+    const defaultProfileVariablesMap = ProfileService.getDefaultProfileVariablesMap();
+    const displayed = attachDisplayValues(ShortcutService.getByProfileId(profileId), (text) =>
+      VariableService.expandTextSync(text, {
+        locale: 'ja',
+        profileVariablesMap,
+        defaultProfileVariablesMap,
+      })
     );
+    return searchShortcuts(displayed, query).map((shortcut) => shortcut.name);
+  };
 
-  /** 参照用のカスタム変数を1件作り、プロファイル別の値を入れる */
-  const createVariable = (values: Record<string, string>): string => {
+  /** カスタム変数 company を1件作り、プロファイル別の値を入れる */
+  const createVariable = (values: Record<string, string>): void => {
     const variable = VariableService.create({
       name: 'company',
       label: '会社名',
@@ -65,15 +76,14 @@ describe('プロファイルを跨ぐショートカット検索', () => {
     for (const [profileId, value] of Object.entries(values)) {
       ProfileVariableMapper.upsert({ profileId, variableId: variable.id, value });
     }
-    return variable.id;
   };
 
-  /** カスタム変数を参照する値を1件持つ、全プロファイル向けのショートカットを作る */
-  const createReferencing = (variableId: string, storedValue = '') =>
+  /** 変数を含む値を1件持つ、全プロファイル向けのショートカットを作る */
+  const createWithToken = () =>
     ShortcutService.create({
       profileIds: [],
       name: '差出人',
-      values: [{ name: '会社名', value: storedValue, variableId }],
+      values: [{ name: '会社名', value: '{{company}} 御中' }],
     });
 
   it('全プロファイル向けはどのプロファイルでも一致し、紐づけたものはそのプロファイルだけで一致する', async () => {
@@ -112,31 +122,41 @@ describe('プロファイルを跨ぐショートカット検索', () => {
     expect(matchedNames(OTHER, 'CUST')).toEqual(['取引先コード']);
   });
 
-  it('変数を参照する値は、プロファイルごとに解決した値で一致する', async () => {
+  it('変数を含む値は、プロファイルごとに展開した値で一致する', async () => {
     await useDatabase();
-    const variableId = createVariable({ [MAIN]: '株式会社Main', [OTHER]: '株式会社Other' });
-    createReferencing(variableId);
+    createVariable({ [MAIN]: '株式会社Main', [OTHER]: '株式会社Other' });
+    createWithToken();
 
     expect(matchedNames(MAIN, 'other')).toEqual([]);
     expect(matchedNames(OTHER, 'other')).toEqual(['差出人']);
   });
 
-  /** 参照中の保存文字列は画面に出ないため、一致させると見えない文字列で結果に出てしまう */
-  it('参照中の保存文字列は、どのプロファイルでも一致しない', async () => {
+  /** 保存されたトークンの変数名は画面に出ないため、一致させると見えない文字列で結果に出てしまう */
+  it('値を展開できる変数の名前では、どのプロファイルでも一致しない', async () => {
     await useDatabase();
-    const variableId = createVariable({ [MAIN]: '株式会社Main', [OTHER]: '株式会社Other' });
-    createReferencing(variableId, '自前の値');
+    createVariable({ [MAIN]: '株式会社Main', [OTHER]: '株式会社Other' });
+    createWithToken();
 
-    expect(matchedNames(MAIN, '自前')).toEqual([]);
-    expect(matchedNames(OTHER, '自前')).toEqual([]);
+    expect(matchedNames(MAIN, 'company')).toEqual([]);
+    expect(matchedNames(OTHER, 'company')).toEqual([]);
+    expect(matchedNames(THIRD, 'company')).toEqual([]);
   });
 
   it('プロファイルに変数の値が無ければ、標準プロファイルの値で一致する', async () => {
     await useDatabase();
-    const variableId = createVariable({ [MAIN]: '株式会社Main' });
-    createReferencing(variableId);
+    createVariable({ [MAIN]: '株式会社Main' });
+    createWithToken();
 
     expect(matchedNames(OTHER, '株式会社Main')).toEqual(['差出人']);
     expect(matchedNames(THIRD, '株式会社Main')).toEqual(['差出人']);
+  });
+
+  /** 展開できないトークンは画面にもトークンのまま出るため、表示どおりトークンの文字列で一致する */
+  it('どこにも値の無い変数はトークンのまま表示され、その文字列で一致する', async () => {
+    await useDatabase();
+    createVariable({});
+    createWithToken();
+
+    expect(matchedNames(MAIN, '{{company}}')).toEqual(['差出人']);
   });
 });

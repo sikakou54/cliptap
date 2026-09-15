@@ -2,6 +2,8 @@
  * ショートカット値の1行
  *
  * 値名を上、値を下に重ねて表示し、タップするとその値だけをクリップボードへコピーする。
+ * 表示するのは表示中のプロファイルで変数トークンを展開した文字列で、
+ * コピーはProviderがその時点のプロファイルと日時で展開し直す。
  *
  * 【横並びにしない理由】
  * 値は電話番号や住所など長さがまちまちで、横に並べると値名の欄幅に引きずられて
@@ -20,7 +22,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from '@cliptap/shared';
 import { useTheme } from '@lib/themeSystem';
-import { type ShortcutValue } from '@cliptap/shared';
+import { type ShortcutValue, type ShortcutValueWithDisplay } from '@cliptap/shared';
 import { UI_CONSTANTS } from '@constants/ui';
 
 /**
@@ -39,11 +41,11 @@ const ROW_VERTICAL_PADDING = UI_CONSTANTS.SPACING.SM;
 
 /**
  * ShortcutValueRowのProps
- * @property value - 表示・コピーするショートカット値
+ * @property value - 表示・コピーするショートカット値（表示用に展開した文字列を持つ）
  * @property onCopy - タップされたときのコールバック（クリップボードへコピー）
  */
 interface ShortcutValueRowProps {
-  value: ShortcutValue;
+  value: ShortcutValueWithDisplay;
   onCopy: (value: ShortcutValue) => Promise<void>;
 }
 
@@ -119,7 +121,7 @@ export function ShortcutValueRow({ value, onCopy }: ShortcutValueRowProps) {
             style={styles.copyIcon}
           />
         </View>
-        {/* 挿入・コピーされる値（下）。
+        {/* 挿入・コピーされる値（下）。変数トークンは表示中のプロファイルで展開して見せる。
             住所のような長い値でも全体を確かめてからコピーできるよう、行数を制限せず折り返す */}
         <Text
           style={[
@@ -131,7 +133,7 @@ export function ShortcutValueRow({ value, onCopy }: ShortcutValueRowProps) {
             },
           ]}
         >
-          {value.value}
+          {value.displayValue}
         </Text>
       </View>
     </TouchableOpacity>

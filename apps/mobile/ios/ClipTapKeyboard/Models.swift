@@ -94,7 +94,7 @@ struct ShortcutValue {
     let id: String
     let shortcutId: String
     let name: String        /* 値を識別する名称（例: 母） */
-    let value: String       /* 実際に挿入する文字列（例: 090-0000-0000） */
+    let value: String       /* 保存された文字列（例: 090-0000-0000）。変数トークンは未展開で、表示・挿入の時点で展開する */
     let useCount: Int       /* 拡張キーボードから挿入した回数（候補の並べ替え用） */
     let sortOrder: Int
     let createdAt: String

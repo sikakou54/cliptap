@@ -145,7 +145,7 @@ describe('ProfileService.deleteWithAutoSwitch', () => {
       db?.run('INSERT INTO shortcut_profiles VALUES (?, ?)', [id, profileId]);
     }
     db?.run(
-      "INSERT INTO shortcut_values VALUES (?, ?, 'value', '080', NULL, 0, 0, 'created', 'updated')",
+      "INSERT INTO shortcut_values VALUES (?, ?, 'value', '080', 0, 0, 'created', 'updated')",
       [`sv-${id}`, id]
     );
   };

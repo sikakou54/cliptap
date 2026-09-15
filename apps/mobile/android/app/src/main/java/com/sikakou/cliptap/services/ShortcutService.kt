@@ -7,8 +7,10 @@ import android.os.Vibrator
 import android.util.Log
 import android.view.inputmethod.InputConnection
 import com.sikakou.cliptap.mappers.ShortcutMapper
+import com.sikakou.cliptap.mappers.SystemVariableFormatMapper
 import com.sikakou.cliptap.models.Shortcut
 import com.sikakou.cliptap.models.ShortcutValue
+import com.sikakou.cliptap.utils.VariableReplacer
 
 /**
  * ショートカット管理サービス
@@ -27,9 +29,10 @@ import com.sikakou.cliptap.models.ShortcutValue
  * packages/shared/tests/shortcuts/sortShortcuts.test.ts が規則の正本。
  * このクラスはその規則を写したものなので、正本を変更するときは必ずここも同じ変更を行うこと。
  *
- * 【定型文との違い】
- * ショートカットの値には変数トークン（{{name}}など）の展開を行わない。
- * 保存された文字列をそのまま挿入する。
+ * 【変数の展開】
+ * ショートカットの値も定型文と同じく、変数トークン（{{today}}、{{client_name}}など）を
+ * 挿入する時点の選択中プロファイルと日時で展開する。
+ * 規則は定型文の挿入（SnippetService.insertSnippet）と同じ VariableReplacer に任せる。
  *
  * 【対応するiOSファイル】
  * ios/ClipTapKeyboard/Services/ShortcutService.swift と同等
@@ -37,6 +40,8 @@ import com.sikakou.cliptap.models.ShortcutValue
 class ShortcutService private constructor(private val context: Context) {
 
     private val shortcutMapper = ShortcutMapper.getInstance(context)
+    private val variableReplacer = VariableReplacer()
+    private val systemVariableFormatMapper = SystemVariableFormatMapper.getInstance(context)
 
     companion object {
         private const val TAG = "ShortcutService"
@@ -125,12 +130,14 @@ class ShortcutService private constructor(private val context: Context) {
      * ショートカット値をテキスト入力欄に挿入
      *
      * 【何をするか】
-     * 1. 値（valueのみ）を挿入する。値名は挿入しない
-     * 2. 振動フィードバックを実行
-     * 3. 使用回数を加算し、親ショートカットの更新日時を進める
+     * 1. 値の変数トークンを、選択中のプロファイルの変数マップと現在の日時で展開する
+     * 2. 展開した値を挿入する。値名は挿入しない
+     * 3. 振動フィードバックを実行
+     * 4. 使用回数を加算し、親ショートカットの更新日時を進める
      *
-     * 【変数置換を行わない理由】
-     * ショートカットの値は定型文とは別物で、保存された文字列をそのまま挿入する仕様のため。
+     * 【変数マップを引数で受け取る理由】
+     * 定型文の挿入（SnippetService.insertSnippet）と同じ形にするため。
+     * 呼び出し側は挿入の直前に読み直したマップを渡す。展開できないトークンは元の形のまま挿入する（仕様書 §8.6）。
      *
      * 【iOS版との違い: フルアクセス判定が不要な理由】
      * iOSの拡張キーボードは「フルアクセスを許可」されていないと共有コンテナへ書き込めないため、
@@ -138,12 +145,19 @@ class ShortcutService private constructor(private val context: Context) {
      * Androidの拡張キーボード（IME）はメインアプリと同一パッケージで動作し、
      * SharedDBもDatabase.initialize()で読み書き可能に開かれているため、この判定は存在しない。
      *
-     * @param value 挿入するショートカット値
+     * @param value 挿入するショートカット値（変数トークンは未展開）
      * @param inputConnection テキストフィールドへの接続
+     * @param variablesMap 選択中のプロファイルの変数マップ（変数名 → 値）
      */
-    fun insertValue(value: ShortcutValue, inputConnection: InputConnection) {
+    fun insertValue(
+        value: ShortcutValue,
+        inputConnection: InputConnection,
+        variablesMap: Map<String, String>
+    ) {
+        val text = variableReplacer.replace(value.value, variablesMap, systemVariableFormatMapper.getAll())
+
         /* 値だけを挿入（値名は挿入しない） */
-        inputConnection.commitText(value.value, 1)
+        inputConnection.commitText(text, 1)
 
         if (com.sikakou.cliptap.BuildConfig.DEBUG) Log.d(TAG, "✅ Shortcut value inserted: ${value.id}")
 

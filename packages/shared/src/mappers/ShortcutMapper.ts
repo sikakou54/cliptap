@@ -15,9 +15,7 @@ import type {
   ShortcutRow,
   ShortcutValue,
   ShortcutValueInput,
-  ShortcutValueRow,
 } from '../schema';
-import { resolveShortcutValue, type ProfileValueMap } from '../shortcuts/resolveValue';
 import { generateUniqueId, getCurrentTimestamp } from '../utils/dateHelpers';
 
 /**
@@ -102,10 +100,10 @@ const ShortcutValueQueries = {
   /* 指定ショートカットの値を取得（並び順） */
   SELECT_BY_SHORTCUT: 'SELECT * FROM shortcut_values WHERE shortcutId = ? ORDER BY sortOrder ASC',
   /* ショートカット値を新規作成 */
-  INSERT: `INSERT INTO shortcut_values (id, shortcutId, name, value, variableId, useCount, sortOrder, createdAt, updatedAt)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  INSERT: `INSERT INTO shortcut_values (id, shortcutId, name, value, useCount, sortOrder, createdAt, updatedAt)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
   /* ショートカット値を更新（useCountは挿入時にだけ動かすため触れない） */
-  UPDATE: `UPDATE shortcut_values SET name = ?, value = ?, variableId = ?, sortOrder = ?, updatedAt = ? WHERE id = ?`,
+  UPDATE: `UPDATE shortcut_values SET name = ?, value = ?, sortOrder = ?, updatedAt = ? WHERE id = ?`,
   /* ショートカット値を削除 */
   DELETE: 'DELETE FROM shortcut_values WHERE id = ?',
   /* 指定ショートカットの値をすべて削除 */
@@ -113,17 +111,6 @@ const ShortcutValueQueries = {
   /* 使用回数を1加算 */
   INCREMENT_USE_COUNT:
     'UPDATE shortcut_values SET useCount = useCount + 1 WHERE id = ?',
-  /* 指定したカスタム変数への参照をすべて外す（変数削除時。§8.5）。
-     実行時に外部キーを強制しないため、宣言した ON DELETE SET NULL は働かない */
-  CLEAR_VARIABLE_REFERENCE:
-    'UPDATE shortcut_values SET variableId = NULL, updatedAt = ? WHERE variableId = ?',
-};
-
-/* カスタム変数の値と標準プロファイルを引くためのクエリ。
-   ショートカット値の参照を解決するためだけに読み、更新は行わない */
-const ResolutionQueries = {
-  /* 標準プロファイルのID（フォールバック先） */
-  SELECT_DEFAULT_PROFILE_ID: 'SELECT id FROM profiles WHERE isDefault = 1 LIMIT 1',
 };
 
 /* ======================================== */
@@ -145,16 +132,15 @@ const toShortcutRow = (row: any): ShortcutRow => ({
 });
 
 /**
- * DB行データをShortcutValueRowエンティティに変換
+ * DB行データをShortcutValueエンティティに変換
  * @param row - データベースから取得した行データ
- * @returns ShortcutValueRow型のオブジェクト
+ * @returns ShortcutValue型のオブジェクト
  */
-const toValueRow = (row: any): ShortcutValueRow => ({
+const toValue = (row: any): ShortcutValue => ({
   id: row.id, /* ショートカット値ID */
   shortcutId: row.shortcutId, /* 所属するショートカットのID */
   name: row.name, /* 値名 */
-  value: row.value, /* 保存されている文字列 */
-  variableId: row.variableId ?? null, /* 参照するカスタム変数ID（参照なしはnull） */
+  value: row.value, /* 保存されている文字列（変数トークンは未展開） */
   useCount: row.useCount ?? 0, /* 使用回数（列がNULLの場合は0） */
   sortOrder: row.sortOrder ?? 0, /* 並び順（列がNULLの場合は0） */
   createdAt: row.createdAt, /* 作成日時 */
@@ -200,13 +186,12 @@ export class ShortcutMapper {
   }
 
   /** バックアップの値行をID・日時・使用回数ごと逐語復元する。 */
-  static restoreValue(value: ShortcutValueRow): void {
+  static restoreValue(value: ShortcutValue): void {
     getMainDbAdapter().run(ShortcutValueQueries.INSERT, [
       value.id,
       value.shortcutId,
       value.name,
       value.value,
-      value.variableId,
       value.useCount,
       value.sortOrder,
       value.createdAt,
@@ -224,26 +209,25 @@ export class ShortcutMapper {
    * （編集画面が一覧の要素を初期値にするため、表示中の1件だけにすると保存時に他の紐づけが消える）。
    *
    * 値と紐づけは、ショートカットの件数によらずそれぞれ1回のクエリでまとめて取得する。
-   * 値の参照はプロファイルごとに解決結果が変わるため、全プロファイルを1つの一覧で取得する口は設けず、
-   * プロファイル指定を必須にしている。プロファイルを跨いで検索する画面も、プロファイルごとに呼ぶ。
+   * どのショートカットが見えるかはプロファイルごとに変わるため、プロファイル指定を必須にしている。
+   * プロファイルを跨いで検索する画面も、プロファイルごとに呼ぶ。
+   * 値は保存されている文字列のまま返し、変数トークンは展開しない
+   * （展開は表示の shortcuts/display と、コピーの ShortcutService.prepareValueForClipboard が行う）。
    */
   static getByProfileId(profileId: string): Shortcut[] {
     const db = getMainDbAdapter();
     const rows = db.all<any>(ShortcutQueries.SELECT_BY_PROFILE, [profileId]);
-    const valueRows = db
+    const values = db
       .all<any>(ShortcutValueQueries.SELECT_BY_PROFILE, [profileId])
-      .map(toValueRow);
+      .map(toValue);
     const links = db.all<ShortcutProfile>(
       ShortcutProfileQueries.SELECT_FOR_PROFILE_LIST,
       [profileId]
     );
 
-    /* 参照先のカスタム変数は、このプロファイルを基準に解決する */
-    const resolved = this.resolveValues(valueRows, profileId);
-
     /* ショートカットIDごとに値をまとめる（1回の走査で振り分ける） */
     const valuesByShortcut = new Map<string, ShortcutValue[]>();
-    for (const value of resolved) {
+    for (const value of values) {
       const entries = valuesByShortcut.get(value.shortcutId) ?? [];
       entries.push(value);
       valuesByShortcut.set(value.shortcutId, entries);
@@ -267,16 +251,11 @@ export class ShortcutMapper {
   /**
    * IDでショートカットを値付きで取得
    * @param id - ショートカットID
-   * @param basisProfileId - 値の参照を解決する基準プロファイルID（nullなら標準プロファイルで解決する）
    * @returns ショートカット（存在しない場合はnull）
    * @description
    * 紐づけが0件のショートカットも取得できるよう、紐づけとは結合しない。
-   *
-   * 複数のプロファイルに紐づく（または0件で全プロファイル向けの）ショートカットは、
-   * 本体からは解決の基準を1つに決められない。表示中のプロファイルで解決しないと
-   * 一覧と異なる値を返すため、呼び出し側が基準を渡す。
    */
-  static getById(id: string, basisProfileId: string | null): Shortcut | null {
+  static getById(id: string): Shortcut | null {
     const db = getMainDbAdapter();
     const row = db.get<any>(ShortcutQueries.SELECT_BY_ID, [id]);
     if (!row) return null;
@@ -284,7 +263,7 @@ export class ShortcutMapper {
     return {
       ...toShortcutRow(row),
       profileIds: this.getProfileIds(id),
-      values: this.getValues(id, basisProfileId),
+      values: this.getValues(id),
     };
   }
 
@@ -351,95 +330,13 @@ export class ShortcutMapper {
   /**
    * 指定ショートカットの値を取得
    * @param shortcutId - ショートカットID
-   * @param basisProfileId - 値の参照を解決する基準プロファイルID（nullなら標準プロファイルで解決する）
-   * @returns ショートカット値の一覧（sortOrder順、参照は解決済み）
+   * @returns ショートカット値の一覧（sortOrder順、値は保存されている文字列のまま）
    */
-  static getValues(shortcutId: string, basisProfileId: string | null): ShortcutValue[] {
+  static getValues(shortcutId: string): ShortcutValue[] {
     const db = getMainDbAdapter();
-    const rows = db
+    return db
       .all<any>(ShortcutValueQueries.SELECT_BY_SHORTCUT, [shortcutId])
-      .map(toValueRow);
-
-    return this.resolveValues(rows, basisProfileId);
-  }
-
-  /**
-   * ショートカット値の行に、参照の解決結果を詰める
-   *
-   * @param rows - 値の行
-   * @param profileId - 基準プロファイルID（nullなら標準プロファイルで解決する）
-   * @returns 解決結果を詰めた値
-   *
-   * @remarks
-   * 参照先カスタム変数の値は、参照している変数の分だけ1回のクエリでまとめて引く。
-   * 値の件数だけクエリを撃つと、一覧を開くたびにSQLiteへ何度も往復することになる。
-   *
-   * 解決の規則そのものは`shortcuts/resolveValue`が正本で、ここはデータを揃えるだけに留める。
-   * iOS版・Android版のキーボードが同じ規則を写しており、規則をMapperへ散らすと
-   * 3実装のどれかだけがずれたときに気付けない。
-   */
-  private static resolveValues(
-    rows: ShortcutValueRow[],
-    profileId: string | null
-  ): ShortcutValue[] {
-    if (rows.length === 0) return [];
-
-    const db = getMainDbAdapter();
-
-    /* 参照しているカスタム変数の値。参照が1件も無ければ引かない */
-    const variableIds = [
-      ...new Set(rows.map((row) => row.variableId).filter((id): id is string => Boolean(id))),
-    ];
-    const variableValues: Record<string, Record<string, string>> = {};
-    let defaultProfileId: string | null = null;
-    if (variableIds.length > 0) {
-      defaultProfileId =
-        db.get<{ id: string }>(ResolutionQueries.SELECT_DEFAULT_PROFILE_ID)?.id ?? null;
-      const rowsForVariables = db.all<{
-        variableId: string;
-        profileId: string;
-        value: string;
-      }>(
-        `SELECT variableId, profileId, value FROM profile_variables
-         WHERE variableId IN (${placeholders(variableIds.length)})`,
-        variableIds
-      );
-      for (const row of rowsForVariables) {
-        const entry = variableValues[row.variableId] ?? {};
-        entry[row.profileId] = row.value;
-        variableValues[row.variableId] = entry;
-      }
-    }
-
-    return rows.map((row) => {
-      const { value: storedValue, ...rest } = row;
-      return {
-        ...rest,
-        storedValue,
-        value: resolveShortcutValue(
-          { variableId: row.variableId, storedValue },
-          profileId,
-          defaultProfileId,
-          variableValues as Readonly<Record<string, ProfileValueMap>>
-        ),
-      };
-    });
-  }
-
-  /**
-   * 指定したカスタム変数への参照をすべて外す
-   *
-   * @param variableId - 削除されるカスタム変数のID
-   *
-   * @remarks
-   * 実行時に外部キーを強制しないため、宣言した ON DELETE SET NULL は働かない。
-   * 参照を外した値は保存されていた文字列へ戻る（§8.5、§8.24）。
-   */
-  static clearVariableReferences(variableId: string): void {
-    getMainDbAdapter().run(ShortcutValueQueries.CLEAR_VARIABLE_REFERENCE, [
-      getCurrentTimestamp(),
-      variableId,
-    ]);
+      .map(toValue);
   }
 
   /**
@@ -448,7 +345,6 @@ export class ShortcutMapper {
    * @param name - ショートカット名（検証済み）
    * @param values - 登録する値（検証済み、1件以上）
    * @param categoryId - 所属カテゴリID（未指定・nullは未分類）
-   * @param basisProfileId - 戻り値の値の参照を解決する基準プロファイルID（nullなら標準プロファイル）
    * @returns 作成されたショートカット
    * @description
    * ショートカット本体・紐づけ・値の挿入を1トランザクションで行い、
@@ -458,8 +354,7 @@ export class ShortcutMapper {
     profileIds: readonly string[],
     name: string,
     values: ShortcutValueInput[],
-    categoryId: string | null = null,
-    basisProfileId: string | null = null
+    categoryId: string | null = null
   ): Shortcut {
     const db = getMainDbAdapter();
     /* 一意性を保証するIDとタイムスタンプを生成 */
@@ -478,7 +373,6 @@ export class ShortcutMapper {
           id,
           value.name,
           value.value,
-          value.variableId ?? null,
           0,
           index,
           now,
@@ -488,7 +382,7 @@ export class ShortcutMapper {
     });
 
     /* 挿入したデータを再取得して返却（DBから取得することで整合性を確保） */
-    const created = this.getById(id, basisProfileId);
+    const created = this.getById(id);
     if (!created) {
       throw new Error('Failed to create shortcut');
     }
@@ -502,7 +396,6 @@ export class ShortcutMapper {
    * @param values - 新しい値一覧（未指定なら既存値を保持）
    * @param profileIds - 新しい紐づけ（未指定なら既存の紐づけを保持。空配列で全プロファイル向け）
    * @param categoryId - 新しい所属カテゴリID（未指定なら既存値を保持。nullで未分類へ戻す）
-   * @param basisProfileId - 戻り値の値の参照を解決する基準プロファイルID（nullなら標準プロファイル）
    * @returns 更新されたショートカット
    * @description
    * valuesを指定した場合は差し替え方式で反映する。
@@ -518,13 +411,11 @@ export class ShortcutMapper {
     name?: string,
     values?: ShortcutValueInput[],
     profileIds?: readonly string[],
-    categoryId?: string | null,
-    basisProfileId: string | null = null
+    categoryId?: string | null
   ): Shortcut {
     const db = getMainDbAdapter();
-    /* 更新対象のショートカットが存在するか確認（存在しない場合はエラー）。
-       ここで使うのは本体の列と値のIDだけで、解決結果は使わないため基準は問わない */
-    const existing = this.getById(id, null);
+    /* 更新対象のショートカットが存在するか確認（存在しない場合はエラー） */
+    const existing = this.getById(id);
     if (!existing) {
       throw new Error(`Shortcut not found: ${id}`);
     }
@@ -550,7 +441,7 @@ export class ShortcutMapper {
     });
 
     /* 更新後のデータを再取得して返却（DBから取得することで整合性を確保） */
-    const updated = this.getById(id, basisProfileId);
+    const updated = this.getById(id);
     if (!updated) {
       throw new Error('Failed to update shortcut');
     }
@@ -704,7 +595,6 @@ export class ShortcutMapper {
         db.run(ShortcutValueQueries.UPDATE, [
           input.name,
           input.value,
-          input.variableId ?? null,
           index,
           now,
           input.id,
@@ -718,7 +608,6 @@ export class ShortcutMapper {
         shortcutId,
         input.name,
         input.value,
-        input.variableId ?? null,
         0,
         index,
         now,

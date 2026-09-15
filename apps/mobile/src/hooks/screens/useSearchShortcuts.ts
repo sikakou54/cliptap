@@ -5,14 +5,19 @@
  *
  * 主な責務:
  * - 有効な各プロファイルから見えるショートカットの取得
- * - 検索語での絞り込みと、プロファイルごとの一致件数の算出
+ * - 各プロファイルでの値の変数展開と、検索語での絞り込み・プロファイルごとの一致件数の算出
  * - 検索結果の値のコピー・編集・削除
  *
  * 【プロファイルごとに読み込む理由】
  * 検索は定型文と同じくプロファイルを跨ぎ、画面内で選んだプロファイルの分を表示する（§8.7）。
- * カスタム変数を参照している値はプロファイルごとに解決結果が変わり、検索語に一致するかどうかも変わる。
- * そのため全件を1つの一覧にまとめず、プロファイルごとに解決済みの一覧を持つ。
+ * どのショートカットが見えるかと、値の変数トークンがどう展開されるかはプロファイルごとに変わり、
+ * 検索語に一致するかどうかも変わる。そのため全件を1つの一覧にまとめず、
+ * プロファイルごとに一覧と展開した表示用の値を持つ。
  * Providerはアクティブなプロファイルの分しか持たないため、この画面で読み込む。
+ *
+ * 【展開後の値で照合する理由】
+ * 一覧に見えている文字列で探せるようにするため（shortcuts/search.ts）。
+ * 展開は定型文の一覧と同じ useVariableExpansion を使い、定型文と同じ結果にする。
  *
  * 【フォーカス時に読み直す理由】
  * 検索結果から編集画面へ進んで保存すると、この画面の一覧は古くなる。
@@ -24,20 +29,25 @@
  *
  * @see src/hooks/screens/useSearchScreen.ts - 検索語とプロファイル選択の正本
  * @see packages/shared/src/shortcuts/search.ts - 検索語の突き合わせの規則
+ * @see packages/shared/src/shortcuts/display.ts - 表示用の値の展開
  */
 
 import { useCallback, useMemo, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import {
+  attachDisplayValues,
   searchShortcuts,
   useProfiles,
   useShortcuts,
   useTranslation,
+  useVariableExpansion,
+  useVariables,
   Logger,
   ShortcutService,
   type Profile,
   type Shortcut,
   type ShortcutValue,
+  type ShortcutWithDisplay,
 } from '@cliptap/shared';
 import { showConfirm, showErrorAlert } from '@utils/alerts';
 
@@ -58,8 +68,8 @@ interface UseSearchShortcutsParams {
  */
 export interface UseSearchShortcutsReturn {
   /* データ */
-  /** 選択中のプロファイルで検索語に一致したショートカット（表示順） */
-  displayShortcuts: Shortcut[];
+  /** 選択中のプロファイルで検索語に一致したショートカット（表示順。値は選択中のプロファイルで展開済み） */
+  displayShortcuts: ShortcutWithDisplay[];
 
   /* 派生関数 */
   /** 指定したプロファイルで検索語に一致したショートカットの件数を返す */
@@ -80,7 +90,7 @@ export interface UseSearchShortcutsReturn {
  * 有効な各プロファイルから見えるショートカットを読み込む
  *
  * @param profiles - 読み込む対象のプロファイル
- * @returns プロファイルIDごとのショートカット一覧（値はそのプロファイルで解決済み）
+ * @returns プロファイルIDごとのショートカット一覧（値は保存されている文字列のまま）
  *
  * @remarks
  * 読み込みに失敗しても検索画面は開いたままにしたいため、例外は記録して空の一覧を返す。
@@ -107,10 +117,18 @@ function loadShortcutsByProfile(profiles: readonly Profile[]): Map<string, Short
 export function useSearchShortcuts(params: UseSearchShortcutsParams): UseSearchShortcutsReturn {
   const { enabled, query, selectedProfileId } = params;
 
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const router = useRouter();
-  const { validProfiles } = useProfiles();
+  const { validProfiles, profileVariables, defaultProfile } = useProfiles();
+  const { variables } = useVariables();
   const { deleteShortcut, copyShortcutValue } = useShortcuts();
+  const { expandVariables } = useVariableExpansion({
+    variables,
+    profileVariables,
+    locale: language,
+  });
+
+  const defaultProfileId = defaultProfile?.id ?? null;
 
   /* ======================================== */
   /* データ取得 */
@@ -139,14 +157,27 @@ export function useSearchShortcuts(params: UseSearchShortcutsParams): UseSearchS
   /* 派生状態 */
   /* ======================================== */
 
+  /* 各プロファイルの一覧に、そのプロファイルで変数を展開した表示用の値を持たせる。
+     検索語とは別に持ち、キー入力のたびに展開し直さない */
+  const displayedByProfile = useMemo(() => {
+    const displayed = new Map<string, ShortcutWithDisplay[]>();
+    for (const [profileId, shortcuts] of shortcutsByProfile) {
+      displayed.set(
+        profileId,
+        attachDisplayValues(shortcuts, (text) => expandVariables(text, profileId, defaultProfileId))
+      );
+    }
+    return displayed;
+  }, [shortcutsByProfile, expandVariables, defaultProfileId]);
+
   /* キー入力のたびにDBを読まないよう、読み込み済みの一覧をメモリ上で絞り込む */
   const matchedByProfile = useMemo(() => {
-    const matched = new Map<string, Shortcut[]>();
-    for (const [profileId, shortcuts] of shortcutsByProfile) {
+    const matched = new Map<string, ShortcutWithDisplay[]>();
+    for (const [profileId, shortcuts] of displayedByProfile) {
       matched.set(profileId, searchShortcuts(shortcuts, query));
     }
     return matched;
-  }, [shortcutsByProfile, query]);
+  }, [displayedByProfile, query]);
 
   /* 選択中のプロファイルに一致が無くても、別のプロファイルへは切り替えない（定型文と同じ。§8.7） */
   const displayShortcuts = useMemo(
@@ -167,12 +198,12 @@ export function useSearchShortcuts(params: UseSearchShortcutsParams): UseSearchS
    * ショートカット値をクリップボードへコピーする
    *
    * ホームの一覧と同じ経路を使う（値だけをコピーし、値名は含めない）。
-   * 表示中の値は選択中のプロファイルで解決済みのため、そのまま渡せば同じ値がコピーされる。
+   * 表示中の値は選択中のプロファイルで展開しているため、同じプロファイルを基準に展開してコピーする。
    */
   const handleCopyShortcutValue = useCallback(
     async (value: ShortcutValue) => {
       try {
-        await copyShortcutValue(value);
+        await copyShortcutValue(value, selectedProfileId ?? undefined);
       } catch (error) {
         Logger.error('[SearchShortcuts] Failed to copy the shortcut value:', error);
         showErrorAlert(t('error.generic'));
@@ -180,7 +211,7 @@ export function useSearchShortcuts(params: UseSearchShortcutsParams): UseSearchS
         throw error;
       }
     },
-    [copyShortcutValue, t]
+    [copyShortcutValue, selectedProfileId, t]
   );
 
   /**

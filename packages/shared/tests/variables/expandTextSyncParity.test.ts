@@ -112,4 +112,30 @@ describe('expandTextSync / customResolver parity', () => {
     expect(displayed).toBe('Bearer ABC');
     expect(copied).toBe(displayed);
   });
+
+  /* 値に置換パターンの記号や別のトークンが含まれていても、表示とコピーが一致する。
+     コピー経路が文字列で置換していた頃は `$&` がトークンに戻り、`{{...}}` が再展開されていた */
+  it.each([
+    ['置換パターンの記号をそのまま出す', 'A$&B $$ C', 'Price: A$&B $$ C'],
+    ['値に含まれるトークンを再展開しない', '{{token}}', 'Price: {{token}}'],
+  ])('%s', async (_name, value, expected) => {
+    setup();
+
+    const text = 'Price: {{token}}';
+    const resolver = VariableService.createCustomVariableResolver({
+      isSubscribed: true,
+      profileVariablesMap: { token: value },
+      defaultProfileVariablesMap: {},
+    });
+
+    const copied = await replaceVariables(text, { customResolver: resolver });
+    const displayed = VariableService.expandTextSync(text, {
+      locale: 'ja',
+      profileVariablesMap: { token: value },
+      defaultProfileVariablesMap: {},
+    });
+
+    expect(displayed).toBe(expected);
+    expect(copied).toBe(expected);
+  });
 });

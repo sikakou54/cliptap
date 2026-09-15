@@ -11,7 +11,6 @@
  * - カスタマイズ可能なパディング
  *
  * @see app/search.tsx - 検索画面での使用（表示対象の絞り込み）
- * @see app/variable/select.tsx - カスタム変数選択での使用（プロファイル別の値の確認）
  */
 
 import React from 'react';

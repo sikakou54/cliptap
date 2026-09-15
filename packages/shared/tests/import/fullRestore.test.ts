@@ -54,14 +54,14 @@ describe('ImportService full restore', () => {
     );
     main.run("INSERT INTO shortcut_profiles VALUES ('old-sc', 'old-p')");
     main.run(
-      "INSERT INTO shortcut_values VALUES ('old-sv', 'old-sc', 'old', 'old', NULL, 0, 0, 'old-time', 'old-time')"
+      "INSERT INTO shortcut_values VALUES ('old-sv', 'old-sc', 'old', 'old', 0, 0, 'old-time', 'old-time')"
     );
     backup.run(
       "INSERT INTO shortcuts VALUES ('sc1', 'c1', 'phone', 3, 'sc-created', 'sc-updated')"
     );
     backup.run("INSERT INTO shortcut_profiles VALUES ('sc1', 'p1')");
     backup.run(
-      "INSERT INTO shortcut_values VALUES ('sv1', 'sc1', 'mother', '080-0000-0000', NULL, 12, 1, 'sv-created', 'sv-updated')"
+      "INSERT INTO shortcut_values VALUES ('sv1', 'sc1', 'mother', '{{token}} 080-0000-0000', 12, 1, 'sv-created', 'sv-updated')"
     );
 
     await ImportService.importDatabaseFromTempDb('memory');
@@ -117,9 +117,8 @@ describe('ImportService full restore', () => {
       id: 'sv1',
       shortcutId: 'sc1',
       name: 'mother',
-      /* 保存した文字列と参照先も逐語で戻る */
-      value: '080-0000-0000',
-      variableId: null,
+      /* 保存した文字列は変数トークンを展開せず逐語で戻る */
+      value: '{{token}} 080-0000-0000',
       useCount: 12,
       sortOrder: 1,
       createdAt: 'sv-created',
@@ -159,13 +158,13 @@ describe('ImportService full restore', () => {
     backup.run("INSERT INTO shortcut_profiles VALUES ('sc-linked', 'p1')");
     backup.run("INSERT INTO shortcut_profiles VALUES ('sc-linked', 'p2')");
     backup.run(
-      "INSERT INTO shortcut_values VALUES ('sv-linked', 'sc-linked', 'value', 'linked-value', NULL, 0, 0, 'sv-created', 'sv-updated')"
+      "INSERT INTO shortcut_values VALUES ('sv-linked', 'sc-linked', 'value', 'linked-value', 0, 0, 'sv-created', 'sv-updated')"
     );
     backup.run(
       "INSERT INTO shortcuts VALUES ('sc-all', NULL, 'all', 1, 'sc0-created', 'sc0-updated')"
     );
     backup.run(
-      "INSERT INTO shortcut_values VALUES ('sv-all', 'sc-all', 'value', 'shared-value', NULL, 5, 0, 'sv0-created', 'sv0-updated')"
+      "INSERT INTO shortcut_values VALUES ('sv-all', 'sc-all', 'value', 'shared-value', 5, 0, 'sv0-created', 'sv0-updated')"
     );
 
     await ImportService.importDatabaseFromTempDb('memory');

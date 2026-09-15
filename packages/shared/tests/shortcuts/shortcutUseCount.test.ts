@@ -25,7 +25,7 @@ describe('ショートカット値の使用回数', () => {
     expect(start).toBeGreaterThan(-1);
 
     /* コピー本体から関数の終わりまでの間に加算があること */
-    const body = providerSource.slice(start, start + 900);
+    const body = providerSource.slice(start, start + 1500);
     expect(body).toContain('getClipboardAdapter().copy(');
     expect(body).toContain('ShortcutService.recordUse(');
   });
@@ -36,13 +36,14 @@ describe('ショートカット値の使用回数', () => {
    */
   it('コピー後に保持中の一覧の使用回数も進める', () => {
     const start = providerSource.indexOf('const copyShortcutValue');
-    const body = providerSource.slice(start, start + 900);
+    const body = providerSource.slice(start, start + 1500);
 
     expect(body).toContain('setShortcuts(');
     expect(body).toContain('useCount: current.useCount + 1');
   });
 
-  /** 画面側はProviderを通す（Serviceを直呼びしてクリップボードと加算がばらけないようにする） */
+  /** 画面側はProviderを通す（Serviceを直呼びしてクリップボードと加算がばらけないようにする）。
+      検索画面は展開の基準プロファイルを2番目の引数で渡すため、呼び出しの先頭部分で照合する */
   it('モバイルの画面はProvider経由でコピーする', () => {
     const mobileRoot = resolve(root, '../../apps/mobile');
 
@@ -51,7 +52,7 @@ describe('ショートカット値の使用回数', () => {
       'src/hooks/screens/useSearchShortcuts.ts',
     ]) {
       const source = readFileSync(resolve(mobileRoot, file), 'utf8');
-      expect(source).toContain('copyShortcutValue(value)');
+      expect(source).toContain('copyShortcutValue(value');
       expect(source).not.toContain('ShortcutService.recordUse');
     }
   });

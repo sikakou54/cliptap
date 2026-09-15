@@ -17,7 +17,7 @@
 
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { getProfileSelectPlaceholder, useTranslation, useVariables } from '@cliptap/shared';
+import { getProfileSelectPlaceholder, useTranslation } from '@cliptap/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@lib/themeSystem';
 import { useShortcutEditScreen } from '@hooks/screens/useShortcutEditScreen';
@@ -31,16 +31,6 @@ export default function ShortcutEditModal() {
   const params = useLocalSearchParams();
 
   const shortcutId = params.id as string | undefined;
-
-  /* 参照している変数の表示ラベルを引く。削除済みの変数を指していた場合は
-     参照そのものを保存時に外すため、ここでは空表示に留める */
-  const { variables } = useVariables();
-  const getVariableLabel = (variableId: string): string => {
-    const variable = variables.find((entry) => entry.id === variableId);
-    if (!variable) return '';
-    /* カスタム変数選択・値を編集の画面と同じく表示ラベルで見せ、未設定（null・空白だけ）なら変数名にする */
-    return variable.label?.trim() ? variable.label : variable.name;
-  };
 
   const {
     name,
@@ -255,40 +245,21 @@ export default function ShortcutEditModal() {
                   >
                     {draft.name}
                   </Text>
-                  {/* 挿入する値。カスタム変数を参照している値は、中身が環境ごとに変わるため
-                      具体的な文字列ではなく参照先を示す（§8.24） */}
-                  {draft.variableId ? (
-                    <View style={styles.valueReferenceRow}>
-                      <Ionicons name="link" size={14} color={colors.textSecondary} />
-                      <Text
-                        style={[
-                          styles.valueText,
-                          {
-                            color: colors.textSecondary,
-                            fontSize: responsiveFontSizes.sm,
-                            lineHeight: responsiveLineHeights.sm,
-                          },
-                        ]}
-                        numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.SINGLE}
-                      >
-                        {getVariableLabel(draft.variableId)}
-                      </Text>
-                    </View>
-                  ) : (
-                    <Text
-                      style={[
-                        styles.valueText,
-                        {
-                          color: colors.textSecondary,
-                          fontSize: responsiveFontSizes.sm,
-                          lineHeight: responsiveLineHeights.sm,
-                        },
-                      ]}
-                      numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.DOUBLE}
-                    >
-                      {draft.value}
-                    </Text>
-                  )}
+                  {/* 挿入する値。ホームの一覧と同じく、変数トークンを展開した文字列で表示する
+                      （基準のプロファイルは useShortcutEditScreen の displayProfileId） */}
+                  <Text
+                    style={[
+                      styles.valueText,
+                      {
+                        color: colors.textSecondary,
+                        fontSize: responsiveFontSizes.sm,
+                        lineHeight: responsiveLineHeights.sm,
+                      },
+                    ]}
+                    numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.DOUBLE}
+                  >
+                    {draft.displayValue}
+                  </Text>
                 </View>
 
                 {/* 削除ボタン */}
@@ -384,12 +355,6 @@ const styles = StyleSheet.create({
   },
   profileNames: {
     marginTop: UI_CONSTANTS.GAP.XS,
-  },
-  /* 参照先の変数名を、鎖アイコンと同じ行に並べる */
-  valueReferenceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: UI_CONSTANTS.GAP.XS,
   },
   /* 値の箱と「値を追加」を縦に並べる。箱どうしの間隔はここで取る */
   valueList: {

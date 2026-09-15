@@ -90,8 +90,8 @@ describe('ショートカットの紐づけプロファイル', () => {
 
       expect(linkedProfileIds(db, created.id)).toEqual([]);
       expect(created.profileIds).toEqual([]);
-      expect(ShortcutService.getById(created.id, null)).not.toBeNull();
-      expect(ShortcutService.getById(created.id, null)?.profileIds).toEqual([]);
+      expect(ShortcutService.getById(created.id)).not.toBeNull();
+      expect(ShortcutService.getById(created.id)?.profileIds).toEqual([]);
       for (const profileId of [MAIN, OTHER, THIRD]) {
         expect(namesIn(profileId)).toEqual(['電話番号']);
       }
@@ -375,7 +375,7 @@ describe('ショートカットの紐づけプロファイル', () => {
         (shortcut) => shortcut.name === '両方'
       );
       expect(both).toBeDefined();
-      expect(sorted(ShortcutService.getById(both?.id ?? '', null)?.profileIds)).toEqual([
+      expect(sorted(ShortcutService.getById(both?.id ?? '')?.profileIds)).toEqual([
         MAIN,
         OTHER,
       ]);

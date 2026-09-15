@@ -37,6 +37,7 @@ import {
   type Category,
   type Shortcut,
   type ShortcutValue,
+  type ShortcutWithDisplay,
   type SnippetWithDisplay,
   type Profile,
 } from '@cliptap/shared';
@@ -69,8 +70,8 @@ export interface UseSearchScreenReturn {
 
   /* データ */
   displaySnippets: SnippetWithDisplay[];
-  /** 選択中のプロファイルで検索語に一致したショートカット（ショートカット検索時のみ中身が入る） */
-  displayShortcuts: Shortcut[];
+  /** 選択中のプロファイルで検索語に一致したショートカット（ショートカット検索時のみ中身が入る。値は展開済みの表示用の文字列を持つ） */
+  displayShortcuts: ShortcutWithDisplay[];
   profiles: Profile[];
   filteredProfiles: Profile[];
   categories: Category[];

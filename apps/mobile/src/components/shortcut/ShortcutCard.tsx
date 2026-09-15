@@ -22,7 +22,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from '@cliptap/shared';
 import { useTheme } from '@lib/themeSystem';
-import { type Category, type Shortcut, type ShortcutValue } from '@cliptap/shared';
+import { type Category, type Shortcut, type ShortcutValue, type ShortcutWithDisplay } from '@cliptap/shared';
 import { CategoryBadge } from '@components/category/CategoryBadge';
 import { ItemActionMenu } from '@components/common/ItemActionMenu';
 import { ShortcutValueRow } from '@components/shortcut/ShortcutValueRow';
@@ -42,7 +42,7 @@ const COLLAPSED_VALUE_COUNT = 2;
 
 /**
  * ShortcutCardのProps
- * @property shortcut - 表示するショートカット
+ * @property shortcut - 表示するショートカット（値は表示中のプロファイルで展開した表示用の文字列を持つ）
  * @property category - 所属カテゴリ（未分類ならnull）
  * @property onCopyValue - 値がタップされたときのコールバック（クリップボードへコピー）
  * @property onEdit - メニューで「編集」が選ばれたときのコールバック
@@ -50,7 +50,7 @@ const COLLAPSED_VALUE_COUNT = 2;
  * @property isLast - 一覧の最後の項目か（区切り線を引くかの判定に使う）
  */
 interface ShortcutCardProps {
-  shortcut: Shortcut;
+  shortcut: ShortcutWithDisplay;
   category: Category | null;
   onCopyValue: (value: ShortcutValue) => Promise<void>;
   onEdit: (shortcut: Shortcut) => void;

@@ -347,11 +347,6 @@
     "show_shortcuts": "ショートカットを表示",
     "show_snippets": "定型文を表示",
     "search_placeholder": "ショートカットを検索...",
-    "variable_reference_link": "カスタム変数を参照する",
-    "variable_reference_clear": "解除",
-    "variable_reference_title": "カスタム変数を選択",
-    "variable_reference_description": "参照した変数は、選択中のプロファイルの値になります。値が未設定のときは標準プロファイルの値を使います。",
-    "variable_reference_empty": "参照できるカスタム変数がありません",
     "limit_message": "無料版では{{limit}}件までショートカットを登録できます。無制限に登録するにはProプランにアップグレードしてください。",
     "value_limit_message": "無料版では1つのショートカットに{{limit}}件まで値を登録できます。無制限に登録するにはProプランにアップグレードしてください。"
   }

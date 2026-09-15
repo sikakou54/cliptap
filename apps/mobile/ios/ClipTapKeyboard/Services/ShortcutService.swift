@@ -13,10 +13,10 @@
 //  - 振動フィードバック: 挿入時にHaptic Feedback（触覚フィードバック）
 //  - 使用回数の記録: フルアクセスが許可されているときだけ記録
 //
-//  【定型文（SnippetService）との違い】
-//  ショートカットの値は保存された文字列をそのまま挿入します。
-//  変数（{{today}}など）の展開は行いません。値は「電話番号」「メールアドレス」のような
-//  実データそのものであり、置換対象を持たないためです。
+//  【変数の展開】
+//  ショートカットの値も定型文と同じく、{{today}} などのシステム変数と
+//  {{client_name}} などのカスタム変数を、挿入する時点の選択中プロファイルと日時で展開します。
+//  展開の規則は定型文の挿入（SnippetService.insertSnippet）と同じ VariableReplacer に任せます。
 //
 //  【並べ替えの規則について】
 //  規則の正本は packages/shared/src/shortcuts/sort.ts と
@@ -40,6 +40,12 @@ class ShortcutService {
 
     /// ショートカットのデータアクセス層（データベース操作を担当）
     private let shortcutMapper = ShortcutMapper.shared
+
+    /// カスタム変数のビジネスロジック（プロファイルごとの変数マップを取得）
+    private let variableService = VariableService.shared
+
+    /// 変数トークンの展開（定型文の挿入と同じ実装）
+    private let variableReplacer = VariableReplacer()
 
     /// App Group識別子
     private let appGroupIdentifier = "group.com.sikakou.cliptap"
@@ -158,20 +164,35 @@ class ShortcutService {
     /// ショートカット値をキーボードから挿入（振動フィードバック＋使用回数の記録）
     ///
     /// - Parameters:
-    ///   - value: 挿入するショートカット値
+    ///   - value: 挿入するショートカット値（変数トークンは未展開）
     ///   - textDocumentProxy: iOSのテキスト入力API（カスタムキーボードが提供）
+    ///   - profileId: 変数の展開に使う、キーボード内で選択中のプロファイルID（未確定ならnil）
     ///
     /// 【処理の流れ】
-    /// 1. 値をそのままカーソル位置へ挿入（値名は挿入しない）
-    /// 2. 振動フィードバック（定型文の挿入と同じ軽い振動）
-    /// 3. 使用回数の記録が有効なときだけ、使用回数と親の更新日時を更新
+    /// 1. 値の変数トークンを、選択中のプロファイルと現在の日時で展開
+    /// 2. 展開した文字列をカーソル位置へ挿入（値名は挿入しない）
+    /// 3. 振動フィードバック（定型文の挿入と同じ軽い振動）
+    /// 4. 使用回数の記録が有効なときだけ、使用回数と親の更新日時を更新
     ///
-    /// 【変数置換をしない理由】
-    /// ショートカットの値は電話番号やメールアドレスなどの実データそのもので、
-    /// 定型文のように{{変数}}を含む前提がありません。保存された文字列をそのまま挿入します。
-    func insertValue(_ value: ShortcutValue, into textDocumentProxy: UITextDocumentProxy) {
+    /// 【変数マップを挿入のたびに読み直す理由】
+    /// キーボードを開いたままメインアプリで変数の値を変えても、挿入する文字列を最新の値にするため
+    /// （定型文の挿入 SnippetService.insertSnippet と同じ）。
+    /// プロファイルが未確定のときはカスタム変数を展開せず、システム変数だけを展開する。
+    /// 展開できないトークンは元の形のまま挿入する（仕様書 §8.6）。
+    func insertValue(_ value: ShortcutValue, into textDocumentProxy: UITextDocumentProxy, profileId: String?) {
+        var variablesMap: [String: String] = [:]
+        if let profileId = profileId {
+            variablesMap = variableService.getVariablesMap(for: profileId)
+        }
+
+        let resolvedText = variableReplacer.replace(
+            in: value.value,
+            variablesMap: variablesMap,
+            formats: SystemVariableFormatMapper.shared.getAll()
+        )
+
         /* キーボードから値を挿入（LINEやメモアプリなど、どのアプリの入力欄にも入力されます） */
-        textDocumentProxy.insertText(value.value)
+        textDocumentProxy.insertText(resolvedText)
 
         /* 振動フィードバック（軽い「ブッ」という振動）
            定型文の挿入（SnippetService.insertSnippet）と同じ体験に揃える */

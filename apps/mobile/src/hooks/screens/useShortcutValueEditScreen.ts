@@ -6,18 +6,16 @@
  *
  * 主な責務:
  * - 値名と値の入力状態の管理
- * - カスタム変数への参照の設定・解除
  * - 保存可否の判定
+ * - 値入力画面（shortcut/value-text-edit）との往復
  * - 親画面（shortcut/edit）への値の受け渡し
  *
  * @see app/shortcut/value-edit.tsx - UIコンポーネント
  * @see src/hooks/screens/useShortcutEditScreen.ts - 受け取り側
- * @see packages/shared/src/shortcuts/resolveValue.ts - 解決規則の正本
  */
 
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
-import { useVariables, type Variable } from '@cliptap/shared';
 
 /**
  * useShortcutValueEditScreenの引数の型
@@ -27,12 +25,8 @@ interface UseShortcutValueEditScreenParams {
   valueKey: string;
   /** 値名の初期値 */
   initialName: string;
-  /** 値の初期値 */
+  /** 値の初期値（変数トークンは未展開） */
   initialValue: string;
-  /** 参照するカスタム変数IDの初期値（参照していなければnull） */
-  initialVariableId: string | null;
-  /** ショートカット作成・編集画面で選んでいるプロファイルID（カンマ区切り。空は全プロファイル向け） */
-  shortcutProfileIds: string;
 }
 
 /**
@@ -44,10 +38,8 @@ export interface UseShortcutValueEditScreenReturn {
   valueName: string;
   /** 値名を更新する */
   setValueName: (name: string) => void;
-  /** 挿入する値 */
+  /** 挿入する値（変数トークンは未展開） */
   value: string;
-  /** 参照中のカスタム変数（参照していなければnull） */
-  referencedVariable: Variable | null;
 
   /* 派生状態 */
   /** 編集モードかどうか */
@@ -58,10 +50,6 @@ export interface UseShortcutValueEditScreenReturn {
   /* ハンドラ */
   /** 値の入力画面を開く */
   handleOpenValueInput: () => void;
-  /** カスタム変数の選択画面を開く */
-  handleSelectVariable: () => void;
-  /** カスタム変数への参照を解除する */
-  handleClearVariable: () => void;
   /** 入力内容を親画面へ返して閉じる */
   handleSave: () => void;
 }
@@ -75,34 +63,20 @@ export interface UseShortcutValueEditScreenReturn {
 export function useShortcutValueEditScreen(
   params: UseShortcutValueEditScreenParams
 ): UseShortcutValueEditScreenReturn {
-  const { valueKey, initialName, initialValue, initialVariableId, shortcutProfileIds } = params;
+  const { valueKey, initialName, initialValue } = params;
 
   const router = useRouter();
-  const { variables } = useVariables();
 
   /* ======================================== */
   /* 状態管理 */
   /* ======================================== */
   const [valueName, setValueName] = useState(initialName);
   const [value, setValue] = useState(initialValue);
-  const [variableId, setVariableId] = useState<string | null>(initialVariableId);
 
   /* ======================================== */
   /* 派生状態 */
   /* ======================================== */
   const isEdit = valueKey !== '';
-
-  /**
-   * 参照中のカスタム変数
-   *
-   * @remarks
-   * 変数が削除されていると一覧に無い。その場合は参照していない扱いで表示し、
-   * 保存時に参照も外す。存在しない変数を指したまま残さないため。
-   */
-  const referencedVariable = useMemo(
-    () => variables.find((variable) => variable.id === variableId) ?? null,
-    [variables, variableId]
-  );
 
   /**
    * 保存可能かどうか
@@ -123,6 +97,7 @@ export function useShortcutValueEditScreen(
    * @remarks
    * 値は複数行になることがあり、この画面の中に収めると入力欄が狭くなって全体を確かめられない。
    * カスタム変数の値入力（useVariableEditScreen.handleOpenValueEdit）と同じく専用画面へ出す。
+   * 変数トークンを挿入する変数ツールバーも、その専用画面が持つ。
    * 戻り値はグローバル変数経由で受け取る（expo-routerのモーダルは戻り値を返せないため）。
    */
   const handleOpenValueInput = useCallback(() => {
@@ -134,31 +109,6 @@ export function useShortcutValueEditScreen(
       params: { value },
     });
   }, [value, router]);
-
-  /**
-   * カスタム変数の選択画面を開く
-   *
-   * @remarks
-   * 参照を張ると、この値の中身はカスタム変数側が持つ。入力済みの値は消さずに残し、
-   * 参照を解除したときに元の値へ戻れるようにする。
-   */
-  const handleSelectVariable = useCallback(() => {
-    global.variableSelectCallback = (selectedId: string) => {
-      setVariableId(selectedId);
-    };
-    router.push({
-      pathname: '/variable/select',
-      /* 値を確認するプロファイルの切替を、ショートカットで選んでいるプロファイルに絞るため引き継ぐ */
-      params: { selectedId: variableId ?? '', profileIds: shortcutProfileIds },
-    });
-  }, [variableId, shortcutProfileIds, router]);
-
-  /**
-   * カスタム変数への参照を解除する
-   */
-  const handleClearVariable = useCallback(() => {
-    setVariableId(null);
-  }, []);
 
   /**
    * 入力内容を親画面へ返して閉じる
@@ -175,11 +125,10 @@ export function useShortcutValueEditScreen(
       key: valueKey,
       name: valueName.trim(),
       value,
-      variableId: referencedVariable?.id ?? null,
     };
 
     router.back();
-  }, [canSave, valueKey, valueName, value, referencedVariable, router]);
+  }, [canSave, valueKey, valueName, value, router]);
 
   /* ======================================== */
   /* 戻り値 */
@@ -189,12 +138,9 @@ export function useShortcutValueEditScreen(
     valueName,
     setValueName,
     value,
-    referencedVariable,
     isEdit,
     canSave,
     handleOpenValueInput,
-    handleSelectVariable,
-    handleClearVariable,
     handleSave,
   };
 }

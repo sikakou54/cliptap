@@ -1536,7 +1536,7 @@ class KeyboardViewController: UIInputViewController {
         systemVariableFormats = SystemVariableFormatMapper.shared.getAll()
         KeyboardLog.debug("✅ [KeyboardViewController] Reloaded %d variables for profile: %@", variablesMap.count, profile.name)
 
-        /* ショートカットも環境によって出るものと参照値の中身が変わるため、表示中なら切り替えた環境のものへ読み直す。
+        /* ショートカットも環境によって出るものと値の変数の展開結果が変わるため、表示中なら切り替えた環境のものへ読み直す。
            値一覧を開いていた場合も一覧へ戻る（切り替え前の環境の値をそのまま残さない） */
         if screenState == .shortcutList {
             reloadShortcutList()
@@ -2143,7 +2143,7 @@ class KeyboardViewController: UIInputViewController {
         selectedShortcut = nil
 
         /* 選択中のプロファイルに紐づくショートカットと、全プロファイル向け（紐づけ0件）のショートカットだけを出す。
-           カスタム変数を参照している値の中身も選択中のプロファイルで解決するため、プロファイルを決められないときは空にする。
+           値の変数トークンも選択中のプロファイルで展開するため、プロファイルを決められないときは空にする。
            全件へ倒すと、別の環境向けの値をそれと分からないまま挿入できてしまうため
            （表示は空状態の案内になる）。
            カテゴリは「すべて」を選べる絞り込みなので、未選択（nil）はそのまま渡して全件を出す */
@@ -2227,8 +2227,9 @@ class KeyboardViewController: UIInputViewController {
     private func insertShortcutValue(_ value: ShortcutValue) {
         KeyboardLog.debug("⚡ [Shortcut] Inserting shortcut value: %@", value.id)
 
-        /* 挿入・振動フィードバック・使用回数の記録はService側で実行する */
-        shortcutService.insertValue(value, into: textDocumentProxy)
+        /* 変数の展開・挿入・振動フィードバック・使用回数の記録はService側で実行する。
+           展開の基準は値一覧の表示と同じく、キーボード内で選択中のプロファイル */
+        shortcutService.insertValue(value, into: textDocumentProxy, profileId: currentProfile?.id)
 
         reloadShortcutList()
     }
@@ -2384,9 +2385,10 @@ extension KeyboardViewController: UITableViewDataSource {
      *   - indexPath: 対象の行
      * - Returns: モードに応じたセル
      *
-     * 【変数置換をしない理由】
-     * ショートカットの値は保存された文字列をそのまま挿入するため、
-     * 表示も置換せず保存されたままを見せる（定型文の一覧とは扱いが異なる）。
+     * 【値を変数置換して表示する理由】
+     * 挿入されるのは変数トークンを展開した文字列のため、表示も選択中のプロファイルで展開して見せる
+     * （定型文一覧のタイトルと同じ）。表示には保持中の変数マップと書式を使い、
+     * 挿入時はService側がその時点の値で展開し直す。
      */
     private func shortcutCell(for tableView: UITableView, at indexPath: IndexPath) -> UITableViewCell {
         if shortcutScreenMode == .values {
@@ -2398,7 +2400,12 @@ extension KeyboardViewController: UITableViewDataSource {
             }
 
             let value = sortedShortcutValues[indexPath.row]
-            cell.configure(name: value.name, value: value.value)
+            let displayValue = variableReplacer.replace(
+                in: value.value,
+                variablesMap: variablesMap,
+                formats: systemVariableFormats
+            )
+            cell.configure(name: value.name, value: displayValue)
 
             return cell
         }

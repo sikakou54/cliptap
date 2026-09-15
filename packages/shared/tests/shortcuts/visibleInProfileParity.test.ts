@@ -62,13 +62,10 @@ describe('ショートカットの表示条件（3実装の一致）', () => {
       expect(source).not.toContain('profileTableName) sp');
     });
 
-    /**
-     * 値のクエリの束縛は「解決用の2個（表示中→標準）を先頭、表示条件とカテゴリを後ろ」に並べる。
-     * SQLiteは出現順に束縛するため、この組み立てが崩れると解決値と絞り込みが入れ替わる。
-     */
-    it('ネイティブの値のクエリは解決用の2個を先頭に束縛する組み立てを保つ', () => {
-      expect(readSource(SOURCES.swift)).toContain('[profileId, defaultProfileId] + parameters');
-      expect(readSource(SOURCES.kotlin)).toContain('arrayOf(profileId, defaultProfileId) + queryArgs');
+    /* ショートカット値は変数トークンを未展開のまま保存し、展開は表示と挿入の時点で行う（§8.24）。
+       値を丸ごとカスタム変数へ紐づけていた旧仕様の列を、どの実装も読み書きしないこと */
+    it.each(Object.entries(SOURCES))('%s はショートカット値の variableId を扱わない', (_name, path) => {
+      expect(readSource(path)).not.toContain('variableId');
     });
   });
 
@@ -87,21 +84,13 @@ describe('ショートカットの表示条件（3実装の一致）', () => {
     /** 絞り込むカテゴリ */
     const CATEGORY = 'c1';
 
-    /** ネイティブと同じ、参照先カスタム変数の解決式（`?` は表示中→標準の2個） */
-    const RESOLVED_VALUE = `CASE WHEN v.variableId IS NULL THEN v.value
-      ELSE COALESCE(
-        NULLIF((SELECT pv.value FROM profile_variables pv WHERE pv.variableId = v.variableId AND pv.profileId = ?), ''),
-        NULLIF((SELECT pv.value FROM profile_variables pv WHERE pv.variableId = v.variableId AND pv.profileId = ?), ''),
-        ''
-      ) END`;
-
     /** ネイティブと同じ形の本体クエリ */
     const shortcutQuery = (condition: string, categoryCondition: string): string =>
       `SELECT s.id FROM shortcuts s WHERE ${condition} ${categoryCondition} ORDER BY s.sortOrder ASC`;
 
     /** ネイティブと同じ形の値クエリ（本体とだけ結合し、表示条件とカテゴリで絞る） */
     const valueQuery = (condition: string, categoryCondition: string): string =>
-      `SELECT v.shortcutId, ${RESOLVED_VALUE} AS value
+      `SELECT v.shortcutId, v.value
        FROM shortcut_values v
        INNER JOIN shortcuts s ON s.id = v.shortcutId
        WHERE ${condition} ${categoryCondition}
@@ -112,7 +101,6 @@ describe('ショートカットの表示条件（3実装の一致）', () => {
      *
      * @remarks
      * 表示中（OTHER）から見て、紐づく・0件・紐づかないの各パターンをカテゴリの有無と掛け合わせる。
-     * sc1とsc2の値はMAINとOTHERで中身が異なるカスタム変数を参照する。
      */
     const setup = (): MemoryDbAdapter => {
       const adapter = createMemoryDbAdapter();
@@ -123,34 +111,29 @@ describe('ショートカットの表示条件（3実装の一致）', () => {
       adapter.run("INSERT INTO profiles VALUES (?, 'other', 1, 0, 1, 1, 'now', 'now')", [OTHER]);
       adapter.run("INSERT INTO categories VALUES ('c1', 'work', NULL, 0, 'now')");
       adapter.run("INSERT INTO categories VALUES ('c2', 'home', NULL, 1, 'now')");
-      adapter.run(
-        "INSERT INTO variables VALUES ('v1', 'company', 'custom', NULL, NULL, 1, 0, 'now', 'now')"
-      );
-      adapter.run("INSERT INTO profile_variables VALUES ('pv1', ?, 'v1', 'main-value', 'now', 'now')", [MAIN]);
-      adapter.run("INSERT INTO profile_variables VALUES ('pv2', ?, 'v1', 'other-value', 'now', 'now')", [OTHER]);
 
-      const shortcuts: Array<[id: string, categoryId: string | null, profileIds: string[], variableId: string | null]> = [
+      const shortcuts: Array<[id: string, categoryId: string | null, profileIds: string[]]> = [
         /* 表示中に紐づく・c1 */
-        ['sc1', 'c1', [OTHER], 'v1'],
+        ['sc1', 'c1', [OTHER]],
         /* 0件・c1 */
-        ['sc2', 'c1', [], 'v1'],
+        ['sc2', 'c1', []],
         /* 0件・c2 */
-        ['sc3', 'c2', [], null],
+        ['sc3', 'c2', []],
         /* 表示中に紐づく・未分類 */
-        ['sc4', null, [OTHER], null],
+        ['sc4', null, [OTHER]],
         /* 表示中に紐づく・c2 */
-        ['sc5', 'c2', [OTHER, MAIN], null],
+        ['sc5', 'c2', [OTHER, MAIN]],
         /* 表示中に紐づかない・c1 */
-        ['sc6', 'c1', [MAIN], null],
+        ['sc6', 'c1', [MAIN]],
       ];
-      shortcuts.forEach(([id, categoryId, profileIds, variableId], index) => {
+      shortcuts.forEach(([id, categoryId, profileIds], index) => {
         adapter.run("INSERT INTO shortcuts VALUES (?, ?, ?, ?, 'now', 'now')", [id, categoryId, id, index]);
         for (const profileId of profileIds) {
           adapter.run('INSERT INTO shortcut_profiles VALUES (?, ?)', [id, profileId]);
         }
         adapter.run(
-          "INSERT INTO shortcut_values VALUES (?, ?, 'value', ?, ?, 0, 0, 'now', 'now')",
-          [`sv-${id}`, id, `stored-${id}`, variableId]
+          "INSERT INTO shortcut_values VALUES (?, ?, 'value', ?, 0, 0, 'now', 'now')",
+          [`sv-${id}`, id, `stored-${id}`]
         );
       });
       return adapter;
@@ -211,18 +194,19 @@ describe('ショートカットの表示条件（3実装の一致）', () => {
     });
 
     /**
-     * ネイティブの値のクエリは、解決式の2個を先頭に、表示条件とカテゴリを後ろに束縛する。
+     * ネイティブの値のクエリは、本体と同じく表示条件とカテゴリだけを束縛する。
+     * 値は保存されている文字列のまま返し、変数トークンの展開は取得後にネイティブ側で行う。
      * `?` の数と束縛する配列の長さが一致しないと、SQLiteは足りない分をNULLとして黙って実行する。
      */
     it.each([
-      ['カテゴリなし', null, [['sc1', 'other-value'], ['sc2', 'other-value'], ['sc3', 'stored-sc3'], ['sc4', 'stored-sc4'], ['sc5', 'stored-sc5']]],
-      ['カテゴリあり', CATEGORY, [['sc1', 'other-value'], ['sc2', 'other-value']]],
-    ] as const)('値のクエリ（%s）は `?` の数と束縛の長さが一致し、表示中のプロファイルで解決する', (_name, categoryId, expected) => {
+      ['カテゴリなし', null, [['sc1', 'stored-sc1'], ['sc2', 'stored-sc2'], ['sc3', 'stored-sc3'], ['sc4', 'stored-sc4'], ['sc5', 'stored-sc5']]],
+      ['カテゴリあり', CATEGORY, [['sc1', 'stored-sc1'], ['sc2', 'stored-sc2']]],
+    ] as const)('値のクエリ（%s）は `?` の数と束縛の長さが一致し、本体と同じ絞り込みで保存値を返す', (_name, categoryId, expected) => {
       const adapter = setup();
       const categoryCondition = categoryId !== null ? 'AND s.categoryId = ?' : '';
       const parameters = categoryId !== null ? [OTHER, categoryId] : [OTHER];
       const sql = valueQuery(VISIBLE_IN_PROFILE_CONDITION, categoryCondition);
-      const valueParameters = [OTHER, MAIN, ...parameters];
+      const valueParameters = [...parameters];
 
       expect(countPlaceholders(sql)).toBe(valueParameters.length);
       expect(countPlaceholders(shortcutQuery(VISIBLE_IN_PROFILE_CONDITION, categoryCondition))).toBe(

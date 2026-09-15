@@ -168,9 +168,8 @@ export const CREATE_TABLES = {
    * ショートカット値テーブル
    *
    * @remarks
-   * valueは挿入する文字列そのもの。variableIdを設定した値は、valueではなく
-   * そのカスタム変数をアクティブなプロファイルで解決した結果を挿入する。
-   * 参照中もvalueは消さずに残し、参照を外したときに元の文字列へ戻せるようにする。
+   * valueは挿入する文字列で、変数トークン（{{name}}）を未展開のまま持つ。
+   * 展開は表示・コピー・キーボードからの挿入のそれぞれが、その時点のプロファイルと日時で行う（定型文の本文と同じ）。
    */
   shortcutValues: `
     CREATE TABLE IF NOT EXISTS shortcut_values (
@@ -178,13 +177,11 @@ export const CREATE_TABLES = {
       shortcutId TEXT NOT NULL,
       name TEXT NOT NULL,
       value TEXT NOT NULL,
-      variableId TEXT,
       useCount INTEGER DEFAULT 0,
       sortOrder INTEGER DEFAULT 0,
       createdAt TEXT NOT NULL,
       updatedAt TEXT NOT NULL,
-      FOREIGN KEY (shortcutId) REFERENCES shortcuts(id) ON DELETE CASCADE,
-      FOREIGN KEY (variableId) REFERENCES variables(id) ON DELETE SET NULL
+      FOREIGN KEY (shortcutId) REFERENCES shortcuts(id) ON DELETE CASCADE
     );
   `,
 };
@@ -271,19 +268,6 @@ export const CREATE_INDEXES = {
   shortcutValuesUseCount: `
     CREATE INDEX IF NOT EXISTS idx_shortcut_values_use_count
     ON shortcut_values(useCount DESC);
-  `,
-  /**
-   * ショートカット値が参照するカスタム変数のindex
-   *
-   * @remarks
-   * 変数を削除したときに、その変数を参照している値を引くために使う（§8.5）。
-   * 移行・取込の後に `variableId` 列が存在することを確かめる経路でもある。
-   * 列が欠けても参照が常に無いものとして静かに動くため、参照するクエリが少ないことを
-   * 理由に消さないこと。
-   */
-  shortcutValuesVariable: `
-    CREATE INDEX IF NOT EXISTS idx_shortcut_values_variable
-    ON shortcut_values(variableId);
   `,
 };
 

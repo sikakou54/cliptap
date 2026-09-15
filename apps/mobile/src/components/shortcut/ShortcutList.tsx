@@ -19,7 +19,7 @@ import { View, StyleSheet } from 'react-native';
 import { useTranslation } from '@cliptap/shared';
 import { FlashList, ListRenderItemInfo } from '@mobile-types/flashlist';
 import { useTheme } from '@lib/themeSystem';
-import { type Category, type Shortcut, type ShortcutValue } from '@cliptap/shared';
+import { type Category, type Shortcut, type ShortcutValue, type ShortcutWithDisplay } from '@cliptap/shared';
 import EmptyState from '@components/common/EmptyState';
 import { ShortcutCard } from '@components/shortcut/ShortcutCard';
 
@@ -29,7 +29,7 @@ import { ShortcutCard } from '@components/shortcut/ShortcutCard';
 
 /**
  * ShortcutListのProps
- * @property shortcuts - 表示するショートカット一覧（表示順）
+ * @property shortcuts - 表示するショートカット一覧（表示順。値は表示中のプロファイルで展開した表示用の文字列を持つ）
  * @property categories - カテゴリバッジの解決に使う全カテゴリ
  * @property onCopyValue - 値がタップされたときのコールバック（クリップボードへコピー）
  * @property onEdit - カードのメニューで「編集」が選ばれたときのコールバック
@@ -37,7 +37,7 @@ import { ShortcutCard } from '@components/shortcut/ShortcutCard';
  * @property onRefresh - 引き下げ更新のコールバック
  */
 interface ShortcutListProps {
-  shortcuts: Shortcut[];
+  shortcuts: ShortcutWithDisplay[];
   categories: Category[];
   onCopyValue: (value: ShortcutValue) => Promise<void>;
   onEdit: (shortcut: Shortcut) => void;
@@ -67,7 +67,7 @@ export function ShortcutList({
   );
 
   const renderItem = useCallback(
-    ({ item, index }: ListRenderItemInfo<Shortcut>) => {
+    ({ item, index }: ListRenderItemInfo<ShortcutWithDisplay>) => {
       /* 未分類、またはカテゴリが削除された直後はバッジを出さない */
       const category = item.categoryId ? categoryMap.get(item.categoryId) ?? null : null;
 
@@ -114,7 +114,7 @@ export function ShortcutList({
   return (
     <View style={styles.listStyle}>
       {/* FlashList: FlatListの代替として使用（大量データでも高速） */}
-      <FlashList<Shortcut>
+      <FlashList<ShortcutWithDisplay>
         data={shortcuts}
         estimatedItemSize={140}
         renderItem={renderItem}

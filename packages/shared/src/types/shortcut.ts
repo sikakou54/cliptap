@@ -13,22 +13,18 @@ import { z } from 'zod';
  *
  * @remarks
  * - name: 値を識別する名称（例: 母, 父）。挿入対象ではない
- * - storedValue: 保存されている文字列そのもの
- * - variableId: 参照するカスタム変数のID。設定時はstoredValueではなくその変数を解決して挿入する
- * - value: 表示・挿入に使う解決済みの文字列。参照が無ければstoredValueと同じ
+ * - value: 保存されている文字列。変数トークン（{{name}}）は未展開のまま持つ
  * - useCount: 拡張キーボードから挿入した回数。使用頻度順の根拠
  * - sortOrder: 同一ショートカット内での並び順（0始まり）
  *
- * `value`を解決結果として持つのは、読み手（一覧・コピー・キーボード）が
- * 「参照中かどうか」を意識せずに済むようにするため。参照中の値で`storedValue`を
- * 挿入してしまう取り違えを、型の上で起こしにくくしている。
+ * 変数トークンの展開は、表示・コピー・キーボードからの挿入のそれぞれが、その時点のプロファイルと日時で行う
+ * （表示は shortcuts/display、コピーは ShortcutService.prepareValueForClipboard、キーボードはネイティブ実装）。
+ * 展開した結果をここに持たせないのは、プロファイルの切替や日付の変化で結果が変わるため。
  */
 export const ShortcutValueSchema = z.object({
   id: z.string(),
   shortcutId: z.string(),
   name: z.string(),
-  storedValue: z.string(),
-  variableId: z.string().nullable(),
   value: z.string(),
   useCount: z.number(),
   sortOrder: z.number(),
@@ -47,44 +43,18 @@ export type ShortcutValue = z.infer<typeof ShortcutValueSchema>;
  * @remarks
  * - idを持つ場合は既存値の更新、持たない場合は新規追加として扱う
  * - useCountとsortOrderは保存時に決まるため入力には含めない
- * - variableIdを指定した値でもvalueは保存する（参照を外したときに戻せるようにするため）
+ * - valueは変数トークンを含んだまま保存する
  */
 export const ShortcutValueInputSchema = z.object({
   id: z.string().optional(),
   name: z.string(),
   value: z.string(),
-  variableId: z.string().nullable().optional(),
 });
 
 /**
  * ショートカット値の入力型
  */
 export type ShortcutValueInput = z.infer<typeof ShortcutValueInputSchema>;
-
-/**
- * ショートカット値の行スキーマ（テーブル1行）
- *
- * @remarks
- * 全復元はバックアップの識別子・日時・使用回数を逐語で書き戻すため、
- * 解決済みの`value`を持つ`ShortcutValue`ではなくテーブルの行そのものを扱う。
- * ここでの`value`は保存されている文字列（`ShortcutValue.storedValue`にあたる）。
- */
-export const ShortcutValueRowSchema = z.object({
-  id: z.string(),
-  shortcutId: z.string(),
-  name: z.string(),
-  value: z.string(),
-  variableId: z.string().nullable(),
-  useCount: z.number(),
-  sortOrder: z.number(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-});
-
-/**
- * ショートカット値の行型
- */
-export type ShortcutValueRow = z.infer<typeof ShortcutValueRowSchema>;
 
 /* ==================== Shortcut ==================== */
 

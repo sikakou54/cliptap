@@ -107,9 +107,9 @@ describe('ショートカットのカテゴリ', () => {
 
     CategoryMapper.delete(work.id);
 
-    expect(ShortcutService.getById(target.id, null)?.categoryId).toBeNull();
-    expect(ShortcutService.getById(untouched.id, null)?.categoryId).toBe(privateUse.id);
+    expect(ShortcutService.getById(target.id)?.categoryId).toBeNull();
+    expect(ShortcutService.getById(untouched.id)?.categoryId).toBe(privateUse.id);
     /* 値も巻き添えで消えていないこと */
-    expect(ShortcutService.getById(target.id, null)?.values).toHaveLength(1);
+    expect(ShortcutService.getById(target.id)?.values).toHaveLength(1);
   });
 });

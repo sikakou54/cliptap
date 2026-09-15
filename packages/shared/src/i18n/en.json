@@ -347,11 +347,6 @@
     "show_shortcuts": "Show shortcuts",
     "show_snippets": "Show snippets",
     "search_placeholder": "Search shortcuts...",
-    "variable_reference_link": "Reference a custom variable",
-    "variable_reference_clear": "Remove",
-    "variable_reference_title": "Select Custom Variable",
-    "variable_reference_description": "A referenced variable resolves to the value of the selected profile. If it is not set, the default profile value is used.",
-    "variable_reference_empty": "No custom variables available to reference",
     "limit_message": "Free plan allows up to {{limit}} shortcuts. Upgrade to Pro for unlimited shortcuts.",
     "value_limit_message": "Free plan allows up to {{limit}} values per shortcut. Upgrade to Pro for unlimited values."
   }

@@ -67,7 +67,8 @@ data class ProfileVariable(
  *
  * 【nameとvalueの違い】
  * nameは値を選ぶための名称（例: 母）で、挿入されるのはvalue（例: 090-0000-0000）のみ。
- * 定型文と違い、valueに変数トークンの展開は行わない（保存された文字列をそのまま挿入する）。
+ * valueは保存された文字列で、変数トークン（{{name}}）は未展開のまま持つ。
+ * 定型文と同じく、表示と挿入の時点で選択中のプロファイルの値へ展開する。
  *
  * 【対応するTypeScript型】
  * packages/shared/src/types/shortcut.ts の ShortcutValue と同じ列構成

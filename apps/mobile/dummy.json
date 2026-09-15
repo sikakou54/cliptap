@@ -94,18 +94,15 @@
       "values": [
         {
           "name": "自分",
-          "value": "090-1234-5678",
-          "variable": ""
+          "value": "090-1234-5678"
         },
         {
           "name": "自宅",
-          "value": "03-1234-5678",
-          "variable": ""
+          "value": "03-1234-5678"
         },
         {
           "name": "会社",
-          "value": "03-9876-5432",
-          "variable": ""
+          "value": "03-9876-5432"
         }
       ]
     },
@@ -118,13 +115,11 @@
       "values": [
         {
           "name": "会社",
-          "value": "yamada@example.co.jp",
-          "variable": ""
+          "value": "yamada@example.co.jp"
         },
         {
           "name": "個人",
-          "value": "yamada.private@example.com",
-          "variable": ""
+          "value": "yamada.private@example.com"
         }
       ]
     },
@@ -137,13 +132,11 @@
       "values": [
         {
           "name": "自宅",
-          "value": "〒150-0001 東京都渋谷区神宮前1-2-3 サンプルマンション401",
-          "variable": ""
+          "value": "〒150-0001 東京都渋谷区神宮前1-2-3 サンプルマンション401"
         },
         {
           "name": "会社",
-          "value": "〒100-0005 東京都千代田区丸の内1-1-1 サンプルビル10F",
-          "variable": ""
+          "value": "〒100-0005 東京都千代田区丸の内1-1-1 サンプルビル10F"
         }
       ]
     },
@@ -156,8 +149,7 @@
       "values": [
         {
           "name": "自分",
-          "value": "EMP-004821",
-          "variable": ""
+          "value": "EMP-004821"
         }
       ]
     },
@@ -170,13 +162,11 @@
       "values": [
         {
           "name": "経理部",
-          "value": "株式会社A商事 経理部\n〒101-0021 東京都千代田区外神田2-3-4",
-          "variable": ""
+          "value": "株式会社A商事 経理部\n〒101-0021 東京都千代田区外神田2-3-4"
         },
         {
           "name": "担当者",
-          "value": "田中 太郎（tanaka@a-shoji.example.jp）",
-          "variable": ""
+          "value": "田中 太郎（tanaka@a-shoji.example.jp）"
         }
       ]
     },
@@ -189,13 +179,11 @@
       "values": [
         {
           "name": "X",
-          "value": "@sample_a_official",
-          "variable": ""
+          "value": "@sample_a_official"
         },
         {
           "name": "Instagram",
-          "value": "@sample_a_gram",
-          "variable": ""
+          "value": "@sample_a_gram"
         }
       ]
     },
@@ -208,13 +196,11 @@
       "values": [
         {
           "name": "経理部",
-          "value": "株式会社B商事 経理部\n〒060-0001 北海道札幌市中央区北一条西5-6",
-          "variable": ""
+          "value": "株式会社B商事 経理部\n〒060-0001 北海道札幌市中央区北一条西5-6"
         },
         {
           "name": "担当者",
-          "value": "鈴木 花子（suzuki@b-shoji.example.jp）",
-          "variable": ""
+          "value": "鈴木 花子（suzuki@b-shoji.example.jp）"
         }
       ]
     },
@@ -228,18 +214,15 @@
       "values": [
         {
           "name": "承知",
-          "value": "承知いたしました。対応いたします。",
-          "variable": ""
+          "value": "承知いたしました。対応いたします。"
         },
         {
           "name": "確認中",
-          "value": "確認のうえ、改めてご連絡いたします。",
-          "variable": ""
+          "value": "{{today}} 時点で確認中です。改めてご連絡いたします。"
         },
         {
           "name": "御礼",
-          "value": "ご対応いただきありがとうございました。",
-          "variable": "client_name"
+          "value": "{{client_name}} 様\nご対応いただきありがとうございました。"
         }
       ]
     }

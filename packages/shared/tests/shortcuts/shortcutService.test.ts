@@ -219,7 +219,7 @@ describe('ShortcutService', () => {
       expect(() => ShortcutService.update({ id: created.id, values: [] })).toThrow(
         ShortcutValueRequiredError
       );
-      expect(ShortcutService.getById(created.id, null)?.values).toHaveLength(1);
+      expect(ShortcutService.getById(created.id)?.values).toHaveLength(1);
     });
 
     it('自分以外の同名ショートカットがある場合は拒否する', async () => {
@@ -264,11 +264,11 @@ describe('ShortcutService', () => {
 
       ShortcutService.delete(phone.id);
 
-      expect(ShortcutService.getById(phone.id, null)).toBeNull();
+      expect(ShortcutService.getById(phone.id)).toBeNull();
       expect(
         db.all('SELECT id FROM shortcut_values WHERE shortcutId = ?', [phone.id])
       ).toEqual([]);
-      expect(ShortcutService.getById(mail.id, null)?.values).toHaveLength(1);
+      expect(ShortcutService.getById(mail.id)?.values).toHaveLength(1);
     });
   });
 
@@ -286,7 +286,7 @@ describe('ShortcutService', () => {
 
       ShortcutService.recordUse(created.values[1].id, created.id);
 
-      expect(ShortcutService.getById(created.id, null)?.values.map((value) => value.useCount)).toEqual([
+      expect(ShortcutService.getById(created.id)?.values.map((value) => value.useCount)).toEqual([
         0, 1,
       ]);
     });

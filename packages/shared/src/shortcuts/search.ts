@@ -5,8 +5,9 @@
  *
  * @remarks
  * 定型文の検索（SnippetService.search）はSQLで行うが、ショートカットは
- * プロファイルごとに取得した一覧（値の参照がプロファイルごとに解決されるため）を、
- * それぞれメモリ上で絞り込む。1プロファイルあたりの件数は小さく、キー入力ごとにDBを読まずに済む。
+ * プロファイルごとに取得した一覧を、そのプロファイルで変数を展開したうえでメモリ上で絞り込む。
+ * 照合する値は一覧に表示される展開後の文字列のため、プロファイルによって一致するかどうかが変わり得る（§8.7）。
+ * 1プロファイルあたりの件数は小さく、キー入力ごとにDBを読まずに済む。
  * 取得経路を getByProfileId の1本に保つためでもある。
  */
 
@@ -16,8 +17,8 @@
 export interface SearchableShortcutValue {
   /** 値を識別する名称 */
   readonly name: string;
-  /** 実際に挿入する文字列 */
-  readonly value: string;
+  /** 一覧に表示する文字列（表示中のプロファイルで変数トークンを展開したもの） */
+  readonly displayValue: string;
 }
 
 /**
@@ -56,6 +57,9 @@ function normalize(term: string): string {
  * 値まで対象にするのは、「090」のように挿入される値そのものを手掛かりに
  * 探す場面があるため。
  *
+ * 値は保存された文字列ではなく、一覧に表示される展開後の文字列で照合する。
+ * 画面に見えている文字列で一致させ、変数名（例: client_name）のように画面に出ない文字列では一致させない。
+ *
  * 空の検索語は絞り込みを行わず全件を返す。空文字はどんな文字列にも
  * 含まれると判定されるため、条件として扱うと意味を持たない。
  */
@@ -71,7 +75,7 @@ export function searchShortcuts<T extends SearchableShortcut>(
     return shortcut.values.some(
       (value) =>
         normalize(value.name).includes(normalizedQuery) ||
-        normalize(value.value).includes(normalizedQuery)
+        normalize(value.displayValue).includes(normalizedQuery)
     );
   });
 }

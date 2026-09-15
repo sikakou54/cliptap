@@ -56,10 +56,8 @@ declare global {
     key: string;
     /** 値名 */
     name: string;
-    /** 挿入する値（保存する文字列） */
+    /** 挿入する値（保存する文字列。変数トークンは展開しない） */
     value: string;
-    /** 参照するカスタム変数のID（参照していなければnull） */
-    variableId: string | null;
   } | undefined;
 
   /**
@@ -67,12 +65,6 @@ declare global {
    * 値入力モーダルから値編集モーダルへ編集後の本文を返す
    */
   var shortcutValueTextCallback: ((value: string) => void) | undefined;
-
-  /**
-   * カスタム変数選択のコールバック
-   * 変数選択モーダルから呼び出し元へ選択された変数IDを返す
-   */
-  var variableSelectCallback: ((variableId: string) => void) | undefined;
 
   /**
    * 変数値編集のデータ

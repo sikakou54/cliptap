@@ -46,7 +46,7 @@ describe('migrateImportTempDb', () => {
       await db.exec(`
         CREATE TABLE shortcuts (id TEXT PRIMARY KEY, categoryId TEXT, name TEXT NOT NULL, sortOrder INTEGER DEFAULT 0, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL, FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE SET NULL);
         CREATE TABLE shortcut_profiles (shortcutId TEXT NOT NULL, profileId TEXT NOT NULL, PRIMARY KEY (shortcutId, profileId), FOREIGN KEY (shortcutId) REFERENCES shortcuts(id) ON DELETE CASCADE, FOREIGN KEY (profileId) REFERENCES profiles(id) ON DELETE CASCADE);
-        CREATE TABLE shortcut_values (id TEXT PRIMARY KEY, shortcutId TEXT NOT NULL, name TEXT NOT NULL, value TEXT NOT NULL, variableId TEXT, useCount INTEGER DEFAULT 0, sortOrder INTEGER DEFAULT 0, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL, FOREIGN KEY (shortcutId) REFERENCES shortcuts(id) ON DELETE CASCADE, FOREIGN KEY (variableId) REFERENCES variables(id) ON DELETE SET NULL);
+        CREATE TABLE shortcut_values (id TEXT PRIMARY KEY, shortcutId TEXT NOT NULL, name TEXT NOT NULL, value TEXT NOT NULL, useCount INTEGER DEFAULT 0, sortOrder INTEGER DEFAULT 0, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL, FOREIGN KEY (shortcutId) REFERENCES shortcuts(id) ON DELETE CASCADE);
       `);
     }
     await db.exec(`
@@ -301,7 +301,6 @@ describe('migrateImportTempDb', () => {
       'shortcutId',
       'name',
       'value',
-      'variableId',
       'useCount',
       'sortOrder',
       'createdAt',
@@ -317,7 +316,7 @@ describe('migrateImportTempDb', () => {
     );
     db.run("INSERT INTO shortcut_profiles VALUES ('sc1', 'p1')");
     db.run(
-      "INSERT INTO shortcut_values VALUES ('sv1', 'sc1', 'Mother', '080-0000-0000', NULL, 3, 0, 'created', 'updated')"
+      "INSERT INTO shortcut_values VALUES ('sv1', 'sc1', 'Mother', '080-0000-0000', 3, 0, 'created', 'updated')"
     );
 
     await migrateV7ToV8(db);
@@ -338,7 +337,6 @@ describe('migrateImportTempDb', () => {
         shortcutId: 'sc1',
         name: 'Mother',
         value: '080-0000-0000',
-        variableId: null,
         useCount: 3,
         sortOrder: 0,
         createdAt: 'created',

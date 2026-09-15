@@ -16,7 +16,7 @@ import type {
   ProfileVariable,
   ShortcutProfile,
   ShortcutRow,
-  ShortcutValueRow,
+  ShortcutValue,
   Snippet,
   SnippetProfile,
   Variable,
@@ -33,7 +33,7 @@ export interface FullRestoreData {
   systemVariableFormats: SystemVariableFormatRow[];
   shortcuts: ShortcutRow[];
   shortcutProfiles: ShortcutProfile[];
-  shortcutValues: ShortcutValueRow[];
+  shortcutValues: ShortcutValue[];
 }
 
 /**
@@ -87,7 +87,7 @@ export class ImportMapper {
         : [],
       shortcutValues:
         canRestoreShortcuts && hasShortcutValues
-          ? this.adapter.all<ShortcutValueRow>('SELECT * FROM shortcut_values')
+          ? this.adapter.all<ShortcutValue>('SELECT * FROM shortcut_values')
           : [],
     };
   }

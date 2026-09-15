@@ -199,7 +199,7 @@ export * from './utils/snippetFilterUtils'; /* スニペットフィルタリン
 export * from './utils/profileSelectLabels'; /* プロファイル選択の説明文・未選択時の表示 */
 export * from './shortcuts/search';       /* ショートカット検索ユーティリティ */
 export * from './shortcuts/sort';         /* ショートカット並べ替えユーティリティ */
-export * from './shortcuts/resolveValue';  /* ショートカット値の解決規則 */
+export * from './shortcuts/display';      /* ショートカット値の表示用の展開 */
 export * from './utils/errorUtils';      /* エラーメッセージ翻訳ユーティリティ */
 
 /* 認証エラー関連のユーティリティ */

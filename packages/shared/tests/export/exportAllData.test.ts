@@ -56,7 +56,7 @@ const seedAllTables = (db: DbAdapter): void => {
   db.run("INSERT INTO shortcuts VALUES ('sc1', 'c1', 'phone', 3, 'sc-created', 'sc-updated')");
   db.run("INSERT INTO shortcut_profiles VALUES ('sc1', 'p2')");
   db.run(
-    "INSERT INTO shortcut_values VALUES ('sv1', 'sc1', 'mother', '080-0000-0000', 'v1', 12, 1, 'sv-created', 'sv-updated')"
+    "INSERT INTO shortcut_values VALUES ('sv1', 'sc1', 'mother', '080-0000-0000', 12, 1, 'sv-created', 'sv-updated')"
   );
 };
 

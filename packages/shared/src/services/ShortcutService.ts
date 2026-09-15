@@ -10,6 +10,8 @@
  */
 
 import { ShortcutMapper } from '../mappers/ShortcutMapper';
+import { replaceVariables, type VariableResolver } from '../variables/parser';
+import { SystemVariableFormatRegistry } from './SystemVariableFormatRegistry';
 import type {
   CreateShortcutInput,
   Shortcut,
@@ -39,8 +41,8 @@ export class ShortcutService {
    *
    * @remarks
    * そのプロファイルに紐づくものと、紐づけが0件のもの（全プロファイル向け）を返す。
-   * 値の参照はこのプロファイルで解決する。プロファイルを跨ぐ検索（検索画面）でも
-   * プロファイルごとに解決結果が変わるため、プロファイルごとに呼ぶ。
+   * 値は保存されている文字列のまま返し、変数トークンは展開しない。
+   * 表示は shortcuts/display の attachDisplayValues、コピーは prepareValueForClipboard で展開する。
    */
   static getByProfileId(profileId: string): Shortcut[] {
     return ShortcutMapper.getByProfileId(profileId);
@@ -50,23 +52,16 @@ export class ShortcutService {
    * IDでショートカットを取得
    *
    * @param id - ショートカットのID
-   * @param basisProfileId - 値の参照を解決する基準プロファイルID（nullなら標準プロファイルで解決する）
-   * @returns ショートカット（存在しない場合はnull）
-   *
-   * @remarks
-   * 複数のプロファイルに紐づく（または0件で全プロファイル向けの）ショートカットは
-   * 本体から解決の基準を決められないため、基準を必須の引数にしている。
-   * 省略可能にすると渡し忘れが型を通り、表示中ではなく標準プロファイルの値が静かに返る。
+   * @returns ショートカット（存在しない場合はnull。値は保存されている文字列のまま）
    */
-  static getById(id: string, basisProfileId: string | null): Shortcut | null {
-    return ShortcutMapper.getById(id, basisProfileId);
+  static getById(id: string): Shortcut | null {
+    return ShortcutMapper.getById(id);
   }
 
   /**
    * ショートカットを作成
    *
    * @param input - 作成するショートカットの情報
-   * @param basisProfileId - 戻り値の値の参照を解決する基準プロファイルID（nullなら標準プロファイル）
    * @returns 作成されたショートカット
    * @throws {EmptyContentError} ショートカット名が空の場合
    * @throws {DuplicateNameError} 紐づけるいずれかのプロファイルで同名のショートカットが見える場合
@@ -76,7 +71,7 @@ export class ShortcutService {
    * @remarks
    * profileIdsは0件以上。省略または空配列は全プロファイル向けになる（定型文と同じ）。
    */
-  static create(input: CreateShortcutInput, basisProfileId: string | null = null): Shortcut {
+  static create(input: CreateShortcutInput): Shortcut {
     /* ショートカット名の前後空白をトリム（ユーザー入力の正規化） */
     const trimmedName = input.name.trim();
 
@@ -100,8 +95,7 @@ export class ShortcutService {
       profileIds,
       trimmedName,
       values,
-      input.categoryId ?? null,
-      basisProfileId
+      input.categoryId ?? null
     );
   }
 
@@ -109,7 +103,6 @@ export class ShortcutService {
    * ショートカットを更新
    *
    * @param input - 更新するショートカットの情報
-   * @param basisProfileId - 戻り値の値の参照を解決する基準プロファイルID（nullなら標準プロファイル）
    * @returns 更新されたショートカット
    * @throws {EmptyContentError} ショートカット名が空の場合
    * @throws {DuplicateNameError} 保存後に紐づくいずれかのプロファイルで同名のショートカットが見える場合（自分以外）
@@ -121,10 +114,9 @@ export class ShortcutService {
    * 省略した場合は紐づけを変えない。値と使用回数はそのまま持ち越す。
    * categoryIdにnullを渡すと未分類へ戻す。省略した場合は現在のカテゴリを変えない。
    */
-  static update(input: UpdateShortcutInput, basisProfileId: string | null = null): Shortcut {
-    /* 現在の紐づけを知らないと、紐づけを変えない更新で名前の重複をどこで見るかが決まらない。
-       ここで使うのは名前と紐づけだけで、値の解決結果は使わないため基準は問わない */
-    const current = ShortcutMapper.getById(input.id, null);
+  static update(input: UpdateShortcutInput): Shortcut {
+    /* 現在の紐づけを知らないと、紐づけを変えない更新で名前の重複をどこで見るかが決まらない */
+    const current = ShortcutMapper.getById(input.id);
     if (!current) {
       throw new Error(`Shortcut not found: ${input.id}`);
     }
@@ -158,8 +150,7 @@ export class ShortcutService {
       trimmedName,
       values,
       profileIds,
-      input.categoryId,
-      basisProfileId
+      input.categoryId
     );
   }
 
@@ -198,6 +189,34 @@ export class ShortcutService {
    */
   static recordUse(valueId: string, shortcutId: string): void {
     ShortcutMapper.incrementUseCount(valueId, shortcutId);
+  }
+
+  /**
+   * ショートカット値をクリップボードへコピーするための文字列を準備する
+   *
+   * @param value - 保存されている値（変数トークンは未展開）
+   * @param options - オプション
+   * @param options.locale - ロケール（システム変数の曜日表記などに使用）
+   * @param options.customResolver - カスタム変数リゾルバー（基準プロファイルの値を引く）
+   * @returns 変数トークンを展開した文字列
+   *
+   * @remarks
+   * 展開の規則は定型文のコピー（SnippetService.prepareForClipboard）と同じ replaceVariables に任せ、
+   * 定型文とショートカットで同じトークンが違う結果にならないようにする。
+   * 日時はこの呼び出し時点で解決するため、一覧に表示した時点の値とは分単位でずれることがある。
+   */
+  static async prepareValueForClipboard(
+    value: string,
+    options?: {
+      locale?: string;
+      customResolver?: VariableResolver;
+    }
+  ): Promise<string> {
+    return replaceVariables(value, {
+      locale: options?.locale,
+      customResolver: options?.customResolver,
+      formats: SystemVariableFormatRegistry.getAll(),
+    });
   }
 
   /**
@@ -273,16 +292,13 @@ export class ShortcutService {
    * @remarks
    * 値名は一覧での識別に使うため必須とする。
    * 挿入する値そのものは空文字を許容する（空文字の挿入を選ぶ利用者の意図を壊さない）。
-   *
-   * カスタム変数を参照している値でも、入力された文字列はそのまま保存する。
-   * 参照を外したときに、参照前に入れていた文字列へ戻せるようにするため。
+   * 変数トークン（{{name}}）は展開せず、入力された文字列のまま保存する。
    */
   private static normalizeValues(inputs: ShortcutValueInput[]): ShortcutValueInput[] {
     const normalized = inputs.map((input) => ({
       id: input.id,
       name: input.name.trim(),
       value: input.value.trim(),
-      variableId: input.variableId ?? null,
     }));
 
     /* 値が1件も無いショートカットは拡張キーボードから何も挿入できないため拒否する */

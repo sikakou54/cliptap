@@ -7,6 +7,7 @@
  * 主な責務:
  * - ショートカット名・所属プロファイル（0件以上。0件は全プロファイル向け）・カテゴリ・値一覧の下書き状態の管理
  * - プロファイル選択画面・値編集モーダルとの往復（値は追加・更新・削除）
+ * - 値一覧に出す、変数を展開した表示用の文字列の算出
  * - 保存可否の判定と保存処理（新規作成/更新）
  *
  * @see app/shortcut/edit.tsx - UIコンポーネント
@@ -24,6 +25,8 @@ import {
   useProfiles,
   useSharedSubscription,
   useShortcuts,
+  useVariableExpansion,
+  useVariables,
   type Category,
   type ShortcutValueInput,
 } from '@cliptap/shared';
@@ -49,10 +52,19 @@ export interface ShortcutValueDraft {
   id?: string;
   /** 値名 */
   name: string;
-  /** 保存する文字列。カスタム変数を参照していない値は、一覧にもこれをそのまま表示する */
+  /** 保存する文字列（変数トークンは展開せずそのまま持つ） */
   value: string;
-  /** 参照するカスタム変数のID（参照していなければnull） */
-  variableId: string | null;
+}
+
+/**
+ * 値一覧に表示する値1件
+ *
+ * @remarks
+ * 保存と値編集モーダルへの受け渡しには展開前の value を使い、画面の表示にだけ displayValue を使う。
+ */
+export interface ShortcutValueDraftWithDisplay extends ShortcutValueDraft {
+  /** 変数トークンを展開した表示用の文字列 */
+  displayValue: string;
 }
 
 /**
@@ -78,8 +90,8 @@ export interface UseShortcutEditScreenReturn {
   selectedProfileNames: string[];
   /** 選択中のカテゴリ（未分類ならnull） */
   selectedCategory: Category | null;
-  /** 編集中の値一覧（表示順） */
-  values: ShortcutValueDraft[];
+  /** 編集中の値一覧（表示順。変数を展開した表示用の文字列を持つ） */
+  values: ShortcutValueDraftWithDisplay[];
   /** 保存処理中フラグ */
   saving: boolean;
 
@@ -141,12 +153,19 @@ export function useShortcutEditScreen(
 ): UseShortcutEditScreenReturn {
   const { shortcutId } = params;
 
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const router = useRouter();
   const { activeProfileId, createShortcut, updateShortcut, getById } = useShortcuts();
   /* 既定のチェックは選択画面に出る有効なプロファイル（validProfiles）だけから選ぶ。
      選択済みの名前は無効なプロファイルへの保存済みの紐づけも含めて出すため、profilesから引く */
-  const { profiles, validProfiles } = useProfiles();
+  const { profiles, validProfiles, profileVariables, defaultProfile } = useProfiles();
+  const { variables } = useVariables();
+  /* 値一覧の変数はホームの一覧と同じ規則で展開する */
+  const { expandVariables } = useVariableExpansion({
+    variables,
+    profileVariables,
+    locale: language,
+  });
   const { categories } = useCategories();
   const { isLoading: isSubscriptionLoading } = useSharedSubscription();
   const { ensureCanAddShortcut, ensureCanAddShortcutValue } = useItemLimitGuard();
@@ -170,7 +189,7 @@ export function useShortcutEditScreen(
   /* 編集対象はIDで引く。Providerの一覧はアクティブなプロファイルから見える分しか持たないが、
      検索画面はプロファイルを跨いで検索し、他のプロファイルのショートカットからも編集へ進む。
      一覧から探すと見つからずフォームが空で開き、保存すると作成の分岐へ流れて重複して登録される。
-     値の解決基準はアクティブなプロファイルになるが、フォームは保存文字列と参照先だけを使うため影響しない */
+     値は変数トークンを展開していない保存文字列のまま取得するため、そのままフォームへ入れられる */
   const editingShortcut = useMemo(
     () => (shortcutId ? getById(shortcutId) : null),
     [getById, shortcutId]
@@ -202,6 +221,37 @@ export function useShortcutEditScreen(
         .map((profile) => profile.name),
     [profiles, profileIds]
   );
+
+  /**
+   * 値一覧の変数を展開する基準のプロファイルID
+   *
+   * @remarks
+   * ホームの一覧と同じくアクティブなプロファイルを使う。
+   * ただし選んでいるプロファイルにアクティブなプロファイルが含まれない場合（検索画面から他のプロファイルの
+   * ショートカットを開いたときなど）、このショートカットはアクティブなプロファイルの一覧に出ない。
+   * その値で見せると実際に使う場面と食い違うため、選んでいるプロファイルのうち一覧の並びで先頭のものを使う。
+   * 0件（全プロファイル向け）はアクティブなプロファイルでも表示されるため、アクティブなプロファイルのまま。
+   */
+  const displayProfileId = useMemo(() => {
+    if (profileIds.length === 0 || (activeProfileId && profileIds.includes(activeProfileId))) {
+      return activeProfileId;
+    }
+    return profiles.find((profile) => profileIds.includes(profile.id))?.id ?? activeProfileId;
+  }, [profileIds, activeProfileId, profiles]);
+
+  /**
+   * 変数を展開した表示用の文字列を持たせた値一覧
+   *
+   * @remarks
+   * 保存する値（value）は置き換えない。値編集モーダルへは展開前の値を渡して編集させるため。
+   */
+  const displayValues = useMemo<ShortcutValueDraftWithDisplay[]>(() => {
+    const defaultProfileId = defaultProfile?.id ?? null;
+    return values.map((draft) => ({
+      ...draft,
+      displayValue: expandVariables(draft.value, displayProfileId, defaultProfileId),
+    }));
+  }, [values, expandVariables, displayProfileId, defaultProfile]);
 
   /* ======================================== */
   /* 新規作成時の初期選択（アクティブなプロファイル） */
@@ -252,8 +302,7 @@ export function useShortcutEditScreen(
         key: value.id,
         id: value.id,
         name: value.name,
-        value: value.storedValue,
-        variableId: value.variableId,
+        value: value.value,
       }))
     );
   }, [editingShortcut]);
@@ -282,7 +331,6 @@ export function useShortcutEditScreen(
             ...next[index],
             name: callbackData.name,
             value: callbackData.value,
-            variableId: callbackData.variableId,
           };
           return next;
         }
@@ -294,7 +342,6 @@ export function useShortcutEditScreen(
             key: createDraftKey(prev),
             name: callbackData.name,
             value: callbackData.value,
-            variableId: callbackData.variableId,
           },
         ];
       });
@@ -323,12 +370,9 @@ export function useShortcutEditScreen(
         valueKey: '',
         valueName: '',
         value: '',
-        variableId: '',
-        /* カスタム変数選択でプロファイル別の値を確認するとき、ここで選んでいるプロファイルに絞るため */
-        profileIds: profileIds.join(','),
       },
     });
-  }, [isSubscriptionLoading, ensureCanAddShortcutValue, values.length, router, profileIds]);
+  }, [isSubscriptionLoading, ensureCanAddShortcutValue, values.length, router]);
 
   /**
    * 値の編集画面を開く
@@ -339,15 +383,12 @@ export function useShortcutEditScreen(
         pathname: '/shortcut/value-edit',
         params: {
           valueKey: draft.key,
-          /* カスタム変数選択のプロファイル切替を、ここで選んでいるプロファイルに絞るため */
-          profileIds: profileIds.join(','),
           valueName: draft.name,
           value: draft.value,
-          variableId: draft.variableId ?? '',
         },
       });
     },
-    [router, profileIds]
+    [router]
   );
 
   /**
@@ -442,7 +483,6 @@ export function useShortcutEditScreen(
         id: draft.id,
         name: draft.name,
         value: draft.value,
-        variableId: draft.variableId,
       }));
 
       /* profileIdsは常に明示して渡す。更新で省略すると紐づけを変えない扱いになり、
@@ -492,7 +532,7 @@ export function useShortcutEditScreen(
     profileIds,
     selectedProfileNames,
     selectedCategory,
-    values,
+    values: displayValues,
     saving,
     isEdit,
     canSave,

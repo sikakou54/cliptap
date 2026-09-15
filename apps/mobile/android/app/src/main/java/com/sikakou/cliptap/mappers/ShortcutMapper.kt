@@ -71,7 +71,7 @@ class ShortcutMapper private constructor(context: Context) : BaseMapper(context)
      *
      * 【何をするか】
      * 1. shortcut_valuesを親の表示条件（選択中のプロファイルに紐づくもの＋全プロファイル向け）とカテゴリで絞り、
-     *    参照の解決込みで1回のクエリでまとめて取得
+     *    1回のクエリでまとめて取得（値は保存された文字列のまま。変数の展開は表示と挿入の時点で行う）
      * 2. shortcutsを同じ条件で絞り、sortOrder昇順で取得
      * 3. shortcutIdごとに値を振り分けて組み立てる
      *
@@ -112,38 +112,16 @@ class ShortcutMapper private constructor(context: Context) : BaseMapper(context)
         val queryArgs = if (categoryId != null) arrayOf(profileId, categoryId) else arrayOf(profileId)
 
         /* 挿入する中身は shortcut_values の value が1つの文字列として持つ。
-           カスタム変数を参照している値（variableId が非NULL）だけは自前の value を使わず、
-           profile_variables 側の値を見る。
-           解決の順序は「選択中のプロファイルの非空値 → 標準プロファイルの非空値 → 空文字」で、
-           カスタム変数の展開（仕様書 §8.6）および TypeScript版 shortcuts/resolveValue.ts と同じ。
-
-           空文字を未設定として読み飛ばすために NULLIF を挟む。値を入力せずに保存すると
-           空文字が保存され得るため、NULLのままでは «設定済みの空» と区別できない。
-
-           参照中は自前の中身を見ない。両方を見にいくと、どちらが挿入されるのか利用者が判断できない。
-           参照先の変数が削除されると variableId は NULL へ戻される（§8.5）ため、
-           消えた変数を指したままの値はここへ現れない。 */
-        val defaultProfileId = defaultProfileId() ?: ""
-        val resolvedValue = """
-            CASE WHEN v.variableId IS NULL THEN v.value
-            ELSE
-              COALESCE(
-                NULLIF((SELECT pv.value FROM profile_variables pv
-                         WHERE pv.variableId = v.variableId AND pv.profileId = ?), ''),
-                NULLIF((SELECT pv.value FROM profile_variables pv
-                         WHERE pv.variableId = v.variableId AND pv.profileId = ?), ''),
-                ''
-              )
-            END
-        """
+           変数トークン（{{name}}）は展開せず、保存された文字列のまま返す。
+           展開は表示と挿入の時点で、選択中のプロファイルと日時で行う
+           （ShortcutValueAdapter の表示、ShortcutService.insertValue。定型文と同じ VariableReplacer を使う） */
 
         /* 値を先に読み、shortcutIdごとにまとめておく */
         val valuesByShortcut = mutableMapOf<String, MutableList<ShortcutValue>>()
 
-        /* SELECTの列の並びは変えていないため、下の getString(添字) はそのまま使える。
-           中身を解決する式を4列目に置き、元の `v.value` と同じ位置に保っている */
+        /* SELECTの列の並びは下の getString(添字) と1対1で対応する */
         val valueQuery = """
-            SELECT v.id, v.shortcutId, v.name, $resolvedValue AS value,
+            SELECT v.id, v.shortcutId, v.name, v.value,
                    v.useCount, v.sortOrder, v.createdAt, v.updatedAt
             FROM shortcut_values v
             INNER JOIN shortcuts s ON s.id = v.shortcutId
@@ -151,11 +129,7 @@ class ShortcutMapper private constructor(context: Context) : BaseMapper(context)
             ORDER BY v.shortcutId ASC, v.sortOrder ASC
         """
 
-        /* 解決の?（SELECT句: 選択中→標準の順）はWHERE句の?より前に現れるため、先頭へ並べる。
-           SQLiteは出現順に束縛するので、この順序を崩すと中身と絞り込みが入れ替わる */
-        val valueArgs = arrayOf(profileId, defaultProfileId) + queryArgs
-
-        val valueCursor = executeQuery(valueQuery, valueArgs)
+        val valueCursor = executeQuery(valueQuery, queryArgs)
         valueCursor.use {
             while (it.moveToNext()) {
                 val value = ShortcutValue(
@@ -208,26 +182,6 @@ class ShortcutMapper private constructor(context: Context) : BaseMapper(context)
 
         if (com.sikakou.cliptap.BuildConfig.DEBUG) Log.d(TAG, "Loaded ${shortcuts.size} shortcuts (profileId: $profileId, categoryId: $categoryId)")
         return shortcuts
-    }
-
-    /**
-     * 標準プロファイルのIDを取得する
-     *
-     * 【使いみち】
-     * カスタム変数を参照しているショートカット値は、選択中のプロファイルに非空の値が無ければ
-     * 標準プロファイルの値へ落とす。カスタム変数の展開（仕様書 §8.6）と同じ順序に揃えるためのフォールバック先。
-     * 参照していない値は自前の文字列をそのまま使うため、標準プロファイルは関与しない。
-     *
-     * @return 標準プロファイルのID（確定できない場合はnull）
-     */
-    private fun defaultProfileId(): String? {
-        val cursor = executeQuery("SELECT id FROM profiles WHERE isDefault = 1 LIMIT 1", emptyArray())
-        cursor.use {
-            if (it.moveToNext()) {
-                return it.getString(0)
-            }
-        }
-        return null
     }
 
     /**

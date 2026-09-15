@@ -10,8 +10,14 @@
  * 入力欄が狭くなって全体を確かめられない。カスタム変数の値入力（variable/profile-value-edit）と
  * 同じ扱いに揃える。
  *
+ * 【変数ツールバーを置く理由】
+ * 値にもカスタム変数・システム変数のトークン（{{name}}）を書けるため（§8.24）、
+ * 定型文の本文入力（snippet/content-input）と同じツールバーをキーボードの直上に置き、
+ * カーソル位置へ挿入できるようにする。
+ *
  * @see src/hooks/screens/useShortcutValueTextEditScreen.ts - ビジネスロジック
  * @see app/shortcut/value-edit.tsx - 呼び出し元
+ * @see src/components/snippet/TextInputScreen.tsx - 定型文の本文入力（同じツールバーとキーボード追従）
  * @see app/variable/profile-value-edit.tsx - カスタム変数側の同じ役割の画面
  */
 
@@ -21,35 +27,54 @@ import { useTranslation } from '@cliptap/shared';
 import { useTheme } from '@lib/themeSystem';
 import { useShortcutValueTextEditScreen } from '@hooks/screens/useShortcutValueTextEditScreen';
 import { ScreenContainer } from '@components/common/ScreenContainer';
+import { VariableToolbar } from '@components/snippet/VariableToolbar';
 import { UI_CONSTANTS } from '@constants/ui';
 
-/** iOSでキーボードを避けるための上部オフセット（ヘッダー分） */
-const KEYBOARD_VERTICAL_OFFSET = 90;
+/** Androidでキーボードの高さに足す余白（定型文の本文入力 TextInputScreen と同じ） */
+const ANDROID_KEYBOARD_EXTRA_MARGIN = 24;
 
 export default function ShortcutValueTextEditModal() {
   const { t } = useTranslation();
-  const { colors, responsiveFontSizes } = useTheme();
+  const { colors, responsiveFontSizes, responsiveLineHeights } = useTheme();
   const params = useLocalSearchParams();
 
   const initialValue = (params.value as string) || '';
 
-  const { value, setValue, textInputRef, handleSave } = useShortcutValueTextEditScreen({
+  const {
+    value,
+    keyboardHeight,
+    textInputRef,
+    handleChangeText,
+    handleSelectionChange,
+    handleInsertVariable,
+    handleSave,
+  } = useShortcutValueTextEditScreen({
     initialValue,
   });
+
+  /* キーボードが出ている間は、その高さだけ下を空けてツールバーをキーボードの直上へ置く */
+  const keyboardMargin =
+    keyboardHeight > 0
+      ? Platform.OS === 'ios'
+        ? keyboardHeight
+        : keyboardHeight + ANDROID_KEYBOARD_EXTRA_MARGIN
+      : 0;
 
   /* ショートカットの値入力モーダル */
   return (
     <ScreenContainer
       title={t('shortcut.value_value')}
       isModal={true}
-      keyboardAvoiding
-      keyboardVerticalOffset={Platform.OS === 'ios' ? KEYBOARD_VERTICAL_OFFSET : 0}
       rightAction={
         <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
           <Text
             style={[
               styles.saveText,
-              { color: colors.primary, fontSize: responsiveFontSizes.base },
+              {
+                color: colors.primary,
+                fontSize: responsiveFontSizes.base,
+                lineHeight: responsiveLineHeights.base,
+              },
             ]}
           >
             {t('common.done')}
@@ -57,26 +82,46 @@ export default function ShortcutValueTextEditModal() {
         </TouchableOpacity>
       }
     >
-      <View style={styles.contentWrapper}>
-        {/* 画面いっぱいの入力欄。複数行の値をそのまま確かめられるようにする */}
-        <TextInput
-          ref={textInputRef}
-          value={value}
-          onChangeText={setValue}
-          placeholder={t('shortcut.value_value_placeholder')}
-          placeholderTextColor={colors.textSecondary}
+      {/* キーボード表示に応じてレイアウト調整 */}
+      <View style={[styles.contentWrapper, { marginBottom: keyboardMargin }]}>
+        {/* 入力エリア（余白を吸収し、入力欄を上端へ寄せる） */}
+        <View style={styles.inputArea}>
+          {/* 画面いっぱいの入力欄。複数行の値をそのまま確かめられるようにする */}
+          <TextInput
+            ref={textInputRef}
+            value={value}
+            onChangeText={handleChangeText}
+            onSelectionChange={(e) => {
+              handleSelectionChange(e.nativeEvent.selection.start);
+            }}
+            placeholder={t('shortcut.value_value_placeholder')}
+            placeholderTextColor={colors.textSecondary}
+            style={[
+              styles.input,
+              {
+                color: colors.text,
+                fontSize: responsiveFontSizes.base,
+                lineHeight: responsiveFontSizes.base * 1.5,
+              },
+            ]}
+            multiline
+            textAlignVertical="top"
+            scrollEnabled={true}
+          />
+        </View>
+
+        {/* 変数挿入ツールバー（キーボードの上に表示） */}
+        <View
           style={[
-            styles.input,
+            styles.toolbarContainer,
             {
-              color: colors.text,
-              fontSize: responsiveFontSizes.base,
-              lineHeight: responsiveFontSizes.base * 1.5,
+              backgroundColor: colors.surface,
+              borderTopColor: colors.border,
             },
           ]}
-          multiline
-          textAlignVertical="top"
-          scrollEnabled={true}
-        />
+        >
+          <VariableToolbar onInsert={handleInsertVariable} />
+        </View>
       </View>
     </ScreenContainer>
   );
@@ -91,9 +136,15 @@ const styles = StyleSheet.create({
   },
   contentWrapper: {
     flex: 1,
-    padding: UI_CONSTANTS.SPACING.LG,
+  },
+  inputArea: {
+    flex: 1,
   },
   input: {
     flex: 1,
+    padding: UI_CONSTANTS.SPACING.LG,
+  },
+  toolbarContainer: {
+    borderTopWidth: UI_CONSTANTS.BORDER_WIDTH.THIN,
   },
 });

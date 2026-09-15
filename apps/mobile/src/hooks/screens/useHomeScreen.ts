@@ -27,7 +27,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useTranslation } from '@cliptap/shared';
 import i18next from '@i18n/config';
-import { useSnippets, useCategories, useProfiles, useVariables, useFilteredSnippets, useSharedSubscription, filterCategoriesInUse, type Category, type Shortcut, type ShortcutValue, type SnippetWithDisplay, type SnippetSortBy } from '@cliptap/shared';
+import { useSnippets, useCategories, useProfiles, useVariables, useFilteredSnippets, useSharedSubscription, filterCategoriesInUse, type Category, type Shortcut, type ShortcutValue, type ShortcutWithDisplay, type SnippetWithDisplay, type SnippetSortBy } from '@cliptap/shared';
 import { showErrorAlert } from '@utils/alerts';
 import { useHomeShortcuts } from '@hooks/screens/useHomeShortcuts';
 import { useItemLimitGuard } from '@hooks/useItemLimitGuard';
@@ -52,7 +52,7 @@ export interface UseHomeScreenReturn {
 
   /* データ */
   snippets: SnippetWithDisplay[];
-  shortcuts: Shortcut[];
+  shortcuts: ShortcutWithDisplay[];
   categories: Category[];
   filteredCategories: Category[];
 
