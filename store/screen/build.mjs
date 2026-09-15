@@ -28,7 +28,8 @@ const SLIDES = [
   { slug: '02-scenes', tone: 'light' },
   { slug: '03-variables', tone: 'light' },
   { slug: '04-profiles', tone: 'light' },
-  { slug: '05-pricing', tone: 'poster' },
+  { slug: '05-shortcuts', tone: 'light' },
+  { slug: '06-pricing', tone: 'poster' },
 ];
 
 /**

@@ -1,0 +1,48 @@
+<!doctype html>
+<!--
+  スライド 05 — ショートカット。
+  仕様書 §8.24（拡張キーボードから呼び出す値を、ショートカットとその値として管理する機能）を訴求する。
+  左はアプリのショートカット一覧。シミュレータで撮影し、開発用シード（apps/mobile/dummy.json）の架空データを
+  プロファイル「A社用」で表示している。
+  右は他のアプリで ClipTap キーボードからショートカットの値を挿入したところ（キーボードの切り替えはシミュレータで
+  再現できないため実機で撮影）。
+  シミュレータのキャプチャは 1206×2622 で、既存の 1170×2532 よりわずかに縦長のため、枠の中で上下が合計約0.5%
+  （元画像で各約6px）切れる。切り方は _shared.css の .phone-inner を参照。
+-->
+<meta charset="utf-8" />
+<template id="slide">
+  <div class="head">
+    <h1 class="ja">
+      <span class="line">電話番号や請求先は、</span>
+      <span class="line accent">値だけタップで入る。</span>
+    </h1>
+    <h1 class="en">
+      <span class="line">Phone and billing info,</span>
+      <span class="line accent">just tap to insert.</span>
+    </h1>
+
+    <p class="sub ja">よく入力する値をショートカットに登録。プロファイルごとに使い分けて、キーボードから値だけを入力できます。</p>
+    <p class="sub en">Save the values you type often as shortcuts, switch them by profile, and insert just the value from the keyboard.</p>
+
+    <p class="note"></p>
+  </div>
+
+  <div class="stage" data-shots="2">
+    <figure class="shot">
+      <div class="phone">
+        <div class="phone-inner">
+          <img src="{{IMG}}/05-shortcuts-left-list.png" width="1206" height="2622" alt="" />
+        </div>
+      </div>
+      <figcaption class="cap"></figcaption>
+    </figure>
+    <figure class="shot">
+      <div class="phone">
+        <div class="phone-inner">
+          <img src="{{IMG}}/05-shortcuts-right-keyboard.png" width="1170" height="2532" alt="" />
+        </div>
+      </div>
+      <figcaption class="cap"></figcaption>
+    </figure>
+  </div>
+</template>
