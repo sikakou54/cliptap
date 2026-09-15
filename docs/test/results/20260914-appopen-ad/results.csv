@@ -1,0 +1,14 @@
+TestID,PatternID,StepNo,Action,Result,Expected,Actual,Evidence,ExecutedAt
+TC-2001,P-F01-001,1,ASSERT_SCREEN,FAIL,ホーム画面が表示されている,SC-HOME と判定できない: label=すべて が無い,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-appopen-ad/evidence/TC-2001-1-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-appopen-ad/evidence/TC-2001-1-FAIL.txt,2026-09-13T22:43:21.579Z
+TC-2001,P-F01-001,2,ASSERT_DB,SKIPPED,name=Mainかつ isDefault=1 かつ isActive=1 のプロファイルが1件である,前のステップが失敗したため未実行,,2026-09-13T22:43:22.184Z
+TC-2001,P-F01-001,3,ASSERT_DB,SKIPPED,isDefault=1 のプロファイルが1件だけである,前のステップが失敗したため未実行,,2026-09-13T22:43:22.184Z
+TC-2002,P-F01-002,1,ASSERT_DB,PASS,V7スキーマの7テーブルが揃っている,"""7""",,2026-09-13T22:43:47.494Z
+TC-2002,P-F01-002,2,ASSERT_SCREEN,FAIL,ホーム画面が表示されている,SC-HOME と判定できない: label=すべて が無い,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-appopen-ad/evidence/TC-2002-2-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-appopen-ad/evidence/TC-2002-2-FAIL.txt,2026-09-13T22:43:56.132Z
+TC-2003,P-F01-003,1,ASSERT_DB,PASS,カテゴリが3件である,"""3""",,2026-09-13T22:44:22.621Z
+TC-2003,P-F01-003,2,ASSERT_DB,PASS,定型文が5件である,"""5""",,2026-09-13T22:44:23.388Z
+TC-2003,P-F01-003,3,ASSERT_DB,PASS,プロファイルが3件である,"""3""",,2026-09-13T22:44:24.173Z
+TC-2003,P-F01-003,4,ASSERT_DB,PASS,カスタム変数が3件である,"""3""",,2026-09-13T22:44:24.968Z
+TC-2004,P-F01-004,1,ASSERT_SCREEN,FAIL,ホーム画面が表示されている,SC-HOME と判定できない: label=すべて が無い,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-appopen-ad/evidence/TC-2004-1-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260914-appopen-ad/evidence/TC-2004-1-FAIL.txt,2026-09-13T22:44:56.695Z
+TC-2004,P-F01-004,2,ASSERT_SCREEN_HAS,SKIPPED,一覧に定型文「要約プロンプト」がある,前のステップが失敗したため未実行,,2026-09-13T22:44:57.305Z
+TC-2004,P-F01-004,3,ASSERT_SCREEN_HAS,SKIPPED,一覧に定型文「今日の積み上げ」がある,前のステップが失敗したため未実行,,2026-09-13T22:44:57.305Z
+TC-2004,P-F01-004,4,ASSERT_SCREEN_HAS,SKIPPED,ヘッダのプロファイル選択に文字列Mainが表示されている,前のステップが失敗したため未実行,,2026-09-13T22:44:57.305Z

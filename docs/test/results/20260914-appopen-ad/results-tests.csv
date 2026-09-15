@@ -1,0 +1,5 @@
+TestID,PatternID,Result,FailedStepNo,FailureClass,BugID,StartedAt,EndedAt,Device,OSVersion,Notes
+TC-2001,P-F01-001,FAIL,1,REQUIRES_TRIAGE,,2026-09-13T22:42:49.200Z,2026-09-13T22:43:22.184Z,iPhone 17,iOS-26-5,Step 1 ASSERT_SCREEN: 期待「ホーム画面が表示されている」／実際「SC-HOME と判定できない: label=すべて が無い」
+TC-2002,P-F01-002,FAIL,2,REQUIRES_TRIAGE,,2026-09-13T22:43:22.186Z,2026-09-13T22:43:56.743Z,iPhone 17,iOS-26-5,Step 2 ASSERT_SCREEN: 期待「ホーム画面が表示されている」／実際「SC-HOME と判定できない: label=すべて が無い」
+TC-2003,P-F01-003,PASS,,,,2026-09-13T22:43:56.744Z,2026-09-13T22:44:25.574Z,iPhone 17,iOS-26-5,
+TC-2004,P-F01-004,FAIL,1,REQUIRES_TRIAGE,,2026-09-13T22:44:25.574Z,2026-09-13T22:44:57.305Z,iPhone 17,iOS-26-5,Step 1 ASSERT_SCREEN: 期待「ホーム画面が表示されている」／実際「SC-HOME と判定できない: label=すべて が無い」
