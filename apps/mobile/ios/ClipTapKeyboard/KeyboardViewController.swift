@@ -335,7 +335,9 @@ class KeyboardViewController: UIInputViewController {
     /// 各行をタップすると、詳細画面（プレビュー）が表示されます
     private let tableView: UITableView = {
         let tv = UITableView()
-        tv.backgroundColor = .clear
+        /* 完全な透明にすると、行の余白や最終行より下から始めたタッチがキーボードへ届かないため、
+           目に見えない塗りを置く（UIColor.keyboardTouchableClear を参照） */
+        tv.backgroundColor = .keyboardTouchableClear
         tv.translatesAutoresizingMaskIntoConstraints = false
         return tv
     }()
@@ -643,7 +645,9 @@ class KeyboardViewController: UIInputViewController {
     /// データソース・デリゲートでは必ず同一性で分岐すること
     private let shortcutTableView: UITableView = {
         let tv = UITableView()
-        tv.backgroundColor = .clear
+        /* 定型文一覧と同じく、行の全域と最終行より下でタップ・スクロールを受けるための目に見えない塗り
+           （UIColor.keyboardTouchableClear を参照） */
+        tv.backgroundColor = .keyboardTouchableClear
         tv.translatesAutoresizingMaskIntoConstraints = false
         return tv
     }()
@@ -2506,6 +2510,10 @@ final class ExpandedHitAreaButton: UIButton {
  * 行のどこを触ってもタッチが拾える保証がない。
  * ラベルをcontentViewいっぱいに広げ、行全体を確実にタップ・ドラッグ対象にする。
  *
+ * 【セルの背景を透明のままにしてよい理由】
+ * 行の余白（左端・「＞」の周り）でタッチを受けられるのは、テーブル側に目に見えない塗り
+ * （UIColor.keyboardTouchableClear）を置いているため。セルごとに塗る必要はない。
+ *
  * 【ファイル配置について】
  * 新しいSwiftファイルを追加するとproject.pbxprojの更新が必要になるため、
  * KeyboardViewControllerと同じファイルに定義している。
@@ -2582,6 +2590,8 @@ final class SnippetCell: UITableViewCell {
  * SnippetCellと同じ理由。defaultContentConfigurationは内部ビューの大きさを文字量に合わせて決めるため、
  * 行のどこを触ってもタッチが拾える保証がない。
  * ラベルをcontentViewいっぱいに広げ、行全体を確実にタップ対象にする。
+ * 行の余白でタッチを受けるのはテーブルの目に見えない塗り（UIColor.keyboardTouchableClear）で、
+ * セルの背景は透明のままでよい（値一覧の ShortcutValueCell も同じ）。
  *
  * 【ファイル配置について】
  * 新しいSwiftファイルを追加するとproject.pbxprojの更新が必要になるため、
@@ -2746,6 +2756,29 @@ final class ShortcutValueCell: UITableViewCell {
            空白へ置き換えて1行に収める。挿入するのは元の文字列のままで、表示だけを整える */
         valueLabel.text = value.components(separatedBy: .newlines).joined(separator: " ")
     }
+}
+
+// MARK: - UIColor Extension（タッチを受けるための目に見えない塗り）
+
+extension UIColor {
+    /**
+     * 目に見えないが、完全な透明ではない塗り（白・不透明度1%）
+     *
+     * 【なぜ必要か】
+     * 拡張キーボードは別プロセスで表示され、背景が完全に透明で何も描かれていない場所から始めたタッチは
+     * キーボードへ届かない。通常のアプリのhitTestは背景色を見ないため、UIKit内の判定では説明できないOS側の挙動である。
+     * 一覧の背景を .clear にすると、文字や「＞」の上でしかタップもスクロールも始められなくなる。
+     * スクロールする一覧にだけこの塗りを置き、行の全域と最終行より下でタッチを受けられるようにする。
+     *
+     * 【値を1%にする理由】
+     * 1%の白はOS標準キーボードの背景素材の上で見分けられず、「ビューは独自背景を持たない」仕様
+     * （機能仕様書 §9.3）の意図であるOSの背景の見え方を変えない。
+     * 0に近づけすぎると8bit換算で完全な透明になり、タッチが届かなくなる。
+     *
+     * 参考: https://developer.apple.com/forums/thread/702798 （透明な点へのタッチが無視される報告）、
+     * キーボード向けSDK KeyboardKit の UIColor+TappableClear（同じ回避策）
+     */
+    static let keyboardTouchableClear = UIColor(white: 1, alpha: 0.01)
 }
 
 // MARK: - UIColor Extension
