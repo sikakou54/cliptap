@@ -1,20 +1,26 @@
 /**
  * 定型文／ショートカットの表示切替トグル
  *
- * 枠線だけの角丸のトラックの中を、同じ色の縁を付けた白いノブが左右に動く切替スイッチ。
- * 左（書類のアイコン）が定型文、右（稲妻のアイコン）がショートカットを表す。
+ * 枠線だけの角丸のトラックの中を、同じ色の縁を付けたノブが左右に動く切替スイッチ。
+ * 左（紺のノブに書類のアイコン）が定型文、右（黄色のノブに稲妻のアイコン）がショートカットを表す。
  *
- * 【拡張キーボードと同じ見た目にしている理由】
- * 同じ「一覧の表示対象を切り替える」操作をアプリとキーボードの両方で行うため、
- * 見た目と位置を揃えて、どちらでも同じものだと分かるようにしている。
- * 寸法と配色はiOSの `ListModeToggle`（KeyboardViewController.swift）と
- * Androidの `shortcutToggle`（keyboard_view.xml）に合わせた値で、
- * 変えるときは3実装を同じ変更で揃えること。
+ * 【拡張キーボード・Webと同じ見た目にしている理由】
+ * 同じ「一覧の表示対象を切り替える」操作をアプリ・キーボード・Webで行うため、
+ * 見た目と位置を揃えて、どこでも同じものだと分かるようにしている。
+ * 寸法と配色はiOSの `ListModeToggle`（KeyboardViewController.swift）、
+ * Androidの `shortcutToggle`（keyboard_view.xml）、Webの `ListModeToggle`
+ * （apps/web/src/components/dashboard/ListModeToggle.tsx）に合わせた値で、
+ * 変えるときは4実装を同じ変更で揃えること。
+ *
+ * 【ノブの色を表示対象で変える理由】
+ * ノブの位置とアイコンの形に加えて色でも区別し、一目でどちらの一覧か分かるようにする。
+ * 色はどちらの一覧かを表す識別色のため、テーマの listModeSnippet / listModeShortcut として
+ * ライト・ダークで同じ値に固定している。トラックの枠線の色は表示対象で変えない。
  *
  * 【枠線を textTertiary にしている理由】
  * border（ライト #E5E7EB）では、iOSキーボードの背景（ライト #E2E4E8）に溶けてトラックが見えない。
- * また白いノブは、白い背景（アプリのホーム・Androidキーボード）に溶けて見えない。
- * そのため、白でも灰色でも見える textTertiary でトラックを囲み、ノブにも同じ色の縁を付ける。
+ * また黄色のノブは白い背景に、紺のノブは黒い背景に溶けやすい。
+ * そのため、白でも灰色でも黒でも見える textTertiary でトラックを囲み、ノブにも同じ色の縁を付ける。
  *
  * 【状態を持たない理由】
  * 表示対象はホーム画面が持つ正本で、追加ボタンの行き先やカテゴリチップの集合も
@@ -102,26 +108,25 @@ export function ListModeToggle({ isShowingShortcuts, onToggle }: ListModeToggleP
         isShowingShortcuts ? t('shortcut.show_snippets') : t('shortcut.show_shortcuts')
       }
     >
-      {/* ノブは白固定。今どちら側かは、ノブの位置と中のアイコンの形で示す。
-          表示対象で色を変えないのは、色が変わる箇所が増えるほど
-          「どこを見れば今の状態が分かるのか」がぼやけるため。
-          白い背景に溶けないよう、トラックと同じ色の縁を付ける */}
+      {/* ノブ。定型文は紺、ショートカットは黄色で塗る。
+          色はネイティブドライバで動かせないため、位置が動き始めると同時に切り替わる。
+          背景に溶けないよう、トラックと同じ色の縁を付ける */}
       <Animated.View
         style={[
           styles.knob,
           {
-            backgroundColor: colors.onPrimary,
+            backgroundColor: isShowingShortcuts ? colors.listModeShortcut : colors.listModeSnippet,
             borderColor: colors.textTertiary,
             transform: [{ translateX: knobOffset }],
           },
         ]}
       >
         {/* アイコンは今どちらの一覧かを表す（定型文=書類、ショートカット=稲妻）。
-            色は両方で同じにし、形だけで見分ける */}
+            色はノブの塗りの上で読める色にする（紺の上は白、黄色の上は紺） */}
         <Ionicons
           name={isShowingShortcuts ? 'flash' : 'document-text-outline'}
           size={UI_CONSTANTS.ICON_SIZE.XS}
-          color={colors.textSecondary}
+          color={isShowingShortcuts ? colors.onListModeShortcut : colors.onListModeSnippet}
         />
       </Animated.View>
     </TouchableOpacity>

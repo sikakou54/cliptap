@@ -1188,9 +1188,10 @@ class ClipTapKeyboardService : InputMethodService() {
      * ボタンは出したまま、バッジだけを表示中の一覧の基準に合わせて付け替える。
      *
      * 【トグルの見た目】
-     * ノブの位置と中のアイコンの形で、今どちらを見ているかを示す。
-     * 左（書類）が定型文、右（稲妻）がショートカット。
-     * トラックの枠線とアイコンの色はアプリのホームの切替トグルに揃えてレイアウト側で固定し、表示対象では変えない。
+     * ノブの位置・中のアイコンの形・ノブの色で、今どちらを見ているかを示す。
+     * 左（紺のノブに書類）が定型文、右（黄色のノブに稲妻）がショートカット。
+     * 配色はアプリのホームの切替トグルと同値で、アイコンはノブの塗りの上で読める色にする（紺の上は白、黄色の上は紺）。
+     * トラックの枠線の色はレイアウト側で固定し、表示対象では変えない。
      * 読み上げだけは「押したら何が起きるか」を伝えるため、見た目と逆の側を読ませる。
      */
     private fun updateListModeChrome() {
@@ -1204,6 +1205,13 @@ class ClipTapKeyboardService : InputMethodService() {
 
         shortcutToggleIcon.setImageResource(
             if (isShortcutMode) R.drawable.ic_shortcut else R.drawable.ic_snippet
+        )
+        shortcutToggleIcon.imageTintList = android.content.res.ColorStateList.valueOf(
+            getColor(if (isShortcutMode) R.color.keyboardToggleIconShortcut else R.color.keyboardToggleIconSnippet)
+        )
+        /* 塗りの色だけが異なる2つのdrawableを付け替える（縁の色と太さは同じ） */
+        shortcutToggleKnob.setBackgroundResource(
+            if (isShortcutMode) R.drawable.list_mode_toggle_knob_shortcut else R.drawable.list_mode_toggle_knob_snippet
         )
 
         moveToggleKnob()

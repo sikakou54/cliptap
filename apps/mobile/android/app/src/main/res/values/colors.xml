@@ -9,11 +9,16 @@
   <color name="keyboardAccent">#2196F3</color>
   <color name="keyboardOnAccent">#FFFFFF</color>
   <color name="keyboardSeparator">#1F000000</color>
-  <!-- 表示切替トグルの枠線（トラックの枠線とノブの縁）と、ノブの中のアイコンの色。
+  <!-- 表示切替トグルの枠線（トラックの枠線とノブの縁）。
        アプリのホームの切替トグル（ListModeToggle.tsx）と同じ見た目にするため、
-       アプリのテーマの textTertiary / textSecondary と同値にしている（ダークは values-night）。
-       ノブは常に白で、白い背景に溶けないよう枠線と同じ色の縁を付ける。
-       どちらの色も表示対象によらず同じ。 -->
+       アプリのテーマの textTertiary と同値にしている（ダークは values-night）。表示対象によらず同じ。 -->
   <color name="keyboardToggleOutline">#9CA3AF</color>
-  <color name="keyboardToggleKnobIcon">#6B7280</color>
+  <!-- 表示切替トグルのノブの塗りと、ノブの中のアイコンの色。
+       アプリのテーマの listModeSnippet / onListModeSnippet / listModeShortcut / onListModeShortcut と同値で、
+       定型文は紺に白、ショートカットは黄色に紺。どちらの一覧かを表す識別色のため
+       ライト・ダークで同じ値にしており、values-night には置かない。 -->
+  <color name="keyboardToggleKnobSnippet">#212B3C</color>
+  <color name="keyboardToggleIconSnippet">#FFFFFF</color>
+  <color name="keyboardToggleKnobShortcut">#FBBF24</color>
+  <color name="keyboardToggleIconShortcut">#212B3C</color>
 </resources>

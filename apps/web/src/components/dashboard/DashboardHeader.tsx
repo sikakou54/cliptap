@@ -102,9 +102,6 @@ export function DashboardHeader({
                 handleProfileSelect={handleProfileSelect}
               />
             </div>
-            <div className="hidden md:block">
-              <ListModeToggle mode={listMode} onChange={onListModeChange} />
-            </div>
           </div>
 
           {/* 中央：検索バー（表示時のみ）
@@ -125,6 +122,9 @@ export function DashboardHeader({
           {/* 右側：ソート + 列数選択 + 検索ボタン + 新規作成ボタン
               ソートメニュー、グリッドの列数（1〜3列）を切り替え、検索バーを開く、新規スニペットを作成。 */}
           <div className="flex items-center gap-1">
+            {/* 定型文／ショートカットの表示切替スイッチ
+                モバイルのホームと同じく、アクションボタン群の先頭に置く。 */}
+            <ListModeToggle mode={listMode} onChange={onListModeChange} />
             {/* ソートメニュー（ドロップダウン形式）
                 作成日時/更新日時/タイトル/使用頻度でソート可能。 */}
             <SortMenu currentSort={currentSort} onSortChange={onSortChange} />
@@ -159,10 +159,6 @@ export function DashboardHeader({
               </svg>
             </button>
           </div>
-        </div>
-
-        <div className="mt-3 md:hidden">
-          <ListModeToggle mode={listMode} onChange={onListModeChange} />
         </div>
 
         {/* カテゴリフィルターバー（全カテゴリ・未分類・各カテゴリのボタン）

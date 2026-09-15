@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- ショートカットを示すアイコン（稲妻＝すばやく入れる、の意）
-     表示切替トグルのノブの中で使う。色はレイアウト側のtintで付けるため、ここでは焼き込まない -->
+     表示切替トグルのノブの中で使う。色はtint（黄色のノブの上の紺。ClipTapKeyboardService が表示対象に合わせて付ける）で付けるため、ここでは焼き込まない -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"

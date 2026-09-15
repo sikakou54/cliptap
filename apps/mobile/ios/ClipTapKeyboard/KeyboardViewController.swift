@@ -2853,16 +2853,16 @@ extension UIColor {
  * 定型文／ショートカットの表示切替トグル
  *
  * 【見た目】
- * 枠線だけの角丸のトラックの中を、同じ色の縁を付けた白いノブが左右に動く切替スイッチの形。
- * 左（書類のアイコン）が定型文、右（稲妻のアイコン）がショートカット。
+ * 枠線だけの角丸のトラックの中を、同じ色の縁を付けたノブが左右に動く切替スイッチの形。
+ * 左（紺のノブに書類のアイコン）が定型文、右（黄色のノブに稲妻のアイコン）がショートカット。
  * アイコンだけの切替と違い、今どちらを見ているかと、押すと反対側へ移ることが同時に分かる。
  *
  * 【アプリと同じ見た目にする理由】
- * 同じ「一覧の表示対象を切り替える」操作をアプリのホームとキーボードの両方で行うため、
- * どちらでも同じものだと分かるようにしている。配色と寸法はアプリの
+ * 同じ「一覧の表示対象を切り替える」操作をアプリのホーム・キーボード・Webで行うため、
+ * どこでも同じものだと分かるようにしている。配色と寸法はアプリの
  * ListModeToggle（apps/mobile/src/components/common/ListModeToggle.tsx）と同値で、
- * 変えるときはアプリ・iOS・Androidの3実装を同じ変更で揃えること。
- * トラックとアイコンの色は表示対象で変えず、ノブの位置とアイコンの形だけで見分ける。
+ * 変えるときはアプリ・Web・iOS・Androidの4実装を同じ変更で揃えること。
+ * 表示対象はノブの位置・アイコンの形・ノブの色の3つで示す。トラックの枠線の色は表示対象で変えない。
  *
  * 【タップ領域】
  * トラックは32ptでHIGの44ptに届かないため、判定だけを44ptまで広げる。
@@ -2905,12 +2905,17 @@ final class ListModeToggle: UIControl {
             : UIColor(red: 0x9C / 255, green: 0xA3 / 255, blue: 0xAF / 255, alpha: 1)
     }
 
-    /// ノブの中のアイコンの色。アプリのテーマの `textSecondary`（ライト #6B7280 / ダーク #A0A0A0）と同値
-    private static let iconColor = UIColor { traits in
-        traits.userInterfaceStyle == .dark
-            ? UIColor(red: 0xA0 / 255, green: 0xA0 / 255, blue: 0xA0 / 255, alpha: 1)
-            : UIColor(red: 0x6B / 255, green: 0x72 / 255, blue: 0x80 / 255, alpha: 1)
-    }
+    /// 定型文を表示中のノブの塗り（紺 #212B3C）。アプリのテーマの `listModeSnippet` と同値で、ライト・ダーク共通
+    private static let snippetKnobColor = UIColor(red: 0x21 / 255, green: 0x2B / 255, blue: 0x3C / 255, alpha: 1)
+
+    /// 定型文を表示中のアイコンの色（白）。アプリのテーマの `onListModeSnippet` と同値
+    private static let snippetIconColor = UIColor.white
+
+    /// ショートカットを表示中のノブの塗り（黄 #FBBF24）。アプリのテーマの `listModeShortcut` と同値で、ライト・ダーク共通
+    private static let shortcutKnobColor = UIColor(red: 0xFB / 255, green: 0xBF / 255, blue: 0x24 / 255, alpha: 1)
+
+    /// ショートカットを表示中のアイコンの色（紺 #212B3C）。アプリのテーマの `onListModeShortcut` と同値
+    private static let shortcutIconColor = UIColor(red: 0x21 / 255, green: 0x2B / 255, blue: 0x3C / 255, alpha: 1)
 
     /// 確保する最小タップ領域（pt）
     private static let minimumHitSize: CGFloat = 44
@@ -2936,16 +2941,16 @@ final class ListModeToggle: UIControl {
         layer.borderWidth = Self.outlineWidth
         clipsToBounds = true
 
-        /* ノブは白。白い背景でも形が分かるよう、トラックと同じ色の縁を付ける */
-        knobView.backgroundColor = .white
+        /* ノブの塗りは表示対象で変える（applyAppearance）。
+           黄色は白い背景に、紺は黒い背景に溶けやすいため、トラックと同じ色の縁を付ける */
         knobView.layer.cornerRadius = Self.knobSize / 2
         knobView.layer.borderWidth = Self.outlineWidth
         knobView.isUserInteractionEnabled = false
         addSubview(knobView)
         applyOutlineColor()
 
+        /* アイコンの色も表示対象で変える（applyAppearance） */
         iconView.contentMode = .scaleAspectFit
-        iconView.tintColor = Self.iconColor
         iconView.isUserInteractionEnabled = false
         knobView.addSubview(iconView)
 
@@ -3018,11 +3023,16 @@ final class ListModeToggle: UIControl {
         }
     }
 
-    /// ノブの中のアイコンを現在の状態に合わせる（色は状態によらず同じ）
+    /// ノブの塗りと中のアイコン（絵と色）を現在の状態に合わせる
+    ///
+    /// 定型文は紺のノブに白いアイコン、ショートカットは黄色のノブに紺のアイコン。
+    /// アニメーションのブロック内で呼ぶと、ノブの塗りも移動と同じ時間で切り替わる
     private func applyAppearance() {
         let config = UIImage.SymbolConfiguration(pointSize: 12, weight: .semibold)
         let symbolName = isShowingShortcuts ? "bolt.fill" : "doc.text"
         iconView.image = UIImage(systemName: symbolName, withConfiguration: config)
+        iconView.tintColor = isShowingShortcuts ? Self.shortcutIconColor : Self.snippetIconColor
+        knobView.backgroundColor = isShowingShortcuts ? Self.shortcutKnobColor : Self.snippetKnobColor
     }
 
     /// トラックの枠線とノブの縁の色を現在のライト・ダークに合わせる

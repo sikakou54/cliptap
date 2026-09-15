@@ -176,7 +176,7 @@ export function Dashboard() {
 
         {/* メインコンテンツ（定型文グリッド）
             pt-36でヘッダー分の上部マージンを確保（固定ヘッダーの下にコンテンツが表示されるように）。 */}
-        <main className="px-6 py-6 pt-44 md:pt-36">
+        <main className="px-6 py-6 pt-36">
           {listMode === 'snippet' ? (
             <SnippetGrid
               filteredSnippets={filteredSnippets}
