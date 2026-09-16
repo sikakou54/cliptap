@@ -1,0 +1,62 @@
+TestID,PatternID,StepNo,Action,Result,Expected,Actual,Evidence,ExecutedAt
+TC-1211,P-F10-020;P-F10-021;P-F10-022;P-F10-023;P-F10-024,1,TAP,PASS,ショートカット表示へ切り替わる,"tap 1491,187 hold=60ms",,2026-09-15T23:52:18.897Z
+TC-1211,P-F10-020;P-F10-021;P-F10-022;P-F10-023;P-F10-024,2,SCROLL_TO,PASS,対象カードが画面内に入る,これ以上スクロールできません（現在位置 y=）,,2026-09-15T23:52:20.420Z
+TC-1211,P-F10-020;P-F10-021;P-F10-022;P-F10-023;P-F10-024,3,TAP,FAIL,その他の操作メニューが開く,"要素が見つかりません: label=プレビュー確認のその他の操作&visible=true （一致件数 0）
+ERROR: 要素が見つかりません: label=プレビュー確認のその他の操作&visible=true",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview/evidence/TC-1211-3-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview/evidence/TC-1211-3-FAIL.txt,2026-09-15T23:52:22.950Z
+TC-1211,P-F10-020;P-F10-021;P-F10-022;P-F10-023;P-F10-024,4,TAP,SKIPPED,ショートカット編集画面が開く,前のステップが失敗したため未実行,,2026-09-15T23:52:23.555Z
+TC-1211,P-F10-020;P-F10-021;P-F10-022;P-F10-023;P-F10-024,5,ASSERT_VISIBLE,SKIPPED,値一覧には保存文字列が未展開で表示される,前のステップが失敗したため未実行,,2026-09-15T23:52:23.555Z
+TC-1211,P-F10-020;P-F10-021;P-F10-022;P-F10-023;P-F10-024,6,ASSERT_VISIBLE,SKIPPED,会社のプレビューがMainで展開される,前のステップが失敗したため未実行,,2026-09-15T23:52:23.555Z
+TC-1211,P-F10-020;P-F10-021;P-F10-022;P-F10-023;P-F10-024,7,ASSERT_SCREEN_HAS,SKIPPED,日付が実行日の既定書式へ展開される,前のステップが失敗したため未実行,,2026-09-15T23:52:23.555Z
+TC-1211,P-F10-020;P-F10-021;P-F10-022;P-F10-023;P-F10-024,8,ASSERT_VISIBLE,SKIPPED,Mainのチップが表示される,前のステップが失敗したため未実行,,2026-09-15T23:52:23.555Z
+TC-1211,P-F10-020;P-F10-021;P-F10-022;P-F10-023;P-F10-024,9,ASSERT_VISIBLE,SKIPPED,A社用のチップが表示される,前のステップが失敗したため未実行,,2026-09-15T23:52:23.555Z
+TC-1211,P-F10-020;P-F10-021;P-F10-022;P-F10-023;P-F10-024,10,ASSERT_NOT_VISIBLE,SKIPPED,無効なC社用は候補に表示されない,前のステップが失敗したため未実行,,2026-09-15T23:52:23.555Z
+TC-1212,P-F10-025,1,TAP,FAIL,ショートカット表示へ切り替わる,"要素が見つかりません: label=ショートカットを表示&visible=true （一致件数 0）
+ERROR: 要素が見つかりません: label=ショートカットを表示&visible=true",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview/evidence/TC-1212-1-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview/evidence/TC-1212-1-FAIL.txt,2026-09-15T23:52:40.046Z
+TC-1212,P-F10-025,2,TAP,SKIPPED,新規作成画面が開く,前のステップが失敗したため未実行,,2026-09-15T23:52:40.651Z
+TC-1212,P-F10-025,3,ASSERT_VISIBLE,SKIPPED,Mainのチップが表示される,前のステップが失敗したため未実行,,2026-09-15T23:52:40.651Z
+TC-1212,P-F10-025,4,ASSERT_NOT_VISIBLE,SKIPPED,A社用のチップは表示されない,前のステップが失敗したため未実行,,2026-09-15T23:52:40.651Z
+TC-1213,P-F10-026,1,TAP,FAIL,ショートカット表示へ切り替わる,"要素が見つかりません: label=ショートカットを表示&visible=true （一致件数 0）
+ERROR: 要素が見つかりません: label=ショートカットを表示&visible=true",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview/evidence/TC-1213-1-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview/evidence/TC-1213-1-FAIL.txt,2026-09-15T23:52:57.173Z
+TC-1213,P-F10-026,2,TAP,SKIPPED,新規作成画面が開く,前のステップが失敗したため未実行,,2026-09-15T23:52:57.778Z
+TC-1213,P-F10-026,3,ASSERT_SCREEN_HAS,SKIPPED,プレビューに空表示が出る,前のステップが失敗したため未実行,,2026-09-15T23:52:57.778Z
+TC-1214,P-F10-027,1,TAP,FAIL,ショートカット表示へ切り替わる,"要素が見つかりません: label=ショートカットを表示&visible=true （一致件数 0）
+ERROR: 要素が見つかりません: label=ショートカットを表示&visible=true",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview/evidence/TC-1214-1-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview/evidence/TC-1214-1-FAIL.txt,2026-09-15T23:53:14.326Z
+TC-1214,P-F10-027,2,TAP,SKIPPED,メニューが開く,前のステップが失敗したため未実行,,2026-09-15T23:53:14.931Z
+TC-1214,P-F10-027,3,TAP,SKIPPED,編集画面が開く,前のステップが失敗したため未実行,,2026-09-15T23:53:14.931Z
+TC-1214,P-F10-027,4,TAP,SKIPPED,A社用へ切り替わる,前のステップが失敗したため未実行,,2026-09-15T23:53:14.931Z
+TC-1214,P-F10-027,5,ASSERT_VISIBLE,SKIPPED,会社の値がA社用で再展開される,前のステップが失敗したため未実行,,2026-09-15T23:53:14.931Z
+TC-1215,P-F10-028;P-F10-029,1,TAP,FAIL,ショートカット表示へ切り替わる,"要素が見つかりません: label=ショートカットを表示&visible=true （一致件数 0）
+ERROR: 要素が見つかりません: label=ショートカットを表示&visible=true",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview/evidence/TC-1215-1-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview/evidence/TC-1215-1-FAIL.txt,2026-09-15T23:53:31.708Z
+TC-1215,P-F10-028;P-F10-029,2,TAP,SKIPPED,メニューが開く,前のステップが失敗したため未実行,,2026-09-15T23:53:32.314Z
+TC-1215,P-F10-028;P-F10-029,3,TAP,SKIPPED,編集画面が開く,前のステップが失敗したため未実行,,2026-09-15T23:53:32.314Z
+TC-1215,P-F10-028;P-F10-029,4,TAP,SKIPPED,会社のプレビュー行が押される,前のステップが失敗したため未実行,,2026-09-15T23:53:32.314Z
+TC-1215,P-F10-028;P-F10-029,5,ASSERT_CLIPBOARD,SKIPPED,会社の展開値だけがコピーされる,前のステップが失敗したため未実行,,2026-09-15T23:53:32.314Z
+TC-1215,P-F10-028;P-F10-029,6,ASSERT_DB,SKIPPED,プレビューコピーで使用回数が増えない,前のステップが失敗したため未実行,,2026-09-15T23:53:32.314Z
+TC-1215,P-F10-028;P-F10-029,7,ASSERT_DB,SKIPPED,親ショートカットの更新日時が変わらない,前のステップが失敗したため未実行,,2026-09-15T23:53:32.314Z
+TC-1215,P-F10-028;P-F10-029,8,ASSERT_DB,SKIPPED,保存値が未展開のまま変わらない,前のステップが失敗したため未実行,,2026-09-15T23:53:32.314Z
+TC-1216,P-F10-030,1,TAP,FAIL,ショートカット表示へ切り替わる,"要素が見つかりません: label=ショートカットを表示&visible=true （一致件数 0）
+ERROR: 要素が見つかりません: label=ショートカットを表示&visible=true",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview/evidence/TC-1216-1-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview/evidence/TC-1216-1-FAIL.txt,2026-09-15T23:53:49.118Z
+TC-1216,P-F10-030,2,TAP,SKIPPED,メニューが開く,前のステップが失敗したため未実行,,2026-09-15T23:53:49.721Z
+TC-1216,P-F10-030,3,TAP,SKIPPED,編集画面が開く,前のステップが失敗したため未実行,,2026-09-15T23:53:49.721Z
+TC-1216,P-F10-030,4,ASSERT_DISABLED,SKIPPED,空の値のプレビュー行が操作不能である,前のステップが失敗したため未実行,,2026-09-15T23:53:49.721Z
+TC-1216,P-F10-030,5,ASSERT_CLIPBOARD,SKIPPED,クリップボードが変わらない,前のステップが失敗したため未実行,,2026-09-15T23:53:49.721Z
+TC-1217,P-F10-031,1,TAP,FAIL,ショートカット表示へ切り替わる,"要素が見つかりません: label=ショートカットを表示&visible=true （一致件数 0）
+ERROR: 要素が見つかりません: label=ショートカットを表示&visible=true",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview/evidence/TC-1217-1-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview/evidence/TC-1217-1-FAIL.txt,2026-09-15T23:54:06.066Z
+TC-1217,P-F10-031,2,TAP,SKIPPED,メニューが開く,前のステップが失敗したため未実行,,2026-09-15T23:54:06.667Z
+TC-1217,P-F10-031,3,TAP,SKIPPED,編集画面が開く,前のステップが失敗したため未実行,,2026-09-15T23:54:06.667Z
+TC-1217,P-F10-031,4,ASSERT_VISIBLE,SKIPPED,無効な変数が元トークンのまま表示される,前のステップが失敗したため未実行,,2026-09-15T23:54:06.667Z
+TC-1218,P-F10-032,1,TAP,FAIL,ショートカット表示へ切り替わる,"要素が見つかりません: label=ショートカットを表示&visible=true （一致件数 0）
+ERROR: 要素が見つかりません: label=ショートカットを表示&visible=true",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview/evidence/TC-1218-1-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview/evidence/TC-1218-1-FAIL.txt,2026-09-15T23:54:23.368Z
+TC-1218,P-F10-032,2,TAP,SKIPPED,メニューが開く,前のステップが失敗したため未実行,,2026-09-15T23:54:23.974Z
+TC-1218,P-F10-032,3,TAP,SKIPPED,編集画面が開く,前のステップが失敗したため未実行,,2026-09-15T23:54:23.974Z
+TC-1218,P-F10-032,4,TAP,SKIPPED,会社のプレビュー行が押される,前のステップが失敗したため未実行,,2026-09-15T23:54:23.974Z
+TC-1218,P-F10-032,5,ASSERT_VISIBLE,SKIPPED,コピー直後にチェックマークが現れる,前のステップが失敗したため未実行,,2026-09-15T23:54:23.974Z
+TC-1218,P-F10-032,6,WAIT,SKIPPED,コピー済み表示の2秒が経過するのを待つ,前のステップが失敗したため未実行,,2026-09-15T23:54:23.974Z
+TC-1218,P-F10-032,7,ASSERT_NOT_VISIBLE,SKIPPED,チェックマークが消える,前のステップが失敗したため未実行,,2026-09-15T23:54:23.974Z
+TC-1219,P-F10-033,1,TAP,PASS,ショートカット表示へ切り替わる,"tap 1491,187 hold=60ms",,2026-09-15T23:54:39.344Z
+TC-1219,P-F10-033,2,TAP,PASS,メニューが開く,"tap 1618,285 hold=60ms",,2026-09-15T23:54:41.139Z
+TC-1219,P-F10-033,3,TAP,PASS,編集画面が開く,"tap 1478,729 hold=60ms",,2026-09-15T23:54:42.781Z
+TC-1219,P-F10-033,4,TAP_IN,PASS,会社の値一覧行の削除アイコンが押される,"tap 1624,542 hold=60ms",,2026-09-15T23:54:44.751Z
+TC-1219,P-F10-033,5,TAP,PASS,削除確認を承認する,"tap 1544,526 hold=60ms",,2026-09-15T23:54:46.397Z
+TC-1219,P-F10-033,6,ASSERT_NOT_VISIBLE,PASS,値一覧から会社の行が消える,見えていない,,2026-09-15T23:54:47.859Z
+TC-1219,P-F10-033,7,ASSERT_NOT_VISIBLE,PASS,プレビューから会社の行も消える,見えていない,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview/evidence/TC-1219-7-preview-deleted.png,2026-09-15T23:54:49.618Z
