@@ -2355,6 +2355,10 @@ final class ExpandedHitAreaButton: UIButton {
     private static let minimumHitSize: CGFloat = 44
 
     /// タップ判定の範囲を最小タップ領域まで広げる
+    ///
+    /// トラックの外側へ広げた分は自身が何も描いていないため、拡張キーボードではタッチが届かないことがある。
+    /// 指が縁へ寄ったときの取りこぼしを減らす補助であり、確実に効くのはトラックの内側（塗りのある範囲）。
+    ///
     /// - Parameters:
     ///   - point: 自身の座標系でのタッチ位置
     ///   - event: 対象のイベント
@@ -2722,8 +2726,11 @@ final class ListModeToggle: UIControl {
     override init(frame: CGRect) {
         super.init(frame: frame)
 
-        /* トラックは塗りを持たず、ノブが動く範囲を示す枠線だけを引く */
-        backgroundColor = .clear
+        /* トラックは見た目の上では塗りを持たず、ノブが動く範囲を枠線だけで示す。
+           ただし完全な透明にすると、ノブが乗っていない側を押したタッチがキーボードへ届かず、
+           押しても切り替わらない。目に見えない塗りを置いてトラック全域でタッチを受ける
+           （UIColor.keyboardTouchableClear を参照） */
+        backgroundColor = .keyboardTouchableClear
         layer.cornerRadius = Self.trackHeight / 2
         layer.borderWidth = Self.outlineWidth
         clipsToBounds = true
