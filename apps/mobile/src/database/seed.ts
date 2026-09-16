@@ -13,16 +13,21 @@
  * - アプリ初回起動時
  * - データベースリセット後
  *
- * データ構成（LPの画面キャプチャに合わせた構成）:
- * - カテゴリ: 3種類（仕事、SNS、プロンプト）
- * - スニペット: 5種類（仕事2種類、SNS1種類、プロンプト2種類）
+ * データ構成（ストア用スクリーンショットの撮影に使う想定）:
+ * - カテゴリ: 6種類（仕事、SNS、プロンプト、コード、連絡先、日常）
+ * - スニペット: 24種類（仕事7、SNS4、プロンプト4、コード4、日常3、連絡先2）
  * - プロファイル: 2種類（取引先別。デフォルトの「Main」と合わせて無料プラン上限の3件）
- * - カスタム変数: 3種類（取引先担当者名、自社名、送信者名）
- * - ショートカット: 8種類（全プロファイル向け 1件、Main 3件、A社用 2件、B社用 1件、A社用とB社用の両方 1件）
+ * - カスタム変数: 5種類（取引先担当者名、自社名、送信者名、案件名、メール署名）
+ * - ショートカット: 17種類（全プロファイル向け 6件、Main 4件、A社用 3件、B社用 2件、A社用とB社用の両方 2件）
  *
- * 定型文はLPの画面キャプチャに写っている文面を再現している。
- * ただしtpl_003はキャプチャでは見出しに日付が入っているが、本文では日付を使わない。
- * tpl_005はキャプチャに写っていないため、プロンプトの例として補ったもの。
+ * 一覧の既定の並びは作成日時の新しい順のため、dummy.jsonの配列の末尾ほど一覧の上に出る。
+ * 撮影の一枚目に見せたいものを配列の後ろへ置いている。
+ *
+ * 定型文のうち「週次報告（A社様式）」はA社用、「作業報告（B社様式）」はB社用に限定してある。
+ * プロファイルを切り替えると一覧の件数が変わることを、撮影で見せられるようにするため。
+ *
+ * 個人情報にあたる値（電話番号・メール・住所・口座・アカウントID）は末尾を小文字のxで伏せている。
+ * 公開するスクリーンショットに実在しうる連絡先が写らないようにするため。桁数は残して何の値かは読めるようにする。
  *
  * tpl_001とtpl_002はタイトルにシステム変数を含む。
  * タイトルは本文と同様に変数展開の対象（一覧表示・コピー時の双方）。
@@ -40,6 +45,7 @@ import {
   ProfileMapper,            /* プロファイル（環境）データ操作 */
   ProfileVariableMapper,    /* プロファイル別変数値データ操作 */
   ShortcutService,          /* ショートカット管理（Mapperは非公開のためService経由） */
+  type Profile,             /* プロファイル名の解決で標準プロファイルを受け取るため */
 } from '@cliptap/shared';
 import { Logger } from '@cliptap/shared';
 
@@ -65,13 +71,15 @@ const TEST_CATEGORIES = dummyTemplates.categories;
  * JSONからスニペット形式に変換
  */
 /* JSONデータを内部形式に変換してテストスニペットを生成 */
-const TEST_SNIPPETS = dummyTemplates.snippets.map(item => ({
+const TEST_SNIPPETS: DummySnippet[] = dummyTemplates.snippets.map(item => ({
   /* スニペットのタイトル（表示名） */
   title: item.title,
   /* スニペットの本文内容（JSONの'body'を'content'にマッピング） */
   content: item.body,
   /* 所属するカテゴリ名（後でIDに変換される） */
   categoryName: item.category,
+  /* 所属させるプロファイル名（省略時は空配列＝全プロファイル向け） */
+  profiles: 'profiles' in item ? item.profiles ?? [] : [],
   /* タイトルも一緒にコピーするかどうか（未定義時はfalse） */
   copyWithTitle: item.copyWithTitle ?? false,
 }));
@@ -87,6 +95,25 @@ const TEST_PROFILES = dummyTemplates.profiles;
  * 変数メタデータと標準値、プロファイル別の値を含む
  */
 const TEST_VARIABLES = dummyTemplates.custom_variables;
+
+/**
+ * ダミーデータの定型文
+ *
+ * @remarks
+ * - profiles: 所属させるプロファイル名（0件以上。空配列は全プロファイル向け）
+ * - categoryName: カテゴリ名（解決できなければ未分類）
+ *
+ * 型を明示するのは、JSONからの推論だと`profiles`を持つ要素と持たない要素で
+ * ユニオンになり、中身を書き換えるたびに関係のない箇所で型が合わなくなるため
+ * （DummyShortcutと同じ理由）。
+ */
+interface DummySnippet {
+  title: string;
+  content: string;
+  categoryName: string;
+  profiles: string[];
+  copyWithTitle: boolean;
+}
 
 /**
  * ダミーデータのショートカット
@@ -183,29 +210,95 @@ async function seedCategories(): Promise<Map<string, string>> {
 /**
  * 定型文（スニペット）をシード
  *
- * TEST_SNIPPETSの各スニペットを作成。
- * カテゴリ名からIDを解決して紐付け。
- * profileIdsを空配列にすることで全プロファイルに表示。
+ * TEST_SNIPPETSの各スニペットを、カテゴリと所属プロファイルを解決して作成する。
+ *
+ * 所属プロファイルは名前の配列で持ち、空配列は全プロファイル向けとしてそのまま作る。
+ * 名前を挙げたのに1件も解決できなかったものは作らずに飛ばす。空配列で作ると全プロファイル向けになり、
+ * 限定したはずの定型文が全体へ広がるため（ショートカットと同じ扱い）。
  *
  * 1件の失敗で残りを諦めないため、ループ内で個別に catch して継続する。
  *
  * @param categoryMap - カテゴリ名とIDのマッピング
+ * @param profileMap - プロファイル名とIDのマッピング
  */
-async function seedSnippets(categoryMap: Map<string, string>): Promise<void> {
+/**
+ * プロファイル名の配列をIDの配列へ解決する
+ *
+ * @param profileNames - dummy.jsonが指定したプロファイル名（空配列は全プロファイル向け）
+ * @param profileMap - プロファイル名とIDのマッピング
+ * @param defaultProfile - 標準プロファイル（未取得ならnull）
+ * @returns 解決できたID と、解決できなかった名前
+ *
+ * @remarks
+ * 標準プロファイル「Main」はdatabase.tsが作るためprofileMapに含まれない。
+ * dummy.jsonが "Main" を指したときは標準プロファイルの名前と突き合わせて解決する。
+ * 定型文とショートカットで同じ規則にするため、1か所にまとめている。
+ */
+function resolveProfileIds(
+  profileNames: readonly string[],
+  profileMap: Map<string, string>,
+  defaultProfile: Profile | null
+): { profileIds: string[]; unresolvedProfiles: string[] } {
+  const profileIds: string[] = [];
+  const unresolvedProfiles: string[] = [];
+
+  for (const profileName of profileNames) {
+    const profileId =
+      profileMap.get(profileName) ??
+      (profileName === defaultProfile?.name ? defaultProfile.id : undefined);
+    if (profileId) {
+      profileIds.push(profileId);
+    } else {
+      unresolvedProfiles.push(profileName);
+    }
+  }
+
+  return { profileIds, unresolvedProfiles };
+}
+
+async function seedSnippets(
+  categoryMap: Map<string, string>,
+  profileMap: Map<string, string>
+): Promise<void> {
+  /* 標準プロファイル「Main」の解決先として先に取得しておく（ショートカットと同じ） */
+  const defaultProfile = ProfileMapper.getDefault();
+
   for (const snippetData of TEST_SNIPPETS) {
     try {
       /* カテゴリが存在しない場合はundefinedになる */
       const categoryId = categoryMap.get(snippetData.categoryName);
+
+      const { profileIds, unresolvedProfiles } = resolveProfileIds(
+        snippetData.profiles,
+        profileMap,
+        defaultProfile
+      );
+
+      /* 名前を挙げたのに1件も解決できなかった。空配列のまま作ると全プロファイル向けへ広がるため作らない */
+      if (snippetData.profiles.length > 0 && profileIds.length === 0) {
+        Logger.error(
+          `[Seed] Skipped snippet ${snippetData.title}: profiles not found (${unresolvedProfiles.join(', ')})`
+        );
+        continue;
+      }
 
       SnippetMapper.create({
         title: snippetData.title,                     /* スニペットのタイトル */
         content: snippetData.content,                 /* スニペットの本文内容 */
         categoryId: categoryId || undefined,          /* カテゴリID（なくてもOK） */
         copyWithTitle: snippetData.copyWithTitle,     /* タイトルも一緒にコピーするか */
-        profileIds: [],                               /* 空配列 = 全プロファイルで表示 */
+        profileIds,                                   /* 空配列 = 全プロファイルで表示 */
       });
 
-      Logger.info(`[Seed] Created snippet: ${snippetData.title}`);
+      if (unresolvedProfiles.length > 0) {
+        Logger.error(
+          `[Seed] Snippet ${snippetData.title} is created without some profiles: profiles not found (${unresolvedProfiles.join(', ')})`
+        );
+      }
+
+      Logger.info(
+        `[Seed] Created snippet: ${snippetData.title} (profiles: [${snippetData.profiles.join(', ')}])`
+      );
     } catch (error) {
       Logger.error(`[Seed] Failed to create snippet ${snippetData.title}:`, error);
     }
@@ -412,11 +505,11 @@ async function seedShortcuts(
  * - 複数回実行しても安全
  *
  * 生成されるデータ:
- * 1. カテゴリ 3種類
- * 2. スニペット 5種類（仕事2種類、SNS1種類、プロンプト2種類）
- * 3. プロファイル 2種類（デフォルトの「Main」と合わせて計3件）
- * 4. カスタム変数 3種類 + 各プロファイル別の値
- * 5. ショートカット 8種類（値は1〜3件。カテゴリ付きと未分類の両方を含む）
+ * 1. カテゴリ 6種類
+ * 2. プロファイル 2種類（デフォルトの「Main」と合わせて計3件）
+ * 3. スニペット 24種類（うち2件はプロファイルを限定。残りは全プロファイル向け）
+ * 4. カスタム変数 5種類 + 各プロファイル別の値
+ * 5. ショートカット 17種類（カテゴリ付きと未分類の両方を含む）
  *
  * デフォルトプロファイル「Main」の作成はこの関数の責務ではなく、
  * src/database/database.ts の setupDatabase / reset が担う。
@@ -445,16 +538,17 @@ export async function runSeed(): Promise<void> {
     /* 1. カテゴリを作成し、カテゴリ名→IDのマッピングを取得 */
     const categoryMap = await seedCategories();
 
-    /* 2. スニペットを作成（カテゴリマップを使ってカテゴリIDを解決） */
-    await seedSnippets(categoryMap);
-
-    /* 3. プロファイルを作成し、プロファイル名→IDのマッピングを取得 */
+    /* 2. プロファイルを作成し、プロファイル名→IDのマッピングを取得。
+          定型文とショートカットの所属プロファイルを解決するため、どちらよりも先に行う */
     const profileMap = await seedProfiles();
+
+    /* 3. スニペットを作成（カテゴリとプロファイルを解決） */
+    await seedSnippets(categoryMap, profileMap);
 
     /* 4. カスタム変数を作成し、各プロファイル別の値も設定 */
     await seedVariables(profileMap);
 
-    /* 5. ショートカットを作成（プロファイルとカテゴリの両方を解決するため最後に行う） */
+    /* 5. ショートカットを作成 */
     await seedShortcuts(profileMap, categoryMap);
 
     Logger.info('[Seed] Test data seeding completed successfully!');
