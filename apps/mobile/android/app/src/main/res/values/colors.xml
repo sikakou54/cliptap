@@ -9,7 +9,7 @@
   <color name="keyboardAccent">#2196F3</color>
   <color name="keyboardOnAccent">#FFFFFF</color>
   <color name="keyboardSeparator">#1F000000</color>
-  <!-- 表示切替トグルの枠線（トラックの枠線とノブの縁）。
+  <!-- 表示切替トグルのトラックの枠線（ノブは枠線を持たない）。
        アプリのホームの切替トグル（ListModeToggle.tsx）と同じ見た目にするため、
        アプリのテーマの textTertiary と同値にしている（ダークは values-night）。表示対象によらず同じ。 -->
   <color name="keyboardToggleOutline">#9CA3AF</color>

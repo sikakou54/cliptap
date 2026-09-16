@@ -1,7 +1,7 @@
 /**
  * 定型文／ショートカットの表示切替トグル
  *
- * 枠線だけの角丸のトラックの中を、同じ色の縁を付けたノブが左右に動く切替スイッチ。
+ * 枠線だけの角丸のトラックの中を、塗りだけのノブ（枠線なし）が左右に動く切替スイッチ。
  * 左（紺のノブに書類のアイコン）が定型文、右（黄色のノブに稲妻のアイコン）がショートカットを表す。
  *
  * 【拡張キーボード・Webと同じ見た目にしている理由】
@@ -17,10 +17,10 @@
  * 色はどちらの一覧かを表す識別色のため、テーマの listModeSnippet / listModeShortcut として
  * ライト・ダークで同じ値に固定している。トラックの枠線の色は表示対象で変えない。
  *
- * 【枠線を textTertiary にしている理由】
+ * 【トラックの枠線を textTertiary にしている理由】
  * border（ライト #E5E7EB）では、iOSキーボードの背景（ライト #E2E4E8）に溶けてトラックが見えない。
- * また黄色のノブは白い背景に、紺のノブは黒い背景に溶けやすい。
- * そのため、白でも灰色でも黒でも見える textTertiary でトラックを囲み、ノブにも同じ色の縁を付ける。
+ * そのため、白でも灰色でも黒でも見える textTertiary でトラックを囲む。
+ * ノブは枠線を持たず、識別色の塗りだけで示す（4実装とも同じ）。
  *
  * 【状態を持たない理由】
  * 表示対象はホーム画面が持つ正本で、追加ボタンの行き先やカテゴリチップの集合も
@@ -110,13 +110,12 @@ export function ListModeToggle({ isShowingShortcuts, onToggle }: ListModeToggleP
     >
       {/* ノブ。定型文は紺、ショートカットは黄色で塗る。
           色はネイティブドライバで動かせないため、位置が動き始めると同時に切り替わる。
-          背景に溶けないよう、トラックと同じ色の縁を付ける */}
+          枠線は付けず、塗りだけで形を示す */}
       <Animated.View
         style={[
           styles.knob,
           {
             backgroundColor: isShowingShortcuts ? colors.listModeShortcut : colors.listModeSnippet,
-            borderColor: colors.textTertiary,
             transform: [{ translateX: knobOffset }],
           },
         ]}
@@ -143,14 +142,13 @@ const styles = StyleSheet.create({
     borderWidth: UI_CONSTANTS.BORDER_WIDTH.THIN,
     justifyContent: 'center',
     /* paddingは枠線の内側から数えるため、枠線の太さを引いてノブをトラックの外形から KNOB_INSET の位置に置く。
-       引かないとノブが枠線の分だけ右へずれ、右端でノブの縁がトラックの枠線に接する */
+       引かないとノブが枠線の分だけ右へずれ、右端でノブがトラックの枠線に接する */
     padding: KNOB_INSET - UI_CONSTANTS.BORDER_WIDTH.THIN,
   },
   knob: {
     width: KNOB_SIZE,
     height: KNOB_SIZE,
     borderRadius: KNOB_SIZE / 2,
-    borderWidth: UI_CONSTANTS.BORDER_WIDTH.THIN,
     justifyContent: 'center',
     alignItems: 'center',
   },

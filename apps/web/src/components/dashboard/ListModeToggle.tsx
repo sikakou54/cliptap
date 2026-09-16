@@ -2,7 +2,7 @@
  * 定型文／ショートカットの表示切替スイッチ
  *
  * @description
- * 枠線だけの角丸のトラックの中を、同じ色の縁を付けたノブが左右に動く切替スイッチ。
+ * 枠線だけの角丸のトラックの中を、塗りだけのノブ（枠線なし）が左右に動く切替スイッチ。
  * 左（紺のノブに書類のアイコン）が定型文、右（黄色のノブに稲妻のアイコン）がショートカットを表す。
  *
  * @remarks
@@ -12,7 +12,7 @@
  * `apps/mobile/src/components/common/ListModeToggle.tsx`（色はテーマの listModeSnippet などと同値）に
  * 合わせており、変えるときは揃えること。
  * - トラック: 幅52px・高さ32px、枠線はtextTertiary（ライト #9CA3AF / ダーク #707070）
- * - ノブ: 直径28px、トラックの外形から2px内側、トラックと同じ色の縁
+ * - ノブ: 直径28px、トラックの外形から2px内側、枠線なし（塗りだけ）
  * - ノブの塗りとアイコンの色: 定型文は紺 #212B3C に白、ショートカットは黄 #FBBF24 に紺（ライト・ダーク共通）
  * - アイコン: 16px
  * - ノブの移動: 20px（52 - 28 - 2 × 2）を100msで動かす
@@ -65,9 +65,9 @@ export function ListModeToggle({ mode, onChange }: ListModeToggleProps) {
       {/* トラック。塗りを持たず、ノブが動く範囲を示す枠線だけを引く。
           枠線1px + 内側の余白1px で、ノブをトラックの外形から2px内側に置く */}
       <span className="flex h-8 w-[52px] items-center rounded-full border border-gray-400 p-px dark:border-[#707070]">
-        {/* ノブ。定型文は紺、ショートカットは黄色で塗り、背景に溶けないようトラックと同じ色の縁を付ける */}
+        {/* ノブ。定型文は紺、ショートカットは黄色で塗る。枠線は付けず、塗りだけで形を示す */}
         <span
-          className={`flex h-7 w-7 items-center justify-center rounded-full border border-gray-400 transition duration-100 motion-reduce:transition-none dark:border-[#707070] ${isShowingShortcuts ? 'translate-x-5 bg-[#FBBF24] text-[#212B3C]' : 'translate-x-0 bg-[#212B3C] text-white'}`}
+          className={`flex h-7 w-7 items-center justify-center rounded-full transition duration-100 motion-reduce:transition-none ${isShowingShortcuts ? 'translate-x-5 bg-[#FBBF24] text-[#212B3C]' : 'translate-x-0 bg-[#212B3C] text-white'}`}
         >
           {/* アイコンは今どちらの一覧かを表す（定型文=書類、ショートカット=稲妻）。
               色はノブの塗りの上で読める色にする（紺の上は白、黄色の上は紺） */}

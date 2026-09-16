@@ -2853,7 +2853,7 @@ extension UIColor {
  * 定型文／ショートカットの表示切替トグル
  *
  * 【見た目】
- * 枠線だけの角丸のトラックの中を、同じ色の縁を付けたノブが左右に動く切替スイッチの形。
+ * 枠線だけの角丸のトラックの中を、塗りだけのノブ（枠線なし）が左右に動く切替スイッチの形。
  * 左（紺のノブに書類のアイコン）が定型文、右（黄色のノブに稲妻のアイコン）がショートカット。
  * アイコンだけの切替と違い、今どちらを見ているかと、押すと反対側へ移ることが同時に分かる。
  *
@@ -2894,10 +2894,10 @@ final class ListModeToggle: UIControl {
     /// ノブの中に置くアイコンの一辺（pt）
     private static let iconSize: CGFloat = 16
 
-    /// トラックの枠線とノブの縁の太さ（pt）。アプリの `UI_CONSTANTS.BORDER_WIDTH.THIN` と同値
+    /// トラックの枠線の太さ（pt）。アプリの `UI_CONSTANTS.BORDER_WIDTH.THIN` と同値
     private static let outlineWidth: CGFloat = 1
 
-    /// トラックの枠線とノブの縁の色。アプリのテーマの `textTertiary`（ライト #9CA3AF / ダーク #707070）と同値。
+    /// トラックの枠線の色。アプリのテーマの `textTertiary`（ライト #9CA3AF / ダーク #707070）と同値。
     /// `border`（ライト #E5E7EB）はキーボードの背景（ライト #E2E4E8）とほぼ同じ色で、トラックが見えなくなる
     private static let outlineColor = UIColor { traits in
         traits.userInterfaceStyle == .dark
@@ -2941,10 +2941,8 @@ final class ListModeToggle: UIControl {
         layer.borderWidth = Self.outlineWidth
         clipsToBounds = true
 
-        /* ノブの塗りは表示対象で変える（applyAppearance）。
-           黄色は白い背景に、紺は黒い背景に溶けやすいため、トラックと同じ色の縁を付ける */
+        /* ノブの塗りは表示対象で変える（applyAppearance）。枠線は付けず、識別色の塗りだけで形を示す */
         knobView.layer.cornerRadius = Self.knobSize / 2
-        knobView.layer.borderWidth = Self.outlineWidth
         knobView.isUserInteractionEnabled = false
         addSubview(knobView)
         applyOutlineColor()
@@ -3035,11 +3033,9 @@ final class ListModeToggle: UIControl {
         knobView.backgroundColor = isShowingShortcuts ? Self.shortcutKnobColor : Self.snippetKnobColor
     }
 
-    /// トラックの枠線とノブの縁の色を現在のライト・ダークに合わせる
+    /// トラックの枠線の色を現在のライト・ダークに合わせる
     private func applyOutlineColor() {
-        let outlineColor = Self.outlineColor.resolvedColor(with: traitCollection).cgColor
-        layer.borderColor = outlineColor
-        knobView.layer.borderColor = outlineColor
+        layer.borderColor = Self.outlineColor.resolvedColor(with: traitCollection).cgColor
     }
 
     /// ノブとアイコンの位置を現在の状態に合わせる

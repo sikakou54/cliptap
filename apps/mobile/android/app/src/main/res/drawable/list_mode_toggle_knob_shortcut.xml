@@ -2,11 +2,8 @@
 <!-- 表示切替トグルのノブ（ショートカットを表示中。トラックの右端にいる黄色の円）
 
      定型文側（list_mode_toggle_knob_snippet.xml）と塗りの色だけが異なる。
-     黄色は白い背景に溶けやすいため、トラックと同じ色の縁を付ける。 -->
+     枠線は付けず、識別色の塗りだけで形を示す（4実装とも同じ）。 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="oval">
     <solid android:color="@color/keyboardToggleKnobShortcut" />
-    <stroke
-        android:width="1dp"
-        android:color="@color/keyboardToggleOutline" />
 </shape>
