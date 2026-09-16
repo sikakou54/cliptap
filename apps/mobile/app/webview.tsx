@@ -23,7 +23,7 @@ export default function WebViewScreen() {
   const { colors } = useTheme();
   const { file, title: paramTitle } = useLocalSearchParams<{ file: string; title: string }>();
 
-  const { htmlContent, loading, title } = useWebViewScreen({
+  const { htmlContent, loading, title, handleShouldStartLoad } = useWebViewScreen({
     file: file ?? '',
     title: paramTitle ?? 'ClipTap',
   });
@@ -42,6 +42,8 @@ export default function WebViewScreen() {
           javaScriptEnabled={true}
           domStorageEnabled={true}
           startInLoadingState={true}
+          /* お問い合わせのmailtoリンクはWebViewが扱えないため、OSへ渡してメールアプリを開く */
+          onShouldStartLoadWithRequest={handleShouldStartLoad}
         />
       )}
     </ScreenContainer>
