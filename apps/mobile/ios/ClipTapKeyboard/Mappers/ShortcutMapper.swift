@@ -17,10 +17,6 @@ class ShortcutMapper: BaseMapper {
 
     // MARK: - Constants
 
-    /// ショートカット値のテーブル名
-    /// BaseMapperのtableNameは親テーブル（shortcuts）を指すため、子テーブルは個別に保持する
-    private let valueTableName = "shortcut_values"
-
     /// 選択中のプロファイルで表示するショートカットの条件（? は選択中のプロファイルID 1個）
     ///
     /// 【何を出すか】
@@ -86,19 +82,15 @@ class ShortcutMapper: BaseMapper {
     /// nilは「絞り込まない」の意味しか持たせない。未分類（categoryId IS NULL）だけを選ぶ候補は
     /// 用意していないので、ここでもIS NULLでの絞り込みは行わない。
     ///
-    /// 【値を1回のクエリでまとめて取る理由】
-    /// ショートカットごとに値を問い合わせると、キーボードを開くたびに件数分のクエリが走る。
-    /// 全件を1回で取り、ショートカットIDで振り分ける（TypeScript版 getByProfileId() と同じ方針）。
+    /// 【1回のクエリで取る理由】
+    /// 挿入する値は shortcuts.value が持つため、本体を読むだけで一覧に必要なものが揃う
+    /// （TypeScript版 getByProfileId() と同じ方針）。
     func getAll(profileId: String, categoryId: String?) -> [Shortcut] {
-        /* 親（shortcuts）と値（shortcut_values）の2本は、WHERE句の?の並びが profileId → categoryId で揃っている
-           （表示条件の?は選択中のプロファイルID 1個だけ）。
-           バインド値を1つの配列で共有しておけば、片方にだけ条件を足して並びが食い違う組み方にならない */
+        /* WHERE句の?の並びは profileId → categoryId で揃える（表示条件の?は選択中のプロファイルID 1個だけ） */
         var parameters: [Any] = [profileId]
         var shortcutCategoryCondition = ""
-        var valueCategoryCondition = ""
         if let categoryId = categoryId {
             shortcutCategoryCondition = "AND s.categoryId = ?"
-            valueCategoryCondition = "AND s.categoryId = ?"
             parameters.append(categoryId)
         }
 
@@ -107,92 +99,45 @@ class ShortcutMapper: BaseMapper {
            ずれてもコンパイルは通り、名前の欄にカテゴリIDが出るだけで例外にならないため気付けない。
            DDLの列順と揃える必要はないので、既存の添字を動かさず末尾に足す */
         let shortcutQuery = """
-            SELECT s.id, s.name, s.sortOrder, s.createdAt, s.updatedAt, s.categoryId
+            SELECT s.id, s.name, s.value, s.useCount, s.sortOrder, s.createdAt, s.updatedAt, s.categoryId
             FROM \(tableName) s
             WHERE \(visibleInProfileCondition)
             \(shortcutCategoryCondition)
             ORDER BY s.sortOrder ASC
         """
 
-        let shortcuts: [Shortcut] = executeQuery(shortcutQuery, parameters: parameters) { statement in
+        return executeQuery(shortcutQuery, parameters: parameters) { statement in
             return self.mapShortcut(from: statement)
-        }
-
-        /* 挿入する中身は shortcut_values.value が持つ（1つの文字列で、プロファイルごとには持たない）。
-           変数トークン（{{name}}）は展開せず、保存された文字列のまま返す。
-           展開は表示と挿入の時点で、選択中のプロファイルと日時で行う
-           （KeyboardViewController の値一覧、ShortcutService.insertValue。定型文と同じ VariableReplacer を使う）。
-
-           値にも同じ絞り込みを掛ける。
-           shortcut_values は紐づくプロファイルもカテゴリも持たないため、親の shortcuts と結合し、
-           ショートカット側と同じ表示条件とカテゴリ条件を掛ける（TypeScript版 ShortcutMapper.ts の値の取得と同じ方針）。
-           ここを絞らないと、表示しないショートカットの値を読み込んだうえで捨てるだけの無駄が出る。
-           紐づけ（shortcut_profiles）は結合せず表示条件の副問い合わせで判定するため、
-           複数のプロファイルに紐づくショートカットでも値は重複せず、紐づけ0件の値も落ちない。
-
-           SELECTの列の並びは mapShortcutValue の添字と1対1で対応する。 */
-        let valueQuery = """
-            SELECT v.id, v.shortcutId, v.name, v.value,
-                   v.useCount, v.sortOrder, v.createdAt, v.updatedAt
-            FROM \(valueTableName) v
-            INNER JOIN \(tableName) s ON s.id = v.shortcutId
-            WHERE \(visibleInProfileCondition)
-            \(valueCategoryCondition)
-            ORDER BY v.shortcutId ASC, v.sortOrder ASC
-        """
-
-        let values: [ShortcutValue] = executeQuery(valueQuery, parameters: parameters) { statement in
-            return self.mapShortcutValue(from: statement)
-        }
-
-        /* ショートカットIDごとに値をまとめる（1回の走査で振り分ける） */
-        var valuesByShortcutId: [String: [ShortcutValue]] = [:]
-        for value in values {
-            valuesByShortcutId[value.shortcutId, default: []].append(value)
-        }
-
-        return shortcuts.map { shortcut in
-            var resolved = shortcut
-            resolved.values = valuesByShortcutId[shortcut.id] ?? []
-            return resolved
         }
     }
 
+
     // MARK: - Write Operations
 
-    /// ショートカット値の使用回数をインクリメントし、親ショートカットの更新日時を進める
+    /// ショートカットの使用回数をインクリメントし、あわせて更新日時を進める
     ///
-    /// - Parameters:
-    ///   - valueId: 挿入したショートカット値のID
-    ///   - shortcutId: その値が属するショートカットのID
+    /// - Parameter shortcutId: 挿入したショートカットのID
     ///
-    /// 【親の更新日時も進める理由】
+    /// 【更新日時も進める理由】
     /// メインアプリ側（TypeScript版 incrementUseCount）と同じ扱いにして、
     /// 更新日時順の並びに拡張キーボードからの利用も反映されるようにする。
+    /// 使用回数と更新日時が同じ行にあるため、1文のUPDATEで足りる。
     ///
     /// 【書き込み可否を判定しない理由】
     /// 共有DBへの書き込みはフルアクセスが無いと失敗する。
     /// ただし判定はビジネスロジックであり、Mapperは渡された指示を素直に実行する。
     /// 呼び出し可否は ShortcutService 側で判断する（SnippetService.isUsageTrackingEnabled と同じ）。
-    func incrementUseCount(valueId: String, shortcutId: String) {
+    func incrementUseCount(shortcutId: String) {
         let incrementQuery = """
-            UPDATE \(valueTableName)
-            SET useCount = useCount + 1
-            WHERE id = ?
-        """
-
-        _ = executeUpdate(incrementQuery, parameters: [valueId])
-
-        let touchQuery = """
             UPDATE \(tableName)
-            SET updatedAt = ?
+            SET useCount = useCount + 1, updatedAt = ?
             WHERE id = ?
         """
 
         let now = Self.timestampFormatter.string(from: Date())
-        _ = executeUpdate(touchQuery, parameters: [now, shortcutId])
+        _ = executeUpdate(incrementQuery, parameters: [now, shortcutId])
 
-        KeyboardLog.debug("[ShortcutMapper] ✅ Incremented useCount for value: %@", valueId)
+        KeyboardLog.debug("[ShortcutMapper] ✅ Incremented useCount for shortcut: %@", shortcutId)
 
         /* WALチェックポイントを実行してメインDBに即座に反映 */
         db.checkpoint()
@@ -201,43 +146,22 @@ class ShortcutMapper: BaseMapper {
     // MARK: - Mapping
 
     /// SQLite結果からShortcutモデルにマッピング
-    /// カラム順: id, name, sortOrder, createdAt, updatedAt, categoryId
+    /// カラム順: id, name, value, useCount, sortOrder, createdAt, updatedAt, categoryId
     /// （DDLの列順とは異なる。getAllのSELECTを参照）
     private func mapShortcut(from statement: OpaquePointer) -> Shortcut {
         let id = getString(statement, at: 0) ?? ""
         let name = getString(statement, at: 1) ?? ""
-        let sortOrder = getInt(statement, at: 2)
-        let createdAt = getString(statement, at: 3) ?? ""
-        let updatedAt = getString(statement, at: 4) ?? ""
+        let value = getString(statement, at: 2) ?? ""
+        let useCount = getInt(statement, at: 3)
+        let sortOrder = getInt(statement, at: 4)
+        let createdAt = getString(statement, at: 5) ?? ""
+        let updatedAt = getString(statement, at: 6) ?? ""
         /* 未分類はNULLのままnilで持つ。空文字へ倒すと、どのカテゴリとも一致しないIDとして扱われる */
-        let categoryId = getString(statement, at: 5)
+        let categoryId = getString(statement, at: 7)
 
         return Shortcut(
             id: id,
             categoryId: categoryId,
-            name: name,
-            sortOrder: sortOrder,
-            createdAt: createdAt,
-            updatedAt: updatedAt,
-            values: []  /* 値はgetAllでまとめて差し込む */
-        )
-    }
-
-    /// SQLite結果からShortcutValueモデルにマッピング
-    /// カラム順: id, shortcutId, name, value, useCount, sortOrder, createdAt, updatedAt
-    private func mapShortcutValue(from statement: OpaquePointer) -> ShortcutValue {
-        let id = getString(statement, at: 0) ?? ""
-        let shortcutId = getString(statement, at: 1) ?? ""
-        let name = getString(statement, at: 2) ?? ""
-        let value = getString(statement, at: 3) ?? ""
-        let useCount = getInt(statement, at: 4)
-        let sortOrder = getInt(statement, at: 5)
-        let createdAt = getString(statement, at: 6) ?? ""
-        let updatedAt = getString(statement, at: 7) ?? ""
-
-        return ShortcutValue(
-            id: id,
-            shortcutId: shortcutId,
             name: name,
             value: value,
             useCount: useCount,

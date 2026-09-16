@@ -164,9 +164,9 @@ describe('distributed starter database migration', () => {
     ).toEqual({ name: 'system_variable_formats' });
     expect(
       preparedDatabase
-        .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('shortcuts', 'shortcut_values') ORDER BY name")
+        .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('shortcuts', 'shortcut_profiles') ORDER BY name")
         .all()
-    ).toEqual([{ name: 'shortcut_values' }, { name: 'shortcuts' }]);
+    ).toEqual([{ name: 'shortcut_profiles' }, { name: 'shortcuts' }]);
     preparedDatabase.close();
   });
 });

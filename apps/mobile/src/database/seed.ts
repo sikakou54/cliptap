@@ -89,28 +89,18 @@ const TEST_PROFILES = dummyTemplates.profiles;
 const TEST_VARIABLES = dummyTemplates.custom_variables;
 
 /**
- * ダミーデータのショートカット値
- *
- * @remarks
- * - value: 挿入する値（保存する文字列。変数トークン {{name}} をそのまま書ける）
- */
-interface DummyShortcutValue {
-  name: string;
-  value: string;
-}
-
-/**
  * ダミーデータのショートカット
  *
  * @remarks
  * - profiles: 所属させるプロファイル名（0件以上。空配列は全プロファイル向け）
  * - category: カテゴリ名（nullは未分類）
+ * - value: 挿入する値（保存する文字列。変数トークン {{name}} をそのまま書ける）
  */
 interface DummyShortcut {
   name: string;
   profiles: string[];
   category: string | null;
-  values: DummyShortcutValue[];
+  value: string;
 }
 
 /**
@@ -397,14 +387,11 @@ async function seedShortcuts(
           ? categoryMap.get(shortcutData.category) ?? null
           : null,
         name: shortcutData.name,                                     /* ショートカット名 */
-        values: shortcutData.values.map((value) => ({
-          name: value.name,                                          /* 値名 */
-          value: value.value,                                        /* 挿入する値（変数トークンは未展開のまま） */
-        })),
+        value: shortcutData.value,                                   /* 挿入する値（変数トークンは未展開のまま） */
       });
 
       Logger.info(
-        `[Seed] Created shortcut: ${shortcutData.name} (profiles: [${shortcutData.profiles.join(', ')}], ${shortcutData.values.length} values)`
+        `[Seed] Created shortcut: ${shortcutData.name} (profiles: [${shortcutData.profiles.join(', ')}])`
       );
     } catch (error) {
       Logger.error(`[Seed] Failed to create shortcut ${shortcutData.name}:`, error);

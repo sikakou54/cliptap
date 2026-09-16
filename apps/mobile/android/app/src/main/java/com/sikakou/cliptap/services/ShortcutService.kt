@@ -9,7 +9,6 @@ import android.view.inputmethod.InputConnection
 import com.sikakou.cliptap.mappers.ShortcutMapper
 import com.sikakou.cliptap.mappers.SystemVariableFormatMapper
 import com.sikakou.cliptap.models.Shortcut
-import com.sikakou.cliptap.models.ShortcutValue
 import com.sikakou.cliptap.utils.VariableReplacer
 
 /**
@@ -103,37 +102,13 @@ class ShortcutService private constructor(private val context: Context) {
     }
 
     /**
-     * ショートカット値の一覧を表示順に並べ替える
-     *
-     * 【何をするか】
-     * 使用回数の多い順 → sortOrderの昇順 で並べ替える。
-     *
-     * 【並びの意味】
-     * 使用回数がすべて0の場合は登録順のまま（通常順）になる。
-     *
-     * 【一覧の並べ替え（rankedShortcuts）に従わない理由】
-     * 値が持つのは名前と使用回数だけで、作成日時・更新日時に当たるものが無い。
-     * 4種の基準のうち2種で並びが変わらないなら、利用者から見て選択が効いたのか分からない。
-     *
-     * @param values 保存順（sortOrder順）の値一覧
-     * @return 表示順に並べ替えた値一覧
-     */
-    fun rankedValues(values: List<ShortcutValue>): List<ShortcutValue> {
-        /* sortedWithは安定ソートのため、使用回数もsortOrderも同値なら元の位置のまま並びが揺れない */
-        return values.sortedWith(
-            compareByDescending<ShortcutValue> { it.useCount }
-                .thenBy { it.sortOrder }
-        )
-    }
-
-    /**
-     * ショートカット値をテキスト入力欄に挿入
+     * ショートカットの値をテキスト入力欄に挿入
      *
      * 【何をするか】
      * 1. 値の変数トークンを、選択中のプロファイルの変数マップと現在の日時で展開する
-     * 2. 展開した値を挿入する。値名は挿入しない
+     * 2. 展開した値を挿入する。ショートカット名は挿入しない
      * 3. 振動フィードバックを実行
-     * 4. 使用回数を加算し、親ショートカットの更新日時を進める
+     * 4. 使用回数を加算し、あわせて更新日時を進める
      *
      * 【変数マップを引数で受け取る理由】
      * 定型文の挿入（SnippetService.insertSnippet）と同じ形にするため。
@@ -145,27 +120,27 @@ class ShortcutService private constructor(private val context: Context) {
      * Androidの拡張キーボード（IME）はメインアプリと同一パッケージで動作し、
      * SharedDBもDatabase.initialize()で読み書き可能に開かれているため、この判定は存在しない。
      *
-     * @param value 挿入するショートカット値（変数トークンは未展開）
+     * @param shortcut 挿入するショートカット（変数トークンは未展開）
      * @param inputConnection テキストフィールドへの接続
      * @param variablesMap 選択中のプロファイルの変数マップ（変数名 → 値）
      */
-    fun insertValue(
-        value: ShortcutValue,
+    fun insertShortcut(
+        shortcut: Shortcut,
         inputConnection: InputConnection,
         variablesMap: Map<String, String>
     ) {
-        val text = variableReplacer.replace(value.value, variablesMap, systemVariableFormatMapper.getAll())
+        val text = variableReplacer.replace(shortcut.value, variablesMap, systemVariableFormatMapper.getAll())
 
-        /* 値だけを挿入（値名は挿入しない） */
+        /* 値だけを挿入（ショートカット名は挿入しない） */
         inputConnection.commitText(text, 1)
 
-        if (com.sikakou.cliptap.BuildConfig.DEBUG) Log.d(TAG, "✅ Shortcut value inserted: ${value.id}")
+        if (com.sikakou.cliptap.BuildConfig.DEBUG) Log.d(TAG, "✅ Shortcut value inserted: ${shortcut.id}")
 
         /* 振動フィードバック */
         performHapticFeedback()
 
-        /* 使用回数を加算（値一覧の並びと、使用頻度順のショートカット一覧に反映するため） */
-        shortcutMapper.incrementUseCount(value.id, value.shortcutId)
+        /* 使用回数を加算（使用頻度順のショートカット一覧に反映するため） */
+        shortcutMapper.incrementUseCount(shortcut.id)
     }
 
     /**
@@ -194,26 +169,12 @@ class ShortcutService private constructor(private val context: Context) {
         val comparator = when (sortBy) {
             "updated" -> compareByDescending<Shortcut> { it.updatedAt }.thenBy { it.name }
             "title" -> compareBy<Shortcut> { it.name }.thenByDescending { it.createdAt }
-            "usage" -> compareByDescending<Shortcut> { totalUseCount(it) }
+            "usage" -> compareByDescending<Shortcut> { it.useCount }
                 .thenByDescending { it.createdAt }
             else -> compareByDescending<Shortcut> { it.createdAt }.thenBy { it.name }
         }
 
         return shortcuts.sortedWith(comparator)
-    }
-
-    /**
-     * ショートカットの使用回数を求める
-     *
-     * 【最大値ではなく合計にする理由】
-     * 使用回数は値ごとに持つため、ショートカット単位の使用頻度は合計で表す。
-     * 「よく使う値が1つあるショートカット」と「満遍なく使うショートカット」のどちらも上位に来る。
-     *
-     * @param shortcut 対象のショートカット
-     * @return 値ごとの使用回数の合計
-     */
-    private fun totalUseCount(shortcut: Shortcut): Int {
-        return shortcut.values.sumOf { it.useCount }
     }
 
     /**

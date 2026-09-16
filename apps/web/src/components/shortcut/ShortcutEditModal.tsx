@@ -1,15 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  FREE_SHORTCUT_VALUES_LIMIT,
   INPUT_LIMITS,
   translateError,
-  useSharedSubscription,
   useTranslation,
   type Category,
   type Profile,
   type ProfileVariable,
   type Shortcut,
-  type ShortcutValueInput,
   type Variable,
 } from '@cliptap/shared';
 import { ProfileMultiSelect } from '@components/profile/ProfileMultiSelect';
@@ -19,13 +16,13 @@ import { QuickCategoryCreateButton } from '@components/category/QuickCategoryCre
 import { useBodyScrollLock } from '@hooks/useBodyScrollLock';
 import { useEscapeClose } from '@hooks/useEscapeClose';
 import { useUnsavedChangesWarning } from '@hooks/useUnsavedChangesWarning';
-import { showConfirmMessage, showErrorAlert } from '@utils/alerts';
+import { showErrorAlert } from '@utils/alerts';
 
 export interface ShortcutFormValues {
   name: string;
   categoryId: string | null;
   profileIds: string[];
-  values: ShortcutValueInput[];
+  value: string;
 }
 
 interface ShortcutEditModalProps {
@@ -41,16 +38,6 @@ interface ShortcutEditModalProps {
   onClose: () => void;
 }
 
-interface DraftValue extends ShortcutValueInput {
-  key: string;
-}
-
-const createDraftValue = (): DraftValue => ({
-  key: crypto.randomUUID(),
-  name: '',
-  value: '',
-});
-
 export function ShortcutEditModal({
   isOpen,
   shortcut,
@@ -64,14 +51,13 @@ export function ShortcutEditModal({
   onClose,
 }: ShortcutEditModalProps) {
   const { t } = useTranslation();
-  const { canAddShortcutValue } = useSharedSubscription();
   const [name, setName] = useState('');
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [profileIds, setProfileIds] = useState<string[]>([]);
-  const [values, setValues] = useState<DraftValue[]>([createDraftValue()]);
+  const [value, setValue] = useState('');
   const [initialSnapshot, setInitialSnapshot] = useState('');
-  const [focusedValueKey, setFocusedValueKey] = useState<string | null>(null);
-  const selectionByKey = useRef(new Map<string, number>());
+  /* 変数バッジからトークンを差し込む位置（テキストエリアのカーソル位置） */
+  const selectionStart = useRef(0);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -79,26 +65,18 @@ export function ShortcutEditModal({
     const nextName = shortcut?.name ?? '';
     const nextCategoryId = shortcut?.categoryId ?? null;
     const nextProfileIds = shortcut?.profileIds ?? (activeProfileId ? [activeProfileId] : []);
-    const nextValues = shortcut
-      ? shortcut.values.map((value) => ({
-          key: value.id,
-          id: value.id,
-          name: value.name,
-          value: value.value,
-        }))
-      : [createDraftValue()];
+    const nextValue = shortcut?.value ?? '';
 
     setName(nextName);
     setCategoryId(nextCategoryId);
     setProfileIds(nextProfileIds);
-    setValues(nextValues);
-    setFocusedValueKey(nextValues[0]?.key ?? null);
-    selectionByKey.current.clear();
+    setValue(nextValue);
+    selectionStart.current = nextValue.length;
     setInitialSnapshot(JSON.stringify({
       name: nextName,
       categoryId: nextCategoryId,
       profileIds: nextProfileIds,
-      values: nextValues.map(({ id, name: valueName, value }) => ({ id, name: valueName, value })),
+      value: nextValue,
     }));
   }, [isOpen, shortcut, activeProfileId]);
 
@@ -106,8 +84,8 @@ export function ShortcutEditModal({
     name,
     categoryId,
     profileIds,
-    values: values.map(({ id, name: valueName, value }) => ({ id, name: valueName, value })),
-  }), [name, categoryId, profileIds, values]);
+    value,
+  }), [name, categoryId, profileIds, value]);
 
   const hasChanges = isOpen && initialSnapshot !== '' && currentSnapshot !== initialSnapshot;
   const { confirmClose } = useUnsavedChangesWarning({ hasChanges, isActive: isOpen });
@@ -115,59 +93,21 @@ export function ShortcutEditModal({
   useBodyScrollLock(isOpen);
   useEscapeClose(isOpen, handleClose);
 
-  const updateValue = (key: string, patch: Partial<Pick<DraftValue, 'name' | 'value'>>) => {
-    setValues((current) => current.map((value) => value.key === key ? { ...value, ...patch } : value));
-  };
-
-  const handleAddValue = () => {
-    if (!canAddShortcutValue(values.length)) {
-      showErrorAlert(t('shortcut.value_limit_message', { limit: FREE_SHORTCUT_VALUES_LIMIT }));
-      return;
-    }
-    const next = createDraftValue();
-    setValues((current) => [...current, next]);
-    setFocusedValueKey(next.key);
-  };
-
-  const handleDeleteValue = (value: DraftValue) => {
-    showConfirmMessage(t('shortcut.delete_value_confirm', { name: value.name }), () => {
-      setValues((current) => current.filter((entry) => entry.key !== value.key));
-    });
-  };
-
+  /* 変数バッジのトークンを、テキストエリアのカーソル位置へ差し込む */
   const handleInsertVariable = (variableName: string) => {
-    const targetKey = focusedValueKey ?? values[0]?.key;
-    if (!targetKey) return;
     const token = `{{${variableName}}}`;
-    const target = values.find((value) => value.key === targetKey);
-    if (!target) return;
-    const cursor = selectionByKey.current.get(targetKey) ?? target.value.length;
-    updateValue(targetKey, {
-      value: `${target.value.slice(0, cursor)}${token}${target.value.slice(cursor)}`,
-    });
-    selectionByKey.current.set(targetKey, cursor + token.length);
+    const cursor = Math.min(selectionStart.current, value.length);
+    setValue(`${value.slice(0, cursor)}${token}${value.slice(cursor)}`);
+    selectionStart.current = cursor + token.length;
   };
 
-  const canSave = name.trim() !== '' && values.length > 0 && values.every((value) => value.name.trim() !== '');
+  /* 値は空文字も保存できるため、名前だけを必須とする（モバイルと同じ） */
+  const canSave = name.trim() !== '';
 
   const handleSave = () => {
     if (!canSave) return;
-    const savedValueCount = shortcut?.values.length ?? 0;
-    if (values.length > savedValueCount && !canAddShortcutValue(values.length - 1)) {
-      showErrorAlert(t('shortcut.value_limit_message', { limit: FREE_SHORTCUT_VALUES_LIMIT }));
-      return;
-    }
     try {
-      onSave({
-        name,
-        categoryId,
-        profileIds,
-        values: values.map(({ id, name: valueName, value }) => ({
-          id,
-          name: valueName.trim(),
-          value,
-        })),
-      });
+      onSave({ name, categoryId, profileIds, value });
     } catch (error) {
       showErrorAlert(translateError(error));
     }
@@ -223,40 +163,22 @@ export function ShortcutEditModal({
             />
 
             <div>
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="font-semibold text-gray-900 dark:text-white">{t('shortcut.values')} *</h3>
-                <button type="button" onClick={handleAddValue} className="rounded-lg px-3 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30">＋ {t('shortcut.value_create')}</button>
-              </div>
+              <h3 className="mb-3 font-semibold text-gray-900 dark:text-white">{t('shortcut.value_value')}</h3>
 
-              <div className="space-y-4">
-                {values.map((entry) => (
-                  <div key={entry.key} className="rounded-xl border border-gray-200 p-4 dark:border-[#2A2A2A]">
-                    <div className="mb-3 flex items-center gap-3">
-                      <input
-                        value={entry.name}
-                        onChange={(event) => updateValue(entry.key, { name: event.target.value })}
-                        maxLength={INPUT_LIMITS.SHORTCUT_VALUE_NAME_MAX}
-                        className="min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-[#333333] dark:bg-[#242424] dark:text-white"
-                        placeholder={t('shortcut.value_name_placeholder')}
-                      />
-                      <button type="button" onClick={() => handleDeleteValue(entry)} className="min-h-10 min-w-10 rounded-lg text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20" aria-label={t('common.delete')}>×</button>
-                    </div>
-                    <textarea
-                      value={entry.value}
-                      onChange={(event) => updateValue(entry.key, { value: event.target.value })}
-                      onFocus={(event) => {
-                        setFocusedValueKey(entry.key);
-                        selectionByKey.current.set(entry.key, event.currentTarget.selectionStart);
-                      }}
-                      onSelect={(event) => selectionByKey.current.set(entry.key, event.currentTarget.selectionStart)}
-                      rows={3}
-                      className="w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-[#333333] dark:bg-[#242424] dark:text-white"
-                      placeholder={t('shortcut.value_value_placeholder')}
-                    />
-                  </div>
-                ))}
-                {values.length === 0 && <p className="rounded-xl border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 dark:border-[#333333] dark:text-[#A0A0A0]">{t('error.shortcut_value_required')}</p>}
-              </div>
+              {/* 挿入する値。保存する文字列のまま編集し、変数トークンは右列のプレビューで展開結果を確かめる */}
+              <textarea
+                value={value}
+                onChange={(event) => setValue(event.target.value)}
+                onFocus={(event) => {
+                  selectionStart.current = event.currentTarget.selectionStart;
+                }}
+                onSelect={(event) => {
+                  selectionStart.current = event.currentTarget.selectionStart;
+                }}
+                rows={6}
+                className="w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-2 font-mono text-gray-900 dark:border-[#333333] dark:bg-[#242424] dark:text-white"
+                placeholder={t('shortcut.value_value_placeholder')}
+              />
             </div>
           </div>
 
@@ -266,7 +188,7 @@ export function ShortcutEditModal({
             <div className="h-px bg-gray-200 dark:bg-[#2A2A2A]" />
 
             <ShortcutPreview
-              values={values}
+              value={value}
               selectedProfileIds={profileIds}
               profiles={profiles}
               variables={variables}

@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { SubscriptionAdapter } from '../../src/adapters/SubscriptionAdapter';
 import {
   FREE_PROFILES_LIMIT,
-  FREE_SHORTCUT_VALUES_LIMIT,
   FREE_SHORTCUTS_LIMIT,
   FREE_SNIPPETS_LIMIT,
   FREE_VARIABLES_LIMIT,
@@ -58,18 +57,6 @@ describe('add limit judgement', () => {
       SubscriptionService.setAdapter(adapterFor(true));
       expect(SubscriptionService.canAddSnippet(FREE_SNIPPETS_LIMIT + 10)).toBe(true);
       expect(SubscriptionService.canAddShortcut(FREE_SHORTCUTS_LIMIT + 10)).toBe(true);
-    });
-
-    it('stops adding a value to a shortcut from 2 values for a free user, including shortcuts that already hold more', () => {
-      expect(FREE_SHORTCUT_VALUES_LIMIT).toBe(2);
-
-      SubscriptionService.setAdapter(adapterFor(false));
-      expect(SubscriptionService.canAddShortcutValue(FREE_SHORTCUT_VALUES_LIMIT - 1)).toBe(true);
-      expect(SubscriptionService.canAddShortcutValue(FREE_SHORTCUT_VALUES_LIMIT)).toBe(false);
-      expect(SubscriptionService.canAddShortcutValue(FREE_SHORTCUT_VALUES_LIMIT + 3)).toBe(false);
-
-      SubscriptionService.setAdapter(adapterFor(true));
-      expect(SubscriptionService.canAddShortcutValue(FREE_SHORTCUT_VALUES_LIMIT + 3)).toBe(true);
     });
   });
 
@@ -160,17 +147,6 @@ describe('add limit judgement', () => {
       }
     });
 
-    /**
-     * ショートカットの値の上限は、値の追加ボタンでは権利確認中だけ保留し、保存時は常に判定する。
-     * 保存時は保存済みの件数を超えない保存を許可し、上限を超える値を既に持つショートカットの編集を妨げない。
-     */
-    it('checks the shortcut value limit on the add button and on save without blocking shortcuts that already hold more', () => {
-      expect(mobileItemLimitGuard).toContain('canAddShortcutValue(currentCount)');
-      expect(mobileShortcutEdit).toContain('!isSubscriptionLoading && !ensureCanAddShortcutValue(values.length)');
-      expect(mobileShortcutEdit).toContain('const savedValueCount = isEdit && editingShortcut ? editingShortcut.values.length : 0;');
-      expect(mobileShortcutEdit).toContain('values.length > savedValueCount && !ensureCanAddShortcutValue(values.length - 1)');
-    });
-
     it('delegates the limit comparison instead of restating it per screen', () => {
       for (const source of [webProfiles, mobileProfiles, mobileProfileEdit]) {
         expect(source).not.toContain('< FREE_PROFILES_LIMIT');
@@ -183,9 +159,6 @@ describe('add limit judgement', () => {
       }
       for (const source of [mobileItemLimitGuard, mobileHomeShortcuts, mobileShortcutEdit]) {
         expect(source).not.toContain('< FREE_SHORTCUTS_LIMIT');
-      }
-      for (const source of [mobileItemLimitGuard, mobileShortcutEdit]) {
-        expect(source).not.toContain('< FREE_SHORTCUT_VALUES_LIMIT');
       }
     });
   });

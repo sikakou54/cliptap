@@ -41,7 +41,7 @@ describe('ショートカットのカテゴリ', () => {
     profileIds: [PROFILE_ID],
     categoryId,
     name,
-    values: [{ name: '自分', value: '090-0000-0000' }],
+    value: '090-0000-0000',
   });
 
   it('カテゴリを指定せずに作成すると未分類になる', async () => {
@@ -110,6 +110,6 @@ describe('ショートカットのカテゴリ', () => {
     expect(ShortcutService.getById(target.id)?.categoryId).toBeNull();
     expect(ShortcutService.getById(untouched.id)?.categoryId).toBe(privateUse.id);
     /* 値も巻き添えで消えていないこと */
-    expect(ShortcutService.getById(target.id)?.values).toHaveLength(1);
+    expect(ShortcutService.getById(target.id)?.value).toBe('090-0000-0000');
   });
 });

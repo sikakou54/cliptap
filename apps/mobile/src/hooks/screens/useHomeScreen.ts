@@ -27,7 +27,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useTranslation } from '@cliptap/shared';
 import i18next from '@i18n/config';
-import { useSnippets, useCategories, useProfiles, useVariables, useFilteredSnippets, useSharedSubscription, filterCategoriesInUse, type Category, type Shortcut, type ShortcutValue, type ShortcutWithDisplay, type SnippetWithDisplay, type SnippetSortBy } from '@cliptap/shared';
+import { useSnippets, useCategories, useProfiles, useVariables, useFilteredSnippets, useSharedSubscription, filterCategoriesInUse, type Category, type Shortcut, type ShortcutWithDisplay, type SnippetWithDisplay, type SnippetSortBy } from '@cliptap/shared';
 import { showErrorAlert } from '@utils/alerts';
 import { useHomeShortcuts } from '@hooks/screens/useHomeShortcuts';
 import { useItemLimitGuard } from '@hooks/useItemLimitGuard';
@@ -64,7 +64,7 @@ export interface UseHomeScreenReturn {
   handleCopySnippetTitle: (snippet: SnippetWithDisplay) => Promise<void>;
   handleEditSnippet: (snippet: SnippetWithDisplay) => void;
   handleDeleteSnippet: (snippet: SnippetWithDisplay) => void;
-  handleCopyShortcutValue: (value: ShortcutValue) => Promise<void>;
+  handleCopyShortcut: (shortcut: Shortcut) => Promise<void>;
   handleEditShortcut: (shortcut: Shortcut) => void;
   handleDeleteShortcut: (shortcut: Shortcut) => void;
   handleNavigateToSettings: () => void;
@@ -172,7 +172,7 @@ export function useHomeScreen(): UseHomeScreenReturn {
     filteredCategories: shortcutCategories,
     currentSort: shortcutSort,
     handleSortChange: handleShortcutSortChange,
-    handleCopyShortcutValue,
+    handleCopyShortcut,
     handleRefreshShortcuts: refreshShortcuts,
     handleCreateShortcut,
     handleEditShortcut,
@@ -315,7 +315,7 @@ export function useHomeScreen(): UseHomeScreenReturn {
     handleCopySnippetTitle,
     handleEditSnippet,
     handleDeleteSnippet,
-    handleCopyShortcutValue,
+    handleCopyShortcut,
     handleEditShortcut,
     handleDeleteShortcut,
     handleNavigateToSettings,

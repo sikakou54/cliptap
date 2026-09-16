@@ -15,14 +15,6 @@
 import type { SnippetSortBy } from '../types/snippet';
 
 /**
- * 並べ替えの対象になるショートカット値
- */
-export interface SortableShortcutValue {
-  /** 拡張キーボードから挿入した回数 */
-  readonly useCount: number;
-}
-
-/**
  * 並べ替えの対象になるショートカット
  */
 export interface SortableShortcut {
@@ -32,23 +24,8 @@ export interface SortableShortcut {
   readonly createdAt: string;
   /** 更新日時 */
   readonly updatedAt: string;
-  /** ショートカットが持つ値 */
-  readonly values: readonly SortableShortcutValue[];
-}
-
-/**
- * ショートカットの使用回数
- *
- * @param shortcut - 対象のショートカット
- * @returns 値ごとの使用回数の合計
- *
- * @remarks
- * 使用回数は値ごとに持つため、ショートカット単位の使用頻度は合計で表す。
- * 最大値ではなく合計にするのは、「よく使う値が1つあるショートカット」と
- * 「満遍なく使うショートカット」のどちらも上位に来るようにするため。
- */
-function totalUseCount(shortcut: SortableShortcut): number {
-  return shortcut.values.reduce((total, value) => total + value.useCount, 0);
+  /** モバイル・Webでコピーした回数と、拡張キーボードから挿入した回数 */
+  readonly useCount: number;
 }
 
 /**
@@ -86,7 +63,7 @@ export function sortShortcuts<T extends SortableShortcut>(
     created: (a, b) => byCreatedDesc(a, b) || byNameAsc(a, b),
     updated: (a, b) => compareAsc(b.updatedAt, a.updatedAt) || byNameAsc(a, b),
     title: (a, b) => byNameAsc(a, b) || byCreatedDesc(a, b),
-    usage: (a, b) => totalUseCount(b) - totalUseCount(a) || byCreatedDesc(a, b),
+    usage: (a, b) => b.useCount - a.useCount || byCreatedDesc(a, b),
   };
 
   /* 呼び出し元の配列を書き換えないよう複製してから並べ替える */

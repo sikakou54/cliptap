@@ -88,57 +88,26 @@
   ],
   "shortcuts": [
     {
-      "name": "電話番号",
+      "name": "携帯番号",
       "profiles": [],
       "category": null,
-      "values": [
-        {
-          "name": "自分",
-          "value": "090-1234-5678"
-        },
-        {
-          "name": "自宅",
-          "value": "03-1234-5678"
-        },
-        {
-          "name": "会社",
-          "value": "03-9876-5432"
-        }
-      ]
+      "value": "090-1234-5678"
     },
     {
-      "name": "メールアドレス",
+      "name": "会社メール",
       "profiles": [
         "Main"
       ],
       "category": "仕事",
-      "values": [
-        {
-          "name": "会社",
-          "value": "yamada@example.co.jp"
-        },
-        {
-          "name": "個人",
-          "value": "yamada.private@example.com"
-        }
-      ]
+      "value": "yamada@example.co.jp"
     },
     {
-      "name": "住所",
+      "name": "自宅の住所",
       "profiles": [
         "Main"
       ],
       "category": null,
-      "values": [
-        {
-          "name": "自宅",
-          "value": "〒150-0001 東京都渋谷区神宮前1-2-3 サンプルマンション401"
-        },
-        {
-          "name": "会社",
-          "value": "〒100-0005 東京都千代田区丸の内1-1-1 サンプルビル10F"
-        }
-      ]
+      "value": "〒150-0001 東京都渋谷区神宮前1-2-3 サンプルマンション401"
     },
     {
       "name": "社員番号",
@@ -146,12 +115,7 @@
         "Main"
       ],
       "category": "仕事",
-      "values": [
-        {
-          "name": "自分",
-          "value": "EMP-004821"
-        }
-      ]
+      "value": "EMP-004821"
     },
     {
       "name": "請求先",
@@ -159,33 +123,15 @@
         "A社用"
       ],
       "category": "仕事",
-      "values": [
-        {
-          "name": "経理部",
-          "value": "株式会社A商事 経理部\n〒101-0021 東京都千代田区外神田2-3-4"
-        },
-        {
-          "name": "担当者",
-          "value": "田中 太郎（tanaka@a-shoji.example.jp）"
-        }
-      ]
+      "value": "株式会社A商事 経理部\n〒101-0021 東京都千代田区外神田2-3-4"
     },
     {
-      "name": "SNSアカウント",
+      "name": "Xアカウント",
       "profiles": [
         "A社用"
       ],
       "category": "SNS",
-      "values": [
-        {
-          "name": "X",
-          "value": "@sample_a_official"
-        },
-        {
-          "name": "Instagram",
-          "value": "@sample_a_gram"
-        }
-      ]
+      "value": "@sample_a_official"
     },
     {
       "name": "請求先",
@@ -193,38 +139,16 @@
         "B社用"
       ],
       "category": "仕事",
-      "values": [
-        {
-          "name": "経理部",
-          "value": "株式会社B商事 経理部\n〒060-0001 北海道札幌市中央区北一条西5-6"
-        },
-        {
-          "name": "担当者",
-          "value": "鈴木 花子（suzuki@b-shoji.example.jp）"
-        }
-      ]
+      "value": "株式会社B商事 経理部\n〒060-0001 北海道札幌市中央区北一条西5-6"
     },
     {
-      "name": "定型フレーズ",
+      "name": "確認中の連絡",
       "profiles": [
         "A社用",
         "B社用"
       ],
       "category": "プロンプト",
-      "values": [
-        {
-          "name": "承知",
-          "value": "承知いたしました。対応いたします。"
-        },
-        {
-          "name": "確認中",
-          "value": "{{today}} 時点で確認中です。改めてご連絡いたします。"
-        },
-        {
-          "name": "御礼",
-          "value": "{{client_name}} 様\nご対応いただきありがとうございました。"
-        }
-      ]
+      "value": "{{client_name}} 様\n{{today}} 時点で確認中です。改めてご連絡いたします。"
     }
   ]
 }

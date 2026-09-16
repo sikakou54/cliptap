@@ -9,17 +9,36 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.sikakou.cliptap.R
 import com.sikakou.cliptap.models.Shortcut
+import com.sikakou.cliptap.utils.VariableReplacer
 
 /**
  * ショートカット一覧を表示するRecyclerView用アダプター
  *
- * 【値の一覧と分ける理由】
- * 表示する項目（ショートカット名だけ／値名と値の2行）も、選んだときの意味（次の階層へ／挿入）も
- * 別のものなので、ShortcutValueAdapterと別のアダプターにしている。
+ * 【名前と値を両方出す理由】
+ * 挿入されるのは値だけなので、選ぶ前に何が入力されるかを確かめられるようにする。
+ * 名前（例: 携帯番号）だけでは、どの文字列が入るのか分からない。
+ *
+ * 【値を展開して表示する理由】
+ * 挿入されるのは変数トークン（{{name}}）を展開した文字列のため、表示も選択中のプロファイルで展開する
+ * （定型文一覧のタイトルを展開して出す SnippetAdapter と同じ）。
  */
 class ShortcutAdapter(
     private val onShortcutClick: (Shortcut) -> Unit
 ) : ListAdapter<Shortcut, ShortcutAdapter.ShortcutViewHolder>(ShortcutDiffCallback()) {
+
+    /** 表示用に値の変数トークンを展開する */
+    private val variableReplacer = VariableReplacer()
+
+    /**
+     * 表示に使う、選択中のプロファイルの変数マップ（変数名 → 値）
+     *
+     * 一覧を出す直前に呼び出し側が読み直して入れる。
+     * 行の表示はバインド時にこの値を読むため、submitList より前に入れること。
+     */
+    var variablesMap: Map<String, String> = emptyMap()
+
+    /** 表示に使う、システム変数の書式（変数キー → パターン） */
+    var systemVariableFormats: Map<String, String> = emptyMap()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ShortcutViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -28,7 +47,8 @@ class ShortcutAdapter(
     }
 
     override fun onBindViewHolder(holder: ShortcutViewHolder, position: Int) {
-        holder.bind(getItem(position))
+        val shortcut = getItem(position)
+        holder.bind(shortcut, variableReplacer.replace(shortcut.value, variablesMap, systemVariableFormats))
     }
 
     class ShortcutViewHolder(
@@ -37,6 +57,7 @@ class ShortcutAdapter(
     ) : RecyclerView.ViewHolder(itemView) {
 
         private val nameTextView: TextView = itemView.findViewById(R.id.shortcutName)
+        private val valueTextView: TextView = itemView.findViewById(R.id.shortcutValue)
 
         /** 現在この行が表示しているショートカット */
         private var currentShortcut: Shortcut? = null
@@ -50,9 +71,16 @@ class ShortcutAdapter(
             }
         }
 
-        fun bind(shortcut: Shortcut) {
+        /**
+         * 行にショートカットを表示する
+         *
+         * @param shortcut 表示するショートカット
+         * @param displayValue 変数トークンを展開した値（挿入されるのは展開前の文字列を挿入時に展開したもの）
+         */
+        fun bind(shortcut: Shortcut, displayValue: String) {
             currentShortcut = shortcut
             nameTextView.text = shortcut.name
+            valueTextView.text = displayValue
         }
     }
 

@@ -59,12 +59,12 @@ describe('ショートカット値の変数展開', () => {
     return variable.id;
   };
 
-  /** 値を1件だけ持つ全プロファイル向けのショートカットを作り、そのIDを返す */
+  /** 全プロファイル向けのショートカットを作り、そのIDを返す */
   const createShortcut = (value: string): string =>
     ShortcutService.create({
       profileIds: [],
       name: '差出人',
-      values: [{ name: '会社名', value }],
+      value,
     }).id;
 
   /** 一覧の表示経路で、指定プロファイルの表示用の値を取り出す */
@@ -78,13 +78,13 @@ describe('ショートカット値の変数展開', () => {
         defaultProfileVariablesMap,
       })
     );
-    return shortcut?.values[0]?.displayValue ?? '';
+    return shortcut?.displayValue ?? '';
   };
 
   /** コピー経路で、指定プロファイルを基準に展開した文字列を取り出す */
   const copied = async (profileId: string): Promise<string> => {
     const [shortcut] = ShortcutService.getByProfileId(profileId);
-    return ShortcutService.prepareValueForClipboard(shortcut?.values[0]?.value ?? '', {
+    return ShortcutService.prepareValueForClipboard(shortcut?.value ?? '', {
       locale: 'ja',
       customResolver: createCustomResolver(profileId),
     });
@@ -95,8 +95,8 @@ describe('ショートカット値の変数展開', () => {
     createCompany({ [MAIN]: '株式会社Main' });
     const id = createShortcut('{{company}} 御中');
 
-    expect(ShortcutService.getByProfileId(MAIN)[0]?.values[0]?.value).toBe('{{company}} 御中');
-    expect(ShortcutService.getById(id)?.values[0]?.value).toBe('{{company}} 御中');
+    expect(ShortcutService.getByProfileId(MAIN)[0]?.value).toBe('{{company}} 御中');
+    expect(ShortcutService.getById(id)?.value).toBe('{{company}} 御中');
   });
 
   it.each([
@@ -149,7 +149,7 @@ describe('ショートカット値の変数展開', () => {
 
     VariableService.delete(variableId);
 
-    expect(ShortcutService.getById(id)?.values[0]?.value).toBe('{{company}} 御中');
+    expect(ShortcutService.getById(id)?.value).toBe('{{company}} 御中');
     expect(displayed(MAIN)).toBe('{{company}} 御中');
     expect(await copied(MAIN)).toBe('{{company}} 御中');
   });

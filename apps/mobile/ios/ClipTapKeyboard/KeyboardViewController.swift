@@ -48,18 +48,6 @@ class KeyboardViewController: UIInputViewController {
         case shortcutList
     }
 
-    /**
-     * ショートカット画面の表示モード
-     *
-     * 値一覧をScreenStateへ足さず、ショートカット画面の中のモードとして持つ。
-     * ScreenStateはapplyScreenState()が全画面ビューを排他表示するための区分であり、
-     * 同じshortcutView内での表示の切り替えまで持たせると、
-     * 状態が増えるほど「どのビューを出すか」の組み合わせが読みづらくなるため。
-     */
-    private enum ShortcutScreenMode {
-        case list    /* ショートカット一覧 */
-        case values  /* 選択したショートカットの値一覧 */
-    }
 
     // MARK: - Services（サービス層：ビジネスロジックを担当）
     // 3層アーキテクチャを採用: UI層（ViewController） → ビジネスロジック層（Service） → データアクセス層（Mapper）
@@ -132,15 +120,6 @@ class KeyboardViewController: UIInputViewController {
 
     /// ショートカット画面に表示中のショートカット一覧（選んだ基準で並べ替え済み）
     private var sortedShortcuts: [Shortcut] = []
-
-    /// 値一覧を表示しているショートカット
-    private var selectedShortcut: Shortcut?
-
-    /// 値一覧に表示中のショートカット値（使用回数の多い順に並べ替え済み）
-    private var sortedShortcutValues: [ShortcutValue] = []
-
-    /// ショートカット画面の表示モード（一覧 or 値一覧）
-    private var shortcutScreenMode: ShortcutScreenMode = .list
 
     /// 定型文一覧の現在のソート順
     /// 値: "created" | "updated" | "title" | "usage"
@@ -895,7 +874,7 @@ class KeyboardViewController: UIInputViewController {
             /* ショートカットは画面を開くときに読み直すため、ここでは表示中のときだけ作り直す */
             if screenState == .shortcutList {
                 KeyboardLog.debug("🔄 [Refresh] Reloading shortcut screen...")
-                reloadShortcutScreen()
+                reloadShortcutList()
             }
 
             KeyboardLog.debug("✅ [Refresh] All data refreshed successfully")
@@ -1271,7 +1250,6 @@ class KeyboardViewController: UIInputViewController {
         shortcutTableView.delegate = self
         shortcutTableView.dataSource = self
         shortcutTableView.register(ShortcutCell.self, forCellReuseIdentifier: ShortcutCell.reuseIdentifier)
-        shortcutTableView.register(ShortcutValueCell.self, forCellReuseIdentifier: ShortcutValueCell.reuseIdentifier)
 
         /* 行の高さを固定し、自動高さ計算（セルフサイジング）を無効化する。
            スニペット一覧と同じ理由で、推定高さのままだと行の実フレームが見た目とずれ、
@@ -2132,16 +2110,13 @@ class KeyboardViewController: UIInputViewController {
     }
 
     /**
-     * ショートカット一覧を読み直して表示する（表示モードも一覧へ戻す）
+     * ショートカット一覧を読み直して表示する
      *
      * 【毎回読み直す理由】
      * メインアプリでの追加・編集と、直前の挿入で増えた使用回数を開くたびに反映するため。
      * 使用頻度順を選んでいるときは、増えた使用回数がそのまま一覧の並びにも効く。
      */
     private func reloadShortcutList() {
-        shortcutScreenMode = .list
-        selectedShortcut = nil
-
         /* 選択中のプロファイルに紐づくショートカットと、全プロファイル向け（紐づけ0件）のショートカットだけを出す。
            値の変数トークンも選択中のプロファイルで展開するため、プロファイルを決められないときは空にする。
            全件へ倒すと、別の環境向けの値をそれと分からないまま挿入できてしまうため
@@ -2157,10 +2132,8 @@ class KeyboardViewController: UIInputViewController {
             KeyboardLog.debug("⚠️ [Shortcut] No profile selected - clearing shortcuts")
             sortedShortcuts = []
         }
-        sortedShortcutValues = []
         KeyboardLog.debug("⚡ [Shortcut] Loaded %d shortcuts", sortedShortcuts.count)
 
-        applyShortcutRowHeight()
         shortcutTableView.reloadData()
         /* 前に開いたときのスクロール位置が残ると、並べ替えた先頭が画面外になるため先頭へ戻す */
         shortcutTableView.setContentOffset(.zero, animated: false)
@@ -2168,68 +2141,26 @@ class KeyboardViewController: UIInputViewController {
     }
 
     /**
-     * 選択したショートカットの値一覧へ切り替える
-     *
-     * - Parameter shortcut: 値一覧を表示するショートカット
-     */
-    private func showShortcutValues(_ shortcut: Shortcut) {
-        selectedShortcut = shortcut
-        shortcutScreenMode = .values
-        sortedShortcutValues = shortcutService.sortedValues(shortcut.values)
-        KeyboardLog.debug("⚡ [Shortcut] Showing %d values for shortcut: %@", sortedShortcutValues.count, shortcut.name)
-
-        /* 値一覧にも見出しの行と戻るボタンは置かない。ショートカット一覧へは、
-           値を挿入するか、トグルで定型文へ切り替えてから戻すと開き直す */
-        applyShortcutRowHeight()
-        shortcutTableView.reloadData()
-        shortcutTableView.setContentOffset(.zero, animated: false)
-        updateShortcutEmptyState()
-    }
-
-    /**
-     * ショートカットが選ばれたときの処理
+     * ショートカットの値を入力欄へ挿入する
      *
      * - Parameter shortcut: タップされたショートカット
-     *
-     * 【値の件数で動きを変えない理由】
-     * 挿入までの道筋が件数によって変わると、同じ行を押しても
-     * 値一覧が出る場合と即座に入力される場合があり、押す前に結果を予測できない。
-     * 件数にかかわらず「一覧 → 値一覧 → 挿入」に揃える。
-     */
-    private func selectShortcut(_ shortcut: Shortcut) {
-        /* 階層移動も行の中身が入れ替わる操作のため、挿入と同じ窓で二度押しを塞ぐ */
-        guard acceptShortcutTap() else { return }
-
-        /* 値を持たないショートカットはメインアプリで作れない（作成時に1件以上を必須にしている）。
-           万一そうしたデータが入っていても、選ぶものが無い一覧を見せないよう何もしない */
-        guard !shortcut.values.isEmpty else {
-            KeyboardLog.debug("⚠️ [Shortcut] Shortcut has no values: %@", shortcut.id)
-            return
-        }
-
-        showShortcutValues(shortcut)
-    }
-
-    /**
-     * ショートカット値を入力欄へ挿入し、ショートカット一覧へ戻る
-     *
-     * - Parameter value: 挿入するショートカット値
      *
      * 【定型文一覧へ戻さない理由】
      * 表示対象の切り替えはフィルター行のトグルが担うため、挿入を理由に勝手に切り替えない。
      * 続けて別のショートカットを挿す場面が多く、そのたびに切り替え直させると手数が増える。
      *
-     * 【値一覧から一覧へ戻す理由】
-     * 1つ選び終えた後に同じ値一覧へ留まる必要はない。
-     * 読み直すことで、増えた使用回数が値一覧の並び（使用回数の降順）と、
-     * 使用頻度順を選んでいるときのショートカット一覧の並びへ反映される。
+     * 【挿入のたびに読み直す理由】
+     * 増えた使用回数を、使用頻度順を選んでいるときの一覧の並びへ反映するため。
      */
-    private func insertShortcutValue(_ value: ShortcutValue) {
-        KeyboardLog.debug("⚡ [Shortcut] Inserting shortcut value: %@", value.id)
+    private func insertShortcut(_ shortcut: Shortcut) {
+        /* 指が跳ねた二度押しで、選んだ覚えのない値を挿入しないよう窓を設ける */
+        guard acceptShortcutTap() else { return }
+
+        KeyboardLog.debug("⚡ [Shortcut] Inserting shortcut: %@", shortcut.id)
 
         /* 変数の展開・挿入・振動フィードバック・使用回数の記録はService側で実行する。
-           展開の基準は値一覧の表示と同じく、キーボード内で選択中のプロファイル */
-        shortcutService.insertValue(value, into: textDocumentProxy, profileId: currentProfile?.id)
+           展開の基準は一覧の表示と同じく、キーボード内で選択中のプロファイル */
+        shortcutService.insertShortcut(shortcut, into: textDocumentProxy, profileId: currentProfile?.id)
 
         reloadShortcutList()
     }
@@ -2260,31 +2191,6 @@ class KeyboardViewController: UIInputViewController {
     }
 
     /**
-     * 表示中のショートカット画面を最新のデータで作り直す
-     *
-     * 【値一覧を開いたままにする条件】
-     * 開いていたショートカットが最新のデータにも残っていて、値が1件以上あるときだけ値一覧へ戻す。
-     * メインアプリ側で削除・整理された場合にそのまま値一覧を残すと、
-     * もう存在しない値を挿入できてしまうため、その場合は一覧に留まる。
-     */
-    private func reloadShortcutScreen() {
-        /* 一覧の読み直しでselectedShortcutが消えるため、先に控えておく */
-        let reopeningShortcutId: String? = shortcutScreenMode == .values ? selectedShortcut?.id : nil
-
-        reloadShortcutList()
-
-        guard let shortcutId = reopeningShortcutId else { return }
-
-        guard let shortcut = sortedShortcuts.first(where: { $0.id == shortcutId }),
-              !shortcut.values.isEmpty else {
-            KeyboardLog.debug("⚠️ [Shortcut] Reopened shortcut is gone or has no values: %@", shortcutId)
-            return
-        }
-
-        showShortcutValues(shortcut)
-    }
-
-    /**
      * 一覧の表示対象を定型文へ戻す
      *
      * トグルでショートカット表示を解除したときに呼ぶ。
@@ -2292,16 +2198,6 @@ class KeyboardViewController: UIInputViewController {
      */
     private func showSnippetList() {
         KeyboardLog.debug("⚡ [Shortcut] Switching the list back to snippets")
-        shortcutScreenMode = .list
-        selectedShortcut = nil
-
-        /* 表示中だった値一覧の行をテーブルに残さない。
-           次に開くときは必ずreloadShortcutList()が走るため表示には出ないが、
-           モードと行数の食い違いを切り替えた時点で解消しておく */
-        sortedShortcutValues = []
-        applyShortcutRowHeight()
-        shortcutTableView.reloadData()
-
         screenState = .list
         applyScreenState()
 
@@ -2310,28 +2206,13 @@ class KeyboardViewController: UIInputViewController {
     }
 
     /**
-     * 表示モードに応じた固定の行高さを適用する
-     *
-     * 一覧は1行、値一覧は2行のため高さが異なる。
-     * どちらも固定値で、自動高さ計算（セルフサイジング）は使わない。
-     */
-    private func applyShortcutRowHeight() {
-        shortcutTableView.rowHeight = shortcutScreenMode == .values
-            ? ShortcutValueCell.rowHeight
-            : ShortcutCell.rowHeight
-    }
-
-    /**
      * ショートカット画面の空状態を更新する
      *
      * 選択中のプロファイルとカテゴリで1件も無いときに案内を表示する。
      * 絞り込みで0件になった場合も同じ案内を出すのは、定型文側（一覧の空状態）と同じ扱いに揃えるため。
-     * 値一覧は値を持たないショートカットでは開かないため、空になることはない。
      */
     private func updateShortcutEmptyState() {
-        let isEmpty = shortcutScreenMode == .values
-            ? sortedShortcutValues.isEmpty
-            : sortedShortcuts.isEmpty
+        let isEmpty = sortedShortcuts.isEmpty
 
         shortcutTableView.isHidden = isEmpty
         shortcutEmptyLabel.isHidden = !isEmpty
@@ -2344,7 +2225,7 @@ extension KeyboardViewController: UITableViewDataSource {
         /* 2つのテーブルビューを1つのデータソースで扱うため、必ずテーブルビューの同一性で分岐する
            （引数のtableViewはプロパティのtableViewを隠すので、比較対象はshortcutTableViewに固定する） */
         if tableView === shortcutTableView {
-            return shortcutScreenMode == .values ? sortedShortcutValues.count : sortedShortcuts.count
+            return sortedShortcuts.count
         }
 
         return filteredSnippets.count
@@ -2383,7 +2264,7 @@ extension KeyboardViewController: UITableViewDataSource {
      * - Parameters:
      *   - tableView: ショートカット画面のテーブルビュー
      *   - indexPath: 対象の行
-     * - Returns: モードに応じたセル
+     * - Returns: ショートカットの行のセル
      *
      * 【値を変数置換して表示する理由】
      * 挿入されるのは変数トークンを展開した文字列のため、表示も選択中のプロファイルで展開して見せる
@@ -2391,25 +2272,6 @@ extension KeyboardViewController: UITableViewDataSource {
      * 挿入時はService側がその時点の値で展開し直す。
      */
     private func shortcutCell(for tableView: UITableView, at indexPath: IndexPath) -> UITableViewCell {
-        if shortcutScreenMode == .values {
-            guard let cell = tableView.dequeueReusableCell(
-                withIdentifier: ShortcutValueCell.reuseIdentifier,
-                for: indexPath
-            ) as? ShortcutValueCell else {
-                return UITableViewCell()
-            }
-
-            let value = sortedShortcutValues[indexPath.row]
-            let displayValue = variableReplacer.replace(
-                in: value.value,
-                variablesMap: variablesMap,
-                formats: systemVariableFormats
-            )
-            cell.configure(name: value.name, value: displayValue)
-
-            return cell
-        }
-
         guard let cell = tableView.dequeueReusableCell(
             withIdentifier: ShortcutCell.reuseIdentifier,
             for: indexPath
@@ -2418,7 +2280,12 @@ extension KeyboardViewController: UITableViewDataSource {
         }
 
         let shortcut = sortedShortcuts[indexPath.row]
-        cell.configure(name: shortcut.name)
+        let displayValue = variableReplacer.replace(
+            in: shortcut.value,
+            variablesMap: variablesMap,
+            formats: systemVariableFormats
+        )
+        cell.configure(name: shortcut.name, value: displayValue)
 
         return cell
     }
@@ -2430,15 +2297,8 @@ extension KeyboardViewController: UITableViewDelegate {
         if tableView === shortcutTableView {
             tableView.deselectRow(at: indexPath, animated: true)
 
-            if shortcutScreenMode == .values {
-                /* 値をタップ: その値だけを現在のカーソル位置へ挿入し、ショートカット一覧へ戻る。
-                   階層が入れ替わるため、ここでも二度押しを塞ぐ */
-                guard acceptShortcutTap() else { return }
-                insertShortcutValue(sortedShortcutValues[indexPath.row])
-            } else {
-                /* ショートカットをタップ: 値一覧へ進む */
-                selectShortcut(sortedShortcuts[indexPath.row])
-            }
+            /* 行をタップ: その値だけを現在のカーソル位置へ挿入する */
+            insertShortcut(sortedShortcuts[indexPath.row])
             return
         }
 
@@ -2591,14 +2451,18 @@ final class SnippetCell: UITableViewCell {
 // MARK: - ShortcutCell
 
 /**
- * ショートカット一覧の行セル
+ * ショートカット一覧の行セル（名前と値の2行表示）
  *
  * 【なぜ専用セルにするか】
  * SnippetCellと同じ理由。defaultContentConfigurationは内部ビューの大きさを文字量に合わせて決めるため、
  * 行のどこを触ってもタッチが拾える保証がない。
  * ラベルをcontentViewいっぱいに広げ、行全体を確実にタップ対象にする。
  * 行の余白でタッチを受けるのはテーブルの目に見えない塗り（UIColor.keyboardTouchableClear）で、
- * セルの背景は透明のままでよい（値一覧の ShortcutValueCell も同じ）。
+ * セルの背景は透明のままでよい。
+ *
+ * 【2行にする理由】
+ * 名前（例: 携帯番号）だけでは何が入力されるか分からず、値（例: 090-0000-0000）だけでは
+ * どれを選べばよいか分からないため、両方を見せて選べるようにする。
  *
  * 【ファイル配置について】
  * 新しいSwiftファイルを追加するとproject.pbxprojの更新が必要になるため、
@@ -2609,88 +2473,10 @@ final class ShortcutCell: UITableViewCell {
     /// 再利用識別子
     static let reuseIdentifier = "ShortcutCell"
 
-    /// 行の高さ（pt）。自動高さ計算を使わず固定値で確定させる
-    static let rowHeight: CGFloat = 44
-
-    /// ショートカット名を表示するラベル
-    private let nameLabel: UILabel = {
-        let label = UILabel()
-        label.font = .systemFont(ofSize: 15)
-        label.textColor = .label
-        label.lineBreakMode = .byTruncatingTail
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
-
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        setupCell()
-    }
-
-    required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        setupCell()
-    }
-
-    /**
-     * セルの見た目とレイアウトを設定する
-     *
-     * SnippetCellと同じく、contentViewのタッチを無効にして行内のビューが
-     * タッチを横取りしないようにする。選択とスクロールはテーブルビュー側が処理する。
-     */
-    private func setupCell() {
-        backgroundColor = .clear
-        contentView.isUserInteractionEnabled = false
-
-        contentView.addSubview(nameLabel)
-        NSLayoutConstraint.activate([
-            nameLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            nameLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
-            nameLabel.topAnchor.constraint(equalTo: contentView.topAnchor),
-            nameLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
-        ])
-
-        let selectedBackground = UIView()
-        selectedBackground.backgroundColor = .secondarySystemFill
-        selectedBackgroundView = selectedBackground
-    }
-
-    /**
-     * 表示するショートカット名を設定する
-     *
-     * - Parameter name: ショートカット名
-     *
-     * 【常に「＞」を出す理由】
-     * 値の件数にかかわらず必ず値一覧へ進むため、どの行も次の階層を持つ。
-     */
-    func configure(name: String) {
-        nameLabel.text = name
-        accessoryType = .disclosureIndicator
-    }
-}
-
-// MARK: - ShortcutValueCell
-
-/**
- * ショートカット値一覧の行セル（値名と値の2行表示）
- *
- * 【2行にする理由】
- * 値名（例: 母）だけでは何を挿入するか分からず、値（例: 090-0000-0000）だけでは
- * どれを選べばよいか分からないため、両方を見せて選べるようにする。
- *
- * 【ファイル配置について】
- * 新しいSwiftファイルを追加するとproject.pbxprojの更新が必要になるため、
- * KeyboardViewControllerと同じファイルに定義している。
- */
-final class ShortcutValueCell: UITableViewCell {
-
-    /// 再利用識別子
-    static let reuseIdentifier = "ShortcutValueCell"
-
     /// 行の高さ（pt）。自動高さ計算を使わず固定値で確定させる（2行分）
     static let rowHeight: CGFloat = 56
 
-    /// 値名を表示するラベル
+    /// ショートカット名を表示するラベル
     private let nameLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 15)
@@ -2723,7 +2509,8 @@ final class ShortcutValueCell: UITableViewCell {
     /**
      * セルの見た目とレイアウトを設定する
      *
-     * ShortcutCellと同じく、contentViewのタッチを無効にして行全体をタップ対象にする。
+     * SnippetCellと同じく、contentViewのタッチを無効にして行内のビューが
+     * タッチを横取りしないようにする。選択とスクロールはテーブルビュー側が処理する。
      */
     private func setupCell() {
         backgroundColor = .clear
@@ -2751,10 +2538,10 @@ final class ShortcutValueCell: UITableViewCell {
     }
 
     /**
-     * 表示する値名と値を設定する
+     * 表示するショートカット名と値を設定する
      *
      * - Parameters:
-     *   - name: 値名（例: 母）
+     *   - name: ショートカット名（例: 携帯番号）
      *   - value: 挿入される値（例: 090-0000-0000）
      */
     func configure(name: String, value: String) {

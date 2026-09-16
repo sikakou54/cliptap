@@ -2,28 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { searchShortcuts } from '../../src/shortcuts/search';
 
 /**
- * ショートカット検索は、ショートカット名・値名・値の3つを対象にする。
- * どれか1つでも落とすと「見えているのに探せない」状態になるため、対象をここで固定する。
+ * ショートカット検索は、ショートカット名と値の2つを対象にする。
+ * どちらかを落とすと「見えているのに探せない」状態になるため、対象をここで固定する。
  * 値は一覧に表示される展開後の文字列（displayValue）で照合する。
  */
 describe('searchShortcuts', () => {
   /** 検索対象を1件ずつ持たせたテストデータ（displayValue は表示中のプロファイルで展開した値） */
   const shortcuts = [
-    {
-      name: '電話番号',
-      values: [
-        { name: '自分', value: '090-1234-5678', displayValue: '090-1234-5678' },
-        { name: '会社', value: '{{company_phone}}', displayValue: '03-9876-5432' },
-      ],
-    },
-    {
-      name: 'メールアドレス',
-      values: [{ name: '個人', value: 'taro@example.com', displayValue: 'taro@example.com' }],
-    },
-    {
-      name: 'Address',
-      values: [{ name: 'Home', value: 'Tokyo', displayValue: 'Tokyo' }],
-    },
+    { name: '電話番号', displayValue: '03-9876-5432' },
+    { name: 'メールアドレス', displayValue: 'taro@example.com' },
+    { name: 'Address', displayValue: 'Tokyo' },
   ];
 
   /** 一致したショートカット名だけを取り出す */
@@ -32,10 +20,6 @@ describe('searchShortcuts', () => {
 
   it('ショートカット名で一致する', () => {
     expect(namesOf('電話')).toEqual(['電話番号']);
-  });
-
-  it('値名で一致する', () => {
-    expect(namesOf('個人')).toEqual(['メールアドレス']);
   });
 
   it('値で一致する', () => {

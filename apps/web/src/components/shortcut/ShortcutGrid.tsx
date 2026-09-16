@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
-import { useTranslation, type Category, type ShortcutValueWithDisplay, type ShortcutWithDisplay } from '@cliptap/shared';
+import { useTranslation, type Category, type ShortcutWithDisplay } from '@cliptap/shared';
 import { ShortcutCard } from './ShortcutCard';
 
 interface ShortcutGridProps {
   shortcuts: ShortcutWithDisplay[];
   gridColumns: 1 | 2 | 3;
-  copiedValueId: string | null;
+  copiedShortcutId: string | null;
   categories: Category[];
-  onCopyValue: (value: ShortcutValueWithDisplay) => void;
+  onCopy: (shortcut: ShortcutWithDisplay) => void;
   onEdit: (shortcut: ShortcutWithDisplay) => void;
   onDelete: (shortcut: ShortcutWithDisplay) => void;
 }
@@ -15,9 +15,9 @@ interface ShortcutGridProps {
 export function ShortcutGrid({
   shortcuts,
   gridColumns,
-  copiedValueId,
+  copiedShortcutId,
   categories,
-  onCopyValue,
+  onCopy,
   onEdit,
   onDelete,
 }: ShortcutGridProps) {
@@ -45,10 +45,10 @@ export function ShortcutGrid({
           <ShortcutCard
             key={shortcut.id}
             shortcut={shortcut}
-            copiedValueId={copiedValueId}
+            copiedShortcutId={copiedShortcutId}
             categoryColor={category?.color ?? null}
             categoryName={category?.name ?? null}
-            onCopyValue={onCopyValue}
+            onCopy={onCopy}
             onEdit={() => onEdit(shortcut)}
             onDelete={() => onDelete(shortcut)}
           />

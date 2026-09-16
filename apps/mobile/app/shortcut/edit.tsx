@@ -12,7 +12,7 @@
  * - 値の変数展開結果のプレビュー（プロファイル切替・値ごとのコピー。値一覧は保存する文字列のまま表示）
  *
  * @see src/hooks/screens/useShortcutEditScreen.ts - ビジネスロジック
- * @see src/components/shortcut/ShortcutValuePreview.tsx - 値のプレビュー
+ * @see src/components/shortcut/ShortcutPreview.tsx - 値のプレビュー
  * @see app/profile/select.tsx - プロファイル選択画面（定型文フォームと共有）
  * @see docs/機能仕様書.md §8.24 ショートカット管理
  */
@@ -25,7 +25,7 @@ import { useTheme } from '@lib/themeSystem';
 import { useShortcutEditScreen } from '@hooks/screens/useShortcutEditScreen';
 import { CategoryBadge } from '@components/category/CategoryBadge';
 import { ScreenContainer } from '@components/common/ScreenContainer';
-import { ShortcutValuePreview } from '@components/shortcut/ShortcutValuePreview';
+import { ShortcutPreview } from '@components/shortcut/ShortcutPreview';
 import { UI_CONSTANTS } from '@constants/ui';
 
 export default function ShortcutEditModal() {
@@ -41,15 +41,13 @@ export default function ShortcutEditModal() {
     profileIds,
     selectedProfileNames,
     selectedCategory,
-    values,
+    value,
     saving,
     isEdit,
     canSave,
     handleProfilePress,
     handleCategoryPress,
-    handleAddValue,
-    handleEditValue,
-    handleDeleteValue,
+    handleValuePress,
     handleSave,
   } = useShortcutEditScreen({ shortcutId });
 
@@ -211,7 +209,7 @@ export default function ShortcutEditModal() {
           </TouchableOpacity>
         </View>
 
-        {/* 値一覧セクション */}
+        {/* 値の入力セクション。タップで値入力画面へ進む（カテゴリ・プロファイルの選択欄と同じ形） */}
         <View style={styles.section}>
           <Text
             style={[
@@ -219,92 +217,35 @@ export default function ShortcutEditModal() {
               { color: colors.textSecondary, fontSize: responsiveFontSizes.sm },
             ]}
           >
-            {t('shortcut.values')}
+            {t('shortcut.value_value')}
           </Text>
-
-          {/* 値の一覧と「値を追加」を、間隔を空けて縦に並べる */}
-          <View style={styles.valueList}>
-            {/* 登録済みの値（タップで編集）。
-                名前・プロファイル・カテゴリの入力欄と同じ下地・角丸の箱で1件ずつ表示する */}
-            {values.map((draft) => (
-              <TouchableOpacity
-                key={draft.key}
-                style={[styles.valueRow, { backgroundColor: colors.surface }]}
-                onPress={() => handleEditValue(draft)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.valueCardMain}>
-                  {/* 値名 */}
-                  <Text
-                    style={[
-                      styles.valueName,
-                      {
-                        color: colors.text,
-                        fontSize: responsiveFontSizes.base,
-                        lineHeight: responsiveLineHeights.base,
-                      },
-                    ]}
-                    numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.SINGLE}
-                  >
-                    {draft.name}
-                  </Text>
-                  {/* 挿入する値。保存する文字列のまま表示し、変数トークンは展開しない
-                      （展開結果は画面下部のプレビューで確かめる。定型文フォームの入力欄とプレビューと同じ分担） */}
-                  <Text
-                    style={[
-                      styles.valueText,
-                      {
-                        color: colors.textSecondary,
-                        fontSize: responsiveFontSizes.sm,
-                        lineHeight: responsiveLineHeights.sm,
-                      },
-                    ]}
-                    numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.DOUBLE}
-                  >
-                    {draft.value}
-                  </Text>
-                </View>
-
-                {/* 削除ボタン */}
-                <TouchableOpacity
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    handleDeleteValue(draft);
-                  }}
-                  hitSlop={UI_CONSTANTS.HIT_SLOP.DEFAULT}
-                  style={styles.valueDeleteButton}
-                >
-                  <Ionicons name="trash-outline" size={UI_CONSTANTS.ICON_SIZE.SM} color={colors.error} />
-                </TouchableOpacity>
-              </TouchableOpacity>
-            ))}
-
-            {/* 値を追加 */}
-            <TouchableOpacity
-              style={[styles.addValueButton, { borderColor: colors.primary }]}
-              onPress={handleAddValue}
-              activeOpacity={0.7}
+          <TouchableOpacity
+            style={[styles.categoryButton, { backgroundColor: colors.surface }]}
+            onPress={handleValuePress}
+          >
+            {/* 保存する文字列のまま表示し、変数トークンは展開しない
+                （展開結果は画面下部のプレビューで確かめる。定型文フォームの入力欄とプレビューと同じ分担）。
+                未入力のときは入力を促す文言を出す */}
+            <Text
+              style={[
+                styles.valueText,
+                {
+                  color: value === '' ? colors.textSecondary : colors.text,
+                  fontSize: responsiveFontSizes.base,
+                  lineHeight: responsiveLineHeights.base,
+                },
+              ]}
+              numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.DOUBLE}
             >
-              <Ionicons name="add" size={UI_CONSTANTS.ICON_SIZE.SM} color={colors.primary} />
-              <Text
-                style={[
-                  styles.addValueText,
-                  {
-                    color: colors.primary,
-                    fontSize: responsiveFontSizes.base,
-                    lineHeight: responsiveLineHeights.base,
-                  },
-                ]}
-              >
-                {t('shortcut.value_create')}
-              </Text>
-            </TouchableOpacity>
-          </View>
+              {value === '' ? t('shortcut.value_value_placeholder') : value}
+            </Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
         </View>
 
-        {/* 値のプレビュー（選んだプロファイルで変数を展開した結果を値ごとに表示し、行のタップでその値だけをコピーする）。
+        {/* 値のプレビュー（選んだプロファイルで変数を展開した結果を表示し、タップでコピーする）。
             定型文フォームの VariablePreview と同じく画面の最下部に置く */}
-        <ShortcutValuePreview values={values} selectedProfileIds={profileIds} />
+        <ShortcutPreview value={value} selectedProfileIds={profileIds} />
       </ScrollView>
     </ScreenContainer>
   );
@@ -363,44 +304,9 @@ const styles = StyleSheet.create({
   profileNames: {
     marginTop: UI_CONSTANTS.GAP.XS,
   },
-  /* 値の箱と「値を追加」を縦に並べる。箱どうしの間隔はここで取る */
-  valueList: {
-    gap: UI_CONSTANTS.GAP.SM,
-  },
-  /* 名前・プロファイル・カテゴリの入力欄（input / categoryButton）と同じ角丸・余白の箱。
-     下地の色はテーマに従うため描画時に渡す */
-  valueRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: UI_CONSTANTS.BORDER_RADIUS.BASE,
-    padding: UI_CONSTANTS.SPACING.BASE,
-    minHeight: UI_CONSTANTS.BUTTON_HEIGHT.MEDIUM,
-  },
-  valueCardMain: {
-    flex: 1,
-    gap: UI_CONSTANTS.GAP.XS,
-    paddingRight: UI_CONSTANTS.GAP.MD,
-  },
-  valueName: {
-    fontWeight: UI_CONSTANTS.FONT_WEIGHT.MEDIUM,
-  },
+  /* 保存する文字列をそのまま出すため、一覧・プレビューと同じ等幅で表示する */
   valueText: {
+    flex: 1,
     fontFamily: 'monospace',
-  },
-  valueDeleteButton: {
-    padding: UI_CONSTANTS.SPACING.XS,
-  },
-  addValueButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: UI_CONSTANTS.GAP.XS,
-    borderRadius: UI_CONSTANTS.BORDER_RADIUS.BASE,
-    borderWidth: UI_CONSTANTS.BORDER_WIDTH.THIN,
-    borderStyle: 'dashed',
-    minHeight: UI_CONSTANTS.BUTTON_HEIGHT.MEDIUM,
-  },
-  addValueText: {
-    fontWeight: UI_CONSTANTS.FONT_WEIGHT.MEDIUM,
   },
 });

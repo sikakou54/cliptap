@@ -17,7 +17,6 @@ import com.sikakou.cliptap.R
 import com.sikakou.cliptap.models.Profile
 import com.sikakou.cliptap.models.Category
 import com.sikakou.cliptap.models.Shortcut
-import com.sikakou.cliptap.models.ShortcutValue
 import com.sikakou.cliptap.models.Snippet
 import com.sikakou.cliptap.services.ProfileService
 import com.sikakou.cliptap.services.CategoryService
@@ -86,7 +85,6 @@ class ClipTapKeyboardService : InputMethodService() {
     private lateinit var shortcutRecyclerView: RecyclerView
     private lateinit var shortcutEmptyView: View
     private lateinit var shortcutAdapter: ShortcutAdapter
-    private lateinit var shortcutValueAdapter: ShortcutValueAdapter
 
     // 選択中のスニペット
     private var selectedSnippet: Snippet? = null
@@ -346,13 +344,8 @@ class ClipTapKeyboardService : InputMethodService() {
            これを伝えることでスクロール中のレイアウト再計算を省ける */
         shortcutRecyclerView.setHasFixedSize(true)
 
-        /* ショートカット一覧と値一覧は1つのRecyclerViewでアダプターを差し替えて表示する。
-           差し替えると表示位置が先頭に戻るため、階層を移動するたびに一覧の先頭から読める */
         shortcutAdapter = ShortcutAdapter { shortcut ->
             onShortcutClicked(shortcut)
-        }
-        shortcutValueAdapter = ShortcutValueAdapter { value ->
-            onShortcutValueClicked(value)
         }
         shortcutRecyclerView.adapter = shortcutAdapter
 
@@ -729,8 +722,7 @@ class ClipTapKeyboardService : InputMethodService() {
             reloadSnippets()
 
             /* ショートカットもプロファイルによって出るものと参照値の中身が変わるため、表示中なら読み直す。
-               値一覧（2階層目）を開いていた場合、そのショートカットは切り替え後の環境に出るとは限らず、
-               値も切り替え前の環境で解決したものなので、1階層目へ戻したうえで新しい環境の一覧を出す */
+               表示中の値は切り替え前の環境で解決したものなので、新しい環境で展開し直す */
             if (isShortcutMode) {
                 showShortcutList()
             }
@@ -766,9 +758,7 @@ class ClipTapKeyboardService : InputMethodService() {
 
             reloadSnippets()
 
-            /* ショートカットも定型文と同じカテゴリを持つため、表示中なら読み直す。
-               値一覧（2階層目）を開いていた場合、そのショートカットは切り替え前のカテゴリのものなので、
-               1階層目へ戻したうえで新しいカテゴリの一覧を出す */
+            /* ショートカットも定型文と同じカテゴリを持つため、表示中なら読み直す */
             if (isShortcutMode) {
                 showShortcutList()
             }
@@ -1264,11 +1254,8 @@ class ClipTapKeyboardService : InputMethodService() {
      * AndroidのIMEは onCreateInputView で作ったビューを使い回すため、
      * 何もしないとショートカット一覧と、そこに載っている当時のデータがそのまま残る。
      * その間にメインアプリで削除されていると、存在しない値を挿入できてしまう。
-     *
-     * 【一覧へ戻す理由】
-     * 値一覧を開いていた場合、そのショートカット自体が消えている可能性がある。
      * 一覧から読み直せば、消えたものは並びから外れる。
-     * （iOS版の refreshAllData → reloadShortcutScreen と同じ狙い）
+     * （iOS版の refreshAllData → reloadShortcutList と同じ狙い）
      */
     private fun restoreShortcutViewState() {
         if (!::shortcutView.isInitialized) return
@@ -1281,11 +1268,12 @@ class ClipTapKeyboardService : InputMethodService() {
      * ショートカット一覧を表示
      *
      * 【目的】
-     * ショートカット画面の1階層目（ショートカット名の一覧）を表示します。
+     * ショートカットの一覧（名前と、選択中のプロファイルで展開した値）を表示します。
      *
      * 【何をするか】
      * 1. 選んだ基準で並べ替えたショートカット一覧を取得
-     * 2. 一覧を差し替え、0件なら空状態を表示する
+     * 2. 表示用の変数マップと書式を読み直してアダプターへ渡す
+     * 3. 一覧を差し替え、0件なら空状態を表示する
      *
      * 【開くたびに取得し直す理由】
      * メインアプリでの追加・削除・並べ替えを次に開いたときに反映するため。
@@ -1293,7 +1281,11 @@ class ClipTapKeyboardService : InputMethodService() {
     private fun showShortcutList() {
         val shortcuts = loadRankedShortcuts()
 
-        shortcutRecyclerView.adapter = shortcutAdapter
+        /* 行の表示はバインド時に変数マップを読むため、submitList より前に渡す。
+           保持中の variablesMap は入力画面を開き直しても更新されないことがあり、
+           メインアプリで変数の値を変えた後も古い値で表示されてしまうため、一覧を開くたびに読み直す */
+        shortcutAdapter.variablesMap = loadCurrentVariablesMap()
+        shortcutAdapter.systemVariableFormats = SystemVariableFormatMapper.getInstance(this).getAll()
         shortcutAdapter.submitList(shortcuts)
         updateShortcutEmptyState(shortcuts.isEmpty())
 
@@ -1301,117 +1293,53 @@ class ClipTapKeyboardService : InputMethodService() {
     }
 
     /**
-     * ショートカット値の一覧を表示
-     *
-     * 【目的】
-     * ショートカット画面の2階層目（値の一覧）を表示します。
-     *
-     * 【何をするか】
-     * 1. 使用回数の多い順に値を並べ替える
-     * 2. 値の表示に使う変数マップと書式を、選択中のプロファイルで読み直してアダプターへ渡す
-     * 3. 一覧を値用のアダプターへ差し替える
-     *
-     * 【変数マップをここで読み直す理由】
-     * 保持中の variablesMap は入力画面を開き直しても更新されないことがあり、
-     * メインアプリで変数の値を変えた後も古い値で表示されてしまう。値一覧を開くたびに読み直す。
-     * アダプターの差し替え（adapter の代入）で全行が作り直されるため、マップは差し替えより前に渡す。
-     *
-     * 【見出しと戻るボタンを置かない】
-     * 値一覧にも見出しの行と戻るボタンは置かない。ショートカット一覧へは、
-     * 値を挿入するか、トグルで定型文へ切り替えてから戻すと開き直す。
-     *
-     * 【一覧の並べ替えを掛けない理由】
-     * 値が持つのは名前と使用回数だけで、4種の基準のうち2種が対応しない（ShortcutService.rankedValues）。
-     *
-     * @param shortcut 選択されたショートカット
-     */
-    private fun showShortcutValues(shortcut: Shortcut) {
-        val values = shortcutService.rankedValues(shortcut.values)
-
-        shortcutValueAdapter.variablesMap = loadCurrentVariablesMap()
-        shortcutValueAdapter.systemVariableFormats = SystemVariableFormatMapper.getInstance(this).getAll()
-        shortcutRecyclerView.adapter = shortcutValueAdapter
-        shortcutValueAdapter.submitList(values)
-
-        /* 値を持つショートカットからしか遷移しないため、この階層で空状態になることはない */
-        updateShortcutEmptyState(false)
-
-        if (com.sikakou.cliptap.BuildConfig.DEBUG) Log.d(TAG, "✅ Shortcut values shown (${values.size} values)")
-    }
-
-    /**
      * ショートカットクリック時の処理
      *
      * 【目的】
-     * 選ばれたショートカットの値一覧へ進みます。
+     * 選ばれたショートカットの値を、そのままテキストフィールドへ挿入します。
      *
-     * 【値の件数で動きを変えない理由】
-     * 挿入までの道筋が件数によって変わると、同じ行を押しても値一覧が出る場合と
-     * 即座に入力される場合があり、押す前に結果を予測できない。
-     * 件数にかかわらず「一覧 → 値一覧 → 挿入」に揃える。
+     * 【挿入後に一覧を読み直す理由】
+     * 増えた使用回数を、使用頻度順を選んでいるときの一覧の並びへ反映するため。
+     * 表示対象はショートカットのままで、定型文へは戻さない（戻すかどうかはトグルで決める）。
+     *
+     * 【挿入できなかったときは読み直さない理由】
+     * 二度押しとして落とした直後に一覧が入れ替わると、押したつもりのない動きが起きるため。
      *
      * @param shortcut 選択されたショートカット
      */
     private fun onShortcutClicked(shortcut: Shortcut) {
-        /* 階層移動も行の中身が入れ替わる操作のため、挿入と同じ窓で二度押しを塞ぐ */
-        if (!acceptShortcutTap()) return
-
-        if (com.sikakou.cliptap.BuildConfig.DEBUG) Log.d(TAG, "Shortcut selected (${shortcut.values.size} values)")
-
-        /* 値を持たないショートカットは挿入するものがないため何もしない */
-        if (shortcut.values.isEmpty()) {
-            Log.w(TAG, "⚠️ Shortcut has no values")
-            return
-        }
-
-        showShortcutValues(shortcut)
-    }
-
-    /**
-     * ショートカット値クリック時の処理
-     *
-     * 【挿入後にショートカット一覧へ戻す理由】
-     * 同じ値を続けて入れる場面は少なく、次は別のショートカットを選ぶことが多いため。
-     * 表示対象はショートカットのままで、定型文へは戻さない（戻すかどうかはトグルで決める）。
-     *
-     * 【挿入できなかったときは戻さない理由】
-     * 二度押しとして落とした直後に階層まで戻すと、押したつもりのない移動が起きるため。
-     *
-     * @param value 選択されたショートカット値
-     */
-    private fun onShortcutValueClicked(value: ShortcutValue) {
         /* 二度押しの判定は行のタップ1回につき1度だけ行う。
-           挿入側（insertShortcutValue）にも置くと同じタップが2回数えられ、
+           挿入側（insertShortcut）にも置くと同じタップが2回数えられ、
            2度目が必ず落ちて挿入できなくなる */
         if (!acceptShortcutTap()) return
 
-        if (com.sikakou.cliptap.BuildConfig.DEBUG) Log.d(TAG, "Shortcut value selected")
+        if (com.sikakou.cliptap.BuildConfig.DEBUG) Log.d(TAG, "Shortcut selected")
 
-        if (!insertShortcutValue(value)) return
+        if (!insertShortcut(shortcut)) return
 
         showShortcutList()
     }
 
     /**
-     * ショートカット値をテキストフィールドへ挿入
+     * ショートカットの値をテキストフィールドへ挿入
      *
      * 【何をするか】
      * 1. currentInputConnectionを取得（テキストフィールドへの接続）
      * 2. 選択中のプロファイルの変数マップを読み直す（表示と同じく、メインアプリでの変更を反映するため）
-     * 3. ShortcutService.insertValue()で変数を展開して挿入（振動と使用回数の加算も行う）
+     * 3. ShortcutService.insertShortcut()で変数を展開して挿入（振動と使用回数の加算も行う）
      *
      * 【二重挿入の判定をここに置かない理由】
-     * 呼び出し元の行タップ（onShortcutValueClicked）で既に判定している。
+     * 呼び出し元の行タップ（onShortcutClicked）で既に判定している。
      * ここにも置くと、同じタップが2回数えられてしまう。
      *
      * 【挿入してもショートカット表示のままにする理由】
      * 表示対象はトグルで決めるものなので、挿入を理由に勝手に定型文へ戻さない。
      * 続けて別のショートカットを入れられる。
      *
-     * @param value 挿入するショートカット値
+     * @param shortcut 挿入するショートカット
      * @return 挿入した場合はtrue（挿入先が無い場合はfalse）
      */
-    private fun insertShortcutValue(value: ShortcutValue): Boolean {
+    private fun insertShortcut(shortcut: Shortcut): Boolean {
         val ic = currentInputConnection
         if (ic == null) {
             Log.e(TAG, "❌ InputConnection is null")
@@ -1419,7 +1347,7 @@ class ClipTapKeyboardService : InputMethodService() {
             return false
         }
 
-        shortcutService.insertValue(value, ic, loadCurrentVariablesMap())
+        shortcutService.insertShortcut(shortcut, ic, loadCurrentVariablesMap())
         if (com.sikakou.cliptap.BuildConfig.DEBUG) Log.d(TAG, "✅ Shortcut value inserted successfully")
         return true
     }
@@ -1450,10 +1378,9 @@ class ClipTapKeyboardService : InputMethodService() {
      * フラグ（isClosingShortcutView）で無視していた。
      * トグル化で挿入後も画面が閉じなくなったため、同じ役目を時間で果たす。
      *
-     * 【挿入だけでなく階層移動も対象にする理由】
-     * 値が複数のショートカットを指が跳ねて二度押しすると、1回目で値一覧へ切り替わり、
-     * 2回目が差し替わった直後の値行に当たって、選んだ覚えのない値が挿入されてしまう。
-     * 行の中身が入れ替わる操作はすべて同じ窓で塞ぐ。
+     * 【挿入を対象にする理由】
+     * 指が跳ねて二度押しすると、1回目の挿入で一覧が読み直され、
+     * 2回目が並び替わった直後の別の行に当たって、選んだ覚えのない値が挿入されてしまう。
      *
      * 【elapsedRealtimeを使う理由】
      * 端末の時刻設定や時差の変更に影響されない単調増加の時計のため、
@@ -1576,8 +1503,6 @@ class ClipTapKeyboardService : InputMethodService() {
             currentShortcutSortBy = sortBy
             saveSortPreference(SHORTCUT_SORT_PREFERENCE_KEY, sortBy)
 
-            /* 値一覧（2階層目）を開いていても1階層目へ戻す。
-               値一覧は並べ替えの対象外のため、そのままでは選んだ基準がどこにも現れない */
             showShortcutList()
             shortcutRecyclerView.scrollToPosition(0)
         } else {

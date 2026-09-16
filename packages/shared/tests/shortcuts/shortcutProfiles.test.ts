@@ -44,11 +44,11 @@ describe('ショートカットの紐づけプロファイル', () => {
     return db;
   };
 
-  /** 値を1件だけ持つ作成入力を、紐づけIDの配列付きで組み立てる */
+  /** 作成入力を、紐づけIDの配列付きで組み立てる */
   const inputWith = (name: string, profileIds: string[]) => ({
     profileIds,
     name,
-    values: [{ name: '自分', value: '090-0000-0000' }],
+    value: '090-0000-0000',
   });
 
   /** 紐づけ行のプロファイルIDをID順で取り出す。行数の崩れ（重複・取り残し）もここで見える */
@@ -102,7 +102,7 @@ describe('ショートカットの紐づけプロファイル', () => {
 
       const created = ShortcutService.create({
         name: '電話番号',
-        values: [{ name: '自分', value: '090-0000-0000' }],
+        value: '090-0000-0000',
       });
 
       expect(linkedProfileIds(db, created.id)).toEqual([]);
@@ -316,7 +316,7 @@ describe('ショートカットの紐づけプロファイル', () => {
    * MAINだけ・OTHERだけ・0件・MAIN+OTHER の4件で、MAINとOTHERの一覧はそれぞれ3件になる。
    */
   describe('一覧', () => {
-    /** 4パターンのショートカットを作成順に作る（MAIN+OTHERだけ値を2件持たせる） */
+    /** 4パターンのショートカットを作成順に作る（MAIN+OTHERだけ別の値にする） */
     const createFourKinds = () => {
       ShortcutService.create(inputWith('MAINだけ', [MAIN]));
       ShortcutService.create(inputWith('OTHERだけ', [OTHER]));
@@ -324,10 +324,7 @@ describe('ショートカットの紐づけプロファイル', () => {
       ShortcutService.create({
         profileIds: [MAIN, OTHER],
         name: '両方',
-        values: [
-          { name: '会社', value: '03-0000-0000' },
-          { name: '自宅', value: '045-000-0000' },
-        ],
+        value: '03-0000-0000',
       });
     };
 
@@ -340,8 +337,8 @@ describe('ショートカットの紐づけプロファイル', () => {
       expect(namesIn(THIRD)).toEqual(['全プロファイル']);
     });
 
-    /* 紐づけテーブルと結合すると、複数に紐づくショートカットの行や値が紐づけの数だけ重複しうる */
-    it('複数のプロファイルに紐づいても1件として返し、値も重複しない', async () => {
+    /* 紐づけテーブルと結合すると、複数に紐づくショートカットの行が紐づけの数だけ重複しうる */
+    it('複数のプロファイルに紐づいても1件として返す', async () => {
       await useDatabase();
       createFourKinds();
 
@@ -350,7 +347,7 @@ describe('ショートカットの紐づけプロファイル', () => {
           (shortcut) => shortcut.name === '両方'
         );
         expect(both).toHaveLength(1);
-        expect(both[0].values.map((value) => value.name)).toEqual(['会社', '自宅']);
+        expect(both[0].value).toBe('03-0000-0000');
       }
     });
 

@@ -44,9 +44,8 @@ describe('migrateImportTempDb', () => {
     }
     if (version >= 8) {
       await db.exec(`
-        CREATE TABLE shortcuts (id TEXT PRIMARY KEY, categoryId TEXT, name TEXT NOT NULL, sortOrder INTEGER DEFAULT 0, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL, FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE SET NULL);
+        CREATE TABLE shortcuts (id TEXT PRIMARY KEY, categoryId TEXT, name TEXT NOT NULL, value TEXT NOT NULL, useCount INTEGER DEFAULT 0, sortOrder INTEGER DEFAULT 0, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL, FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE SET NULL);
         CREATE TABLE shortcut_profiles (shortcutId TEXT NOT NULL, profileId TEXT NOT NULL, PRIMARY KEY (shortcutId, profileId), FOREIGN KEY (shortcutId) REFERENCES shortcuts(id) ON DELETE CASCADE, FOREIGN KEY (profileId) REFERENCES profiles(id) ON DELETE CASCADE);
-        CREATE TABLE shortcut_values (id TEXT PRIMARY KEY, shortcutId TEXT NOT NULL, name TEXT NOT NULL, value TEXT NOT NULL, useCount INTEGER DEFAULT 0, sortOrder INTEGER DEFAULT 0, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL, FOREIGN KEY (shortcutId) REFERENCES shortcuts(id) ON DELETE CASCADE);
       `);
     }
     await db.exec(`
@@ -99,7 +98,7 @@ describe('migrateImportTempDb', () => {
     );
     expect(tableExists(db, 'system_variable_formats')).toBe(true);
     expect(tableExists(db, 'shortcuts')).toBe(true);
-    expect(tableExists(db, 'shortcut_values')).toBe(true);
+    expect(tableExists(db, 'shortcut_profiles')).toBe(true);
     expect(
       db.get<{ count: number }>(
         "SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'index' AND name = 'idx_profile_variables_variable'"
@@ -275,30 +274,20 @@ describe('migrateImportTempDb', () => {
     ).toEqual(['variableKey', 'pattern', 'updatedAt']);
   });
 
-  /** V7→V8はショートカットと値のテーブルを追加する。列構成は現行スキーマ定義と一致していなければならない */
+  /** V7→V8はショートカットと紐づけのテーブルを追加する。列構成は現行スキーマ定義と一致していなければならない */
   it('creates the shortcut tables on a V7 database', async () => {
     const db = await createVersion(7);
 
     await migrateV7ToV8(db);
 
+    /* 挿入する値と使用回数は本体の行が持つ（1ショートカット1値） */
     expect(
       db
         .all<{ name: string }>("SELECT name FROM pragma_table_info('shortcuts')")
         .map((c) => c.name)
-    ).toEqual(['id', 'categoryId', 'name', 'sortOrder', 'createdAt', 'updatedAt']);
-    /* 所属プロファイルは中間テーブルが持つ */
-    expect(
-      db
-        .all<{ name: string }>("SELECT name FROM pragma_table_info('shortcut_profiles')")
-        .map((c) => c.name)
-    ).toEqual(['shortcutId', 'profileId']);
-    expect(
-      db
-        .all<{ name: string }>("SELECT name FROM pragma_table_info('shortcut_values')")
-        .map((c) => c.name)
     ).toEqual([
       'id',
-      'shortcutId',
+      'categoryId',
       'name',
       'value',
       'useCount',
@@ -306,18 +295,23 @@ describe('migrateImportTempDb', () => {
       'createdAt',
       'updatedAt',
     ]);
+    /* 所属プロファイルは中間テーブルが持つ */
+    expect(
+      db
+        .all<{ name: string }>("SELECT name FROM pragma_table_info('shortcut_profiles')")
+        .map((c) => c.name)
+    ).toEqual(['shortcutId', 'profileId']);
+    /* 値を別テーブルへ分ける旧構造には戻さない */
+    expect(tableExists(db, 'shortcut_values')).toBe(false);
   });
 
   /** 既にテーブルがあるDBへ再実行しても、保存済みのショートカットを作り直してはならない */
   it('keeps existing rows when the shortcut tables already exist', async () => {
     const db = await createVersion(8);
     db.run(
-      "INSERT INTO shortcuts VALUES ('sc1', NULL, 'Phone', 0, 'created', 'updated')"
+      "INSERT INTO shortcuts VALUES ('sc1', NULL, 'Phone', '080-0000-0000', 3, 0, 'created', 'updated')"
     );
     db.run("INSERT INTO shortcut_profiles VALUES ('sc1', 'p1')");
-    db.run(
-      "INSERT INTO shortcut_values VALUES ('sv1', 'sc1', 'Mother', '080-0000-0000', 3, 0, 'created', 'updated')"
-    );
 
     await migrateV7ToV8(db);
 
@@ -326,22 +320,15 @@ describe('migrateImportTempDb', () => {
         id: 'sc1',
         categoryId: null,
         name: 'Phone',
-        sortOrder: 0,
-        createdAt: 'created',
-        updatedAt: 'updated',
-      },
-    ]);
-    expect(db.all('SELECT * FROM shortcut_values')).toEqual([
-      {
-        id: 'sv1',
-        shortcutId: 'sc1',
-        name: 'Mother',
         value: '080-0000-0000',
         useCount: 3,
         sortOrder: 0,
         createdAt: 'created',
         updatedAt: 'updated',
       },
+    ]);
+    expect(db.all('SELECT * FROM shortcut_profiles')).toEqual([
+      { shortcutId: 'sc1', profileId: 'p1' },
     ]);
   });
 

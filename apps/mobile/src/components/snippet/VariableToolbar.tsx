@@ -12,7 +12,7 @@
  * - 10秒ごとの自動リフレッシュ（変数追加を反映）
  *
  * @see TextInputScreen - 親コンポーネント
- * @see app/shortcut/value-text-edit.tsx - ショートカットの値入力での使用
+ * @see app/shortcut/value-edit.tsx - ショートカットの値入力での使用
  * @see UI_SYSTEM_VARIABLES - システム変数定義
  */
 

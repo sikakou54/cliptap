@@ -46,7 +46,7 @@ export function Dashboard() {
     selectedCategory,
     copiedId,
     copiedTitleId,
-    copiedShortcutValueId,
+    copiedShortcutId,
     showProfileDropdown,
     showSearchBar,
     gridColumns,
@@ -85,7 +85,7 @@ export function Dashboard() {
     handleCopySnippet,
     handleCopySnippetTitle,
     handleDeleteSnippet,
-    handleCopyShortcutValue,
+    handleCopyShortcut,
     handleDeleteShortcut,
     handleSelectProfile,
     handleToggleMobileMenu,
@@ -195,9 +195,9 @@ export function Dashboard() {
             <ShortcutGrid
               shortcuts={filteredShortcuts}
               gridColumns={gridColumns}
-              copiedValueId={copiedShortcutValueId}
+              copiedShortcutId={copiedShortcutId}
               categories={categories}
-              onCopyValue={handleCopyShortcutValue}
+              onCopy={handleCopyShortcut}
               onEdit={shortcutModal.handleEdit}
               onDelete={handleDeleteShortcut}
             />

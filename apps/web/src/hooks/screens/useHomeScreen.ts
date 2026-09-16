@@ -45,7 +45,6 @@ import {
   type SnippetWithDisplay,
   type SnippetSortBy,
   type Shortcut,
-  type ShortcutValueWithDisplay,
   type ShortcutWithDisplay,
 } from '@cliptap/shared';
 import { useDatabase } from '@cliptap/shared';
@@ -80,7 +79,7 @@ export interface UseHomeScreenReturn {
   gridColumns: 1 | 2 | 3;
   listMode: WebListMode;
   searchProfileId: string | null;
-  copiedShortcutValueId: string | null;
+  copiedShortcutId: string | null;
 
   /* モバイルメニュー */
   isMobileMenuOpen: boolean;
@@ -138,7 +137,7 @@ export interface UseHomeScreenReturn {
   handleDeleteSnippet: (id: string) => Promise<void>;
   handleSelectProfile: (profileId: string) => Promise<void>;
   handleToggleSnippet: (snippetId: string) => void;
-  handleCopyShortcutValue: (value: ShortcutValueWithDisplay) => Promise<void>;
+  handleCopyShortcut: (shortcut: ShortcutWithDisplay) => Promise<void>;
   handleDeleteShortcut: (shortcut: Shortcut) => void;
   handleToggleMobileMenu: () => void;
   handleCloseMobileMenu: () => void;
@@ -163,7 +162,7 @@ export function useHomeScreen(): UseHomeScreenReturn {
     createShortcut,
     updateShortcut,
     deleteShortcut,
-    copyShortcutValue,
+    copyShortcut,
   } = useShortcuts();
   const {
     canAddShortcut,
@@ -201,7 +200,7 @@ export function useHomeScreen(): UseHomeScreenReturn {
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [listMode, setListModeState] = useState<WebListMode>('snippet');
   const [searchProfileOverride, setSearchProfileOverride] = useState<string | null>(null);
-  const [copiedShortcutValueId, setCopiedShortcutValueId] = useState<string | null>(null);
+  const [copiedShortcutId, setCopiedShortcutId] = useState<string | null>(null);
   const [editingShortcut, setEditingShortcut] = useState<Shortcut | null>(null);
   const [isCreatingShortcut, setIsCreatingShortcut] = useState(false);
   const [shortcutSort, setShortcutSort] = useState<SnippetSortBy>(() => {
@@ -400,10 +399,10 @@ export function useHomeScreen(): UseHomeScreenReturn {
   }, [copiedTitleId]);
 
   useEffect(() => {
-    if (!copiedShortcutValueId) return;
-    const timeoutId = setTimeout(() => setCopiedShortcutValueId(null), COPY_SUCCESS_DURATION_MS);
+    if (!copiedShortcutId) return;
+    const timeoutId = setTimeout(() => setCopiedShortcutId(null), COPY_SUCCESS_DURATION_MS);
     return () => clearTimeout(timeoutId);
-  }, [copiedShortcutValueId]);
+  }, [copiedShortcutId]);
 
   const setListMode = useCallback((mode: WebListMode) => {
     setListModeState(mode);
@@ -464,15 +463,15 @@ export function useHomeScreen(): UseHomeScreenReturn {
     });
   }, [deleteShortcut, t]);
 
-  const handleCopyShortcutValue = useCallback(async (value: ShortcutValueWithDisplay) => {
+  const handleCopyShortcut = useCallback(async (shortcut: ShortcutWithDisplay) => {
     try {
-      await copyShortcutValue(value, effectiveProfileId ?? undefined);
-      setCopiedShortcutValueId(value.id);
+      await copyShortcut(shortcut, effectiveProfileId ?? undefined);
+      setCopiedShortcutId(shortcut.id);
     } catch (error) {
       Logger.error('Failed to copy shortcut value:', error);
       showErrorAlert(t('error.generic'));
     }
-  }, [copyShortcutValue, effectiveProfileId, t]);
+  }, [copyShortcut, effectiveProfileId, t]);
 
   /** スニペットを削除（確認ダイアログ付き） */
   const handleDeleteSnippet = useCallback(async (id: string) => {
@@ -566,7 +565,7 @@ export function useHomeScreen(): UseHomeScreenReturn {
     defaultProfileId,
     listMode,
     searchProfileId,
-    copiedShortcutValueId,
+    copiedShortcutId,
 
     shortcutModal: {
       isOpen: isCreatingShortcut || editingShortcut !== null,
@@ -592,7 +591,7 @@ export function useHomeScreen(): UseHomeScreenReturn {
     handleDeleteSnippet,
     handleSelectProfile,
     handleToggleSnippet,
-    handleCopyShortcutValue,
+    handleCopyShortcut,
     handleDeleteShortcut,
     handleToggleMobileMenu: toggleMobileMenu,
     handleCloseMobileMenu: closeMobileMenu,

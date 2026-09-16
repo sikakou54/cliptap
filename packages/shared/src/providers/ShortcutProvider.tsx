@@ -21,7 +21,7 @@ import { Logger } from '../utils/logger';
 import { useDatabase } from './DatabaseProvider';
 import { useProfiles } from './ProfileProvider';
 import { createCustomResolver, getCurrentLocale } from './variableCopyContext';
-import type { CreateShortcutInput, Shortcut, ShortcutValue, UpdateShortcutInput } from '../schema';
+import type { CreateShortcutInput, Shortcut, UpdateShortcutInput } from '../schema';
 
 /* ======================================== */
 /* 型定義 */
@@ -47,8 +47,8 @@ export interface ShortcutContextValue {
   updateShortcut: (input: UpdateShortcutInput) => Shortcut;
   /** ショートカット削除 */
   deleteShortcut: (id: string) => void;
-  /** ショートカット値の変数を展開してクリップボードへコピーする（使用回数も加算する。profileId省略時はアクティブなプロファイルで展開） */
-  copyShortcutValue: (value: ShortcutValue, profileId?: string) => Promise<void>;
+  /** ショートカットの値の変数を展開してクリップボードへコピーする（使用回数も加算する。profileId省略時はアクティブなプロファイルで展開） */
+  copyShortcut: (shortcut: Shortcut, profileId?: string) => Promise<void>;
   /** IDで取得（値は保存されている文字列のまま） */
   getById: (id: string) => Shortcut | null;
 }
@@ -130,7 +130,6 @@ export function ShortcutProvider({ children }: ShortcutProviderProps) {
    * ショートカット作成
    * @throws {EmptyContentError} ショートカット名が空の場合
    * @throws {DuplicateNameError} 紐づけるいずれかのプロファイルで同名のショートカットが見える場合
-   * @throws {ShortcutValueRequiredError} 値が1件も無い場合
    */
   const createShortcut = useCallback(
     (input: CreateShortcutInput): Shortcut => {
@@ -145,7 +144,6 @@ export function ShortcutProvider({ children }: ShortcutProviderProps) {
    * ショートカット更新
    * @throws {EmptyContentError} ショートカット名が空の場合
    * @throws {DuplicateNameError} 保存後に紐づくいずれかのプロファイルで同名のショートカットが見える場合（自分以外）
-   * @throws {ShortcutValueRequiredError} 値をすべて削除しようとした場合
    */
   const updateShortcut = useCallback(
     (input: UpdateShortcutInput): Shortcut => {
@@ -173,10 +171,9 @@ export function ShortcutProvider({ children }: ShortcutProviderProps) {
   /* ======================================== */
 
   /**
-   * ショートカット値をクリップボードへコピーする
+   * ショートカットの値をクリップボードへコピーする
    *
    * @remarks
-   * 挿入する値だけをコピーする（値名は含めない）。
    * 保存されている値の変数トークン（{{name}}）を、コピーする時点のプロファイルと日時で展開する。
    * 基準は画面から渡されたプロファイル（検索画面のチップ）で、省略時はアクティブなプロファイルとする
    * （定型文の copySnippet と同じ）。展開に失敗した場合は、未展開の値をコピーする（§8.6）。
@@ -190,14 +187,14 @@ export function ShortcutProvider({ children }: ShortcutProviderProps) {
    * 再取得ではなく手元で進めるのは、コピーのたびに一覧が組み直されて
    * 指の下で行が動くのを避けるため。
    */
-  const copyShortcutValue = useCallback(async (value: ShortcutValue, profileId?: string): Promise<void> => {
+  const copyShortcut = useCallback(async (shortcut: Shortcut, profileId?: string): Promise<void> => {
     if (!hasClipboardAdapter()) {
       throw new Error('Clipboard adapter is not registered');
     }
 
-    let text = value.value;
+    let text = shortcut.value;
     try {
-      text = await ShortcutService.prepareValueForClipboard(value.value, {
+      text = await ShortcutService.prepareValueForClipboard(shortcut.value, {
         locale: getCurrentLocale(),
         customResolver: createCustomResolver(profileId),
       });
@@ -207,19 +204,12 @@ export function ShortcutProvider({ children }: ShortcutProviderProps) {
 
     await getClipboardAdapter().copy(text);
 
-    ShortcutService.recordUse(value.id, value.shortcutId);
+    ShortcutService.recordUse(shortcut.id);
     setShortcuts((prev) =>
-      prev.map((shortcut) =>
-        shortcut.id === value.shortcutId
-          ? {
-              ...shortcut,
-              values: shortcut.values.map((current) =>
-                current.id === value.id
-                  ? { ...current, useCount: current.useCount + 1 }
-                  : current
-              ),
-            }
-          : shortcut
+      prev.map((current) =>
+        current.id === shortcut.id
+          ? { ...current, useCount: current.useCount + 1 }
+          : current
       )
     );
   }, []);
@@ -243,7 +233,7 @@ export function ShortcutProvider({ children }: ShortcutProviderProps) {
       createShortcut,
       updateShortcut,
       deleteShortcut,
-      copyShortcutValue,
+      copyShortcut,
       getById,
     }),
     [
@@ -255,7 +245,7 @@ export function ShortcutProvider({ children }: ShortcutProviderProps) {
       createShortcut,
       updateShortcut,
       deleteShortcut,
-      copyShortcutValue,
+      copyShortcut,
       getById,
     ]
   );

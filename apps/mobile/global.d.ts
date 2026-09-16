@@ -17,7 +17,7 @@
  * @see app/snippet/content-input.tsx - 本文入力モーダル
  * @see app/profile/select.tsx - プロファイル選択モーダル（定型文フォーム・ショートカット編集で共有）
  * @see app/shortcut/value-edit.tsx - ショートカット値編集モーダル
- * @see app/shortcut/value-text-edit.tsx - ショートカットの値入力モーダル
+ * @see app/shortcut/value-edit.tsx - ショートカットの値入力モーダル
  */
 
 declare global {
@@ -48,23 +48,10 @@ declare global {
   var profileSelectCallback: ((selectedIds: string[]) => void) | undefined;
 
   /**
-   * ショートカット値編集のデータ
-   * ショートカット値編集モーダルから親画面（ショートカット編集）に編集後のデータを返す
-   */
-  var shortcutValueCallbackData: {
-    /** 対象の値の画面内キー（空文字なら新規追加） */
-    key: string;
-    /** 値名 */
-    name: string;
-    /** 挿入する値（保存する文字列。変数トークンは展開しない） */
-    value: string;
-  } | undefined;
-
-  /**
    * ショートカットの「挿入する値」のコールバック
-   * 値入力モーダルから値編集モーダルへ編集後の本文を返す
+   * 値入力モーダルから親画面（ショートカット作成・編集）へ編集後の値を返す
    */
-  var shortcutValueTextCallback: ((value: string) => void) | undefined;
+  var shortcutValueCallback: ((value: string) => void) | undefined;
 
   /**
    * 変数値編集のデータ

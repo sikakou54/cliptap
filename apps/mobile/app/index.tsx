@@ -58,7 +58,7 @@ export default function HomeScreen() {
     handleCopySnippetTitle,
     handleEditSnippet,
     handleDeleteSnippet,
-    handleCopyShortcutValue,
+    handleCopyShortcut,
     handleEditShortcut,
     handleDeleteShortcut,
     handleNavigateToSettings,
@@ -165,7 +165,7 @@ export default function HomeScreen() {
             <ShortcutList
               shortcuts={shortcuts}
               categories={categories}
-              onCopyValue={handleCopyShortcutValue}
+              onCopy={handleCopyShortcut}
               onEdit={handleEditShortcut}
               onDelete={handleDeleteShortcut}
               onRefresh={handleRefresh}

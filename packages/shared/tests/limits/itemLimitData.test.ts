@@ -66,11 +66,11 @@ describe('定型文・ショートカットの登録上限と保存済みデー�
 
   it('ショートカットの総数は紐づけの数によらず1件ずつ数え、プロファイル別の件数と区別される', async () => {
     await useDatabase();
-    const values = [{ name: '自分', value: '090-0000-0000' }];
-    ShortcutService.create({ profileIds: [MAIN], name: 'MAINだけ', values });
-    ShortcutService.create({ profileIds: [OTHER], name: 'OTHERだけ', values });
-    ShortcutService.create({ profileIds: [], name: '全プロファイル', values });
-    ShortcutService.create({ profileIds: [MAIN, OTHER], name: '両方', values });
+    const value = '090-0000-0000';
+    ShortcutService.create({ profileIds: [MAIN], name: 'MAINだけ', value });
+    ShortcutService.create({ profileIds: [OTHER], name: 'OTHERだけ', value });
+    ShortcutService.create({ profileIds: [], name: '全プロファイル', value });
+    ShortcutService.create({ profileIds: [MAIN, OTHER], name: '両方', value });
 
     expect(ShortcutService.count()).toBe(4);
     /* MAINから見えるのは「OTHERだけ」以外の3件。総数と取り違えると上限をすり抜ける */
@@ -87,7 +87,7 @@ describe('定型文・ショートカットの登録上限と保存済みデー�
       ShortcutService.create({
         profileIds: [],
         name: `shortcut-${i}`,
-        values: [{ name: '値', value: `value-${i}` }],
+        value: `value-${i}`,
       });
     }
 

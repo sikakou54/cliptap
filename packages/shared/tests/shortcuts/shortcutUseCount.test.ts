@@ -3,15 +3,15 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 /**
- * ショートカット値の使用回数は、キーボードからの挿入だけでなく
- * モバイルのコピーでも加算する（定型文 §8.12 と同じ扱い）。
+ * ショートカットの使用回数は、キーボードからの挿入だけでなく
+ * モバイル・Webのコピーでも加算する（定型文 §8.12 と同じ扱い）。
  *
  * Providerはフックのため実DBテストから直接呼べない。
  * 呼び忘れるとコピーしても使用頻度順が動かず、しかも例外にならないため気付けない。
  * ProfileProviderの保証（tests/profiles/deleteProfile.test.ts）と同じやり方で、
  * 実装のソース上に呼び出しが残っていることを固定する。
  */
-describe('ショートカット値の使用回数', () => {
+describe('ショートカットの使用回数', () => {
   /** 共有パッケージのルート */
   const root = resolve(import.meta.dirname, '../..');
 
@@ -21,7 +21,7 @@ describe('ショートカット値の使用回数', () => {
   );
 
   it('Providerのコピー経路で使用回数を加算する', () => {
-    const start = providerSource.indexOf('const copyShortcutValue');
+    const start = providerSource.indexOf('const copyShortcut');
     expect(start).toBeGreaterThan(-1);
 
     /* コピー本体から関数の終わりまでの間に加算があること */
@@ -35,7 +35,7 @@ describe('ショートカット値の使用回数', () => {
    * 画面を作り直すまで並びが変わらない。
    */
   it('コピー後に保持中の一覧の使用回数も進める', () => {
-    const start = providerSource.indexOf('const copyShortcutValue');
+    const start = providerSource.indexOf('const copyShortcut');
     const body = providerSource.slice(start, start + 1500);
 
     expect(body).toContain('setShortcuts(');
@@ -52,7 +52,7 @@ describe('ショートカット値の使用回数', () => {
       'src/hooks/screens/useSearchShortcuts.ts',
     ]) {
       const source = readFileSync(resolve(mobileRoot, file), 'utf8');
-      expect(source).toContain('copyShortcutValue(value');
+      expect(source).toContain('copyShortcut(shortcut');
       expect(source).not.toContain('ShortcutService.recordUse');
     }
   });

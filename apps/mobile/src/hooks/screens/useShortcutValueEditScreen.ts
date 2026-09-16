@@ -1,31 +1,43 @@
 /**
- * ショートカット値編集モーダルのビジネスロジックフック
+ * ショートカットの値入力モーダルのビジネスロジックフック
  *
- * ショートカットが持つ値1件の追加・編集の状態管理とロジックを提供。
+ * 「挿入する値」だけを入力する画面の状態とロジックを提供。
  * UIコンポーネント（shortcut/value-edit.tsx）から完全に分離されたビジネスロジック層。
  *
  * 主な責務:
- * - 値名と値の入力状態の管理
- * - 保存可否の判定
- * - 値入力画面（shortcut/value-text-edit）との往復
- * - 親画面（shortcut/edit）への値の受け渡し
+ * - 入力中の値の状態管理
+ * - カーソル位置の管理と、変数ツールバーからの変数トークンの挿入
+ * - キーボード高さの管理（ツールバーをキーボードの直上へ置くため）
+ * - 呼び出し元（値編集モーダル）への受け渡し
+ *
+ * 【値だけを別のモーダルにする理由】
+ * 挿入する値は住所や定型の文面など複数行になることがあり、値名と同じ画面に収めると
+ * 入力欄が狭くなって全体を確かめられない。カスタム変数の値入力（profile-value-edit）と
+ * 同じく、値だけを画面いっぱいに広げて入力する。
+ *
+ * 【定型文の本文入力（useTextInputScreen）とまとめない理由】
+ * キーボード高さとカーソル位置の扱いは同じだが、定型文の画面はタブレットでカード表示、
+ * この画面はモーダル表示と提示方法が異なり、入力内容の返し先も違う。
+ * 1つのフックへまとめると、リリース済みの定型文の画面にショートカット用の分岐が混ざるため、
+ * 同じ処理をそれぞれが素直に持つ。挙動を変えるときは両方を揃えること。
  *
  * @see app/shortcut/value-edit.tsx - UIコンポーネント
- * @see src/hooks/screens/useShortcutEditScreen.ts - 受け取り側
+ * @see src/hooks/screens/useTextInputScreen.ts - 定型文の本文入力の同じ処理
+ * @see src/hooks/screens/useProfileValueEditScreen.ts - カスタム変数側の同じ役割のフック
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { TextInput, Keyboard, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
+
+/** フォーカス遅延時間（ミリ秒）- モーダルの表示アニメーションと重なって効かないのを避ける */
+const FOCUS_DELAY_MS = 100;
 
 /**
  * useShortcutValueEditScreenの引数の型
  */
 interface UseShortcutValueEditScreenParams {
-  /** 編集対象の値の画面内キー（新規追加時は空文字） */
-  valueKey: string;
-  /** 値名の初期値 */
-  initialName: string;
-  /** 値の初期値（変数トークンは未展開） */
+  /** 初期値（呼び出し元が保持している編集中の値） */
   initialValue: string;
 }
 
@@ -34,113 +46,148 @@ interface UseShortcutValueEditScreenParams {
  */
 export interface UseShortcutValueEditScreenReturn {
   /* 状態 */
-  /** 値名 */
-  valueName: string;
-  /** 値名を更新する */
-  setValueName: (name: string) => void;
-  /** 挿入する値（変数トークンは未展開） */
+  /** 入力中の値 */
   value: string;
-
-  /* 派生状態 */
-  /** 編集モードかどうか */
-  isEdit: boolean;
-  /** 保存できるかどうか */
-  canSave: boolean;
+  /** 表示中のキーボードの高さ（非表示なら0） */
+  keyboardHeight: number;
+  /** 入力欄への参照（自動フォーカス用） */
+  textInputRef: React.RefObject<TextInput | null>;
 
   /* ハンドラ */
-  /** 値の入力画面を開く */
-  handleOpenValueInput: () => void;
-  /** 入力内容を親画面へ返して閉じる */
+  /** 入力中の値を更新する */
+  handleChangeText: (value: string) => void;
+  /** カーソル位置の変化を受け取る */
+  handleSelectionChange: (start: number) => void;
+  /** 変数トークン（{{name}}）をカーソル位置へ挿入する */
+  handleInsertVariable: (variableName: string) => void;
+  /** 入力内容を呼び出し元へ返して閉じる */
   handleSave: () => void;
 }
 
 /**
- * ショートカット値編集モーダルのビジネスロジックフック
+ * ショートカットの値入力モーダルのビジネスロジックフック
  *
- * @param params - 画面パラメータ
- * @returns 画面に必要な全ての状態とハンドラ
+ * @param params - 初期値
+ * @returns 画面に必要な状態とハンドラ
  */
 export function useShortcutValueEditScreen(
   params: UseShortcutValueEditScreenParams
 ): UseShortcutValueEditScreenReturn {
-  const { valueKey, initialName, initialValue } = params;
+  const { initialValue } = params;
 
   const router = useRouter();
 
   /* ======================================== */
   /* 状態管理 */
   /* ======================================== */
-  const [valueName, setValueName] = useState(initialName);
+
+  /* 初期値はレンダー時に確定するため、effectで書き戻さず初期値として渡す。
+     effectで入れると、1レンダー分だけ空の入力欄が見えるうえに
+     入力後の再レンダーで打ち消される余地が残る */
   const [value, setValue] = useState(initialValue);
+  /* 開いた直後はカーソルを末尾に置くため、挿入位置も末尾から始める */
+  const [cursorPosition, setCursorPosition] = useState(initialValue.length);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const textInputRef = useRef<TextInput>(null);
 
   /* ======================================== */
-  /* 派生状態 */
+  /* キーボードイベントリスナー */
   /* ======================================== */
-  const isEdit = valueKey !== '';
 
-  /**
-   * 保存可能かどうか
-   *
-   * @remarks
-   * 値名は一覧で値を見分けるための表示なので必須にする。
-   * 挿入する値そのものは空文字を許容する（空文字の挿入を選ぶ利用者の意図を壊さない）。
-   */
-  const canSave = useMemo(() => valueName.trim() !== '', [valueName]);
+  /* ツールバーをキーボードの直上へ置くため、キーボードの高さを追う（定型文の本文入力と同じ） */
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const keyboardShow = Keyboard.addListener(showEvent, (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+    });
+    const keyboardHide = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      keyboardShow.remove();
+      keyboardHide.remove();
+    };
+  }, []);
+
+  /* ======================================== */
+  /* 自動フォーカスとカーソル位置設定 */
+  /* ======================================== */
+
+  /* 開いた直後から打ち始められるようにし、カーソルを末尾へ置く。
+     即座にfocusするとモーダルの表示アニメーションと重なって効かないことがあるため少し待つ */
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      textInputRef.current?.focus();
+      if (initialValue.length > 0) {
+        textInputRef.current?.setNativeProps({
+          selection: { start: initialValue.length, end: initialValue.length },
+        });
+      }
+    }, FOCUS_DELAY_MS);
+
+    return () => clearTimeout(timeoutId);
+  }, [initialValue.length]);
 
   /* ======================================== */
   /* イベントハンドラ */
   /* ======================================== */
 
   /**
-   * 値の入力画面を開く
-   *
-   * @remarks
-   * 値は複数行になることがあり、この画面の中に収めると入力欄が狭くなって全体を確かめられない。
-   * カスタム変数の値入力（useVariableEditScreen.handleOpenValueEdit）と同じく専用画面へ出す。
-   * 変数トークンを挿入する変数ツールバーも、その専用画面が持つ。
-   * 戻り値はグローバル変数経由で受け取る（expo-routerのモーダルは戻り値を返せないため）。
+   * 入力中の値を更新する
    */
-  const handleOpenValueInput = useCallback(() => {
-    global.shortcutValueTextCallback = (newValue: string) => {
-      setValue(newValue);
-    };
-    router.push({
-      pathname: '/shortcut/value-text-edit',
-      params: { value },
-    });
-  }, [value, router]);
+  const handleChangeText = useCallback((newValue: string) => {
+    setValue(newValue);
+  }, []);
 
   /**
-   * 入力内容を親画面へ返して閉じる
+   * カーソル位置の変化を受け取る
+   */
+  const handleSelectionChange = useCallback((start: number) => {
+    setCursorPosition(start);
+  }, []);
+
+  /**
+   * 変数トークンをカーソル位置へ挿入する
    *
    * @remarks
-   * expo-router のモーダルは戻り値を返せないため、グローバル変数へ書いてから戻る。
-   * 親画面（shortcut/edit）はフォーカス復帰時にこれを読み取って即座に破棄する。
-   * DBへの反映は親画面の保存時にまとめて行うため、ここではDBへ触れない。
+   * 挿入後もキーボードを出したまま続けて入力できるよう、入力欄へフォーカスを戻す。
+   */
+  const handleInsertVariable = useCallback(
+    (variableName: string) => {
+      const token = `{{${variableName}}}`;
+      const nextValue = value.slice(0, cursorPosition) + token + value.slice(cursorPosition);
+
+      setValue(nextValue);
+      setCursorPosition(cursorPosition + token.length);
+
+      setTimeout(() => {
+        textInputRef.current?.focus();
+      }, FOCUS_DELAY_MS);
+    },
+    [value, cursorPosition]
+  );
+
+  /**
+   * 入力内容を呼び出し元へ返して閉じる
+   *
+   * expo-routerのモーダルは戻り値を返せないため、グローバル変数経由で受け渡す
+   * （値編集モーダルが親画面へ返すときと同じ作り）。
    */
   const handleSave = useCallback(() => {
-    if (!canSave) return;
-
-    global.shortcutValueCallbackData = {
-      key: valueKey,
-      name: valueName.trim(),
-      value,
-    };
-
+    global.shortcutValueCallback?.(value);
     router.back();
-  }, [canSave, valueKey, valueName, value, router]);
-
-  /* ======================================== */
-  /* 戻り値 */
-  /* ======================================== */
+  }, [value, router]);
 
   return {
-    valueName,
-    setValueName,
     value,
-    isEdit,
-    canSave,
-    handleOpenValueInput,
+    keyboardHeight,
+    textInputRef,
+    handleChangeText,
+    handleSelectionChange,
+    handleInsertVariable,
     handleSave,
   };
 }

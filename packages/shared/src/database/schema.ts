@@ -124,6 +124,11 @@ export const CREATE_TABLES = {
    * ショートカットテーブル
    *
    * @remarks
+   * 1件のショートカットは挿入する値を1つだけ持つ。値は value 列の文字列で、
+   * 変数トークン（{{name}}）は未展開のまま保存する。展開は表示・コピー・
+   * キーボードからの挿入のそれぞれが、その時点のプロファイルと日時で行う。
+   * useCount はモバイル・Webでのコピーと、キーボードからの挿入の回数で、使用頻度順の根拠にする。
+   *
    * 紐づくプロファイルは shortcut_profiles で表す。定型文と同じ中間テーブルの形にしてある。
    * 1件のショートカットにつき紐づけは0件以上。0件は全プロファイル向け（snippet_profiles と同じ）。
    *
@@ -139,6 +144,8 @@ export const CREATE_TABLES = {
       id TEXT PRIMARY KEY,
       categoryId TEXT,
       name TEXT NOT NULL,
+      value TEXT NOT NULL,
+      useCount INTEGER DEFAULT 0,
       sortOrder INTEGER DEFAULT 0,
       createdAt TEXT NOT NULL,
       updatedAt TEXT NOT NULL,
@@ -161,27 +168,6 @@ export const CREATE_TABLES = {
       PRIMARY KEY (shortcutId, profileId),
       FOREIGN KEY (shortcutId) REFERENCES shortcuts(id) ON DELETE CASCADE,
       FOREIGN KEY (profileId) REFERENCES profiles(id) ON DELETE CASCADE
-    );
-  `,
-
-  /**
-   * ショートカット値テーブル
-   *
-   * @remarks
-   * valueは挿入する文字列で、変数トークン（{{name}}）を未展開のまま持つ。
-   * 展開は表示・コピー・キーボードからの挿入のそれぞれが、その時点のプロファイルと日時で行う（定型文の本文と同じ）。
-   */
-  shortcutValues: `
-    CREATE TABLE IF NOT EXISTS shortcut_values (
-      id TEXT PRIMARY KEY,
-      shortcutId TEXT NOT NULL,
-      name TEXT NOT NULL,
-      value TEXT NOT NULL,
-      useCount INTEGER DEFAULT 0,
-      sortOrder INTEGER DEFAULT 0,
-      createdAt TEXT NOT NULL,
-      updatedAt TEXT NOT NULL,
-      FOREIGN KEY (shortcutId) REFERENCES shortcuts(id) ON DELETE CASCADE
     );
   `,
 };
@@ -251,10 +237,6 @@ export const CREATE_INDEXES = {
     CREATE INDEX IF NOT EXISTS idx_shortcuts_category
     ON shortcuts(categoryId);
   `,
-  shortcutValuesShortcut: `
-    CREATE INDEX IF NOT EXISTS idx_shortcut_values_shortcut
-    ON shortcut_values(shortcutId);
-  `,
   /**
    * 使用回数のindex
    *
@@ -264,10 +246,13 @@ export const CREATE_INDEXES = {
    * `finalizeLatestSchema` はテーブル名しか確認せず、Mapperは `useCount ?? 0` で読むため、
    * 列が欠けても例外にならず全件0として静かに壊れる（migrations.tsの「派生indexが参照する列は
    * createIndexesWithDbの作成時に検知される」に対応）。参照するクエリが無いことを理由に消さないこと。
+   *
+   * 1ショートカット1値へ変えたため、旧構造（値を shortcut_values に持つV8）のDBが残っていることを
+   * 起動時に検知する経路も兼ねる。旧構造のshortcutsはuseCount列を持たず、ここで必ず失敗する。
    */
-  shortcutValuesUseCount: `
-    CREATE INDEX IF NOT EXISTS idx_shortcut_values_use_count
-    ON shortcut_values(useCount DESC);
+  shortcutsUseCount: `
+    CREATE INDEX IF NOT EXISTS idx_shortcuts_use_count
+    ON shortcuts(useCount DESC);
   `,
 };
 
@@ -275,7 +260,6 @@ export const CREATE_INDEXES = {
  * テーブル削除SQL定義（外部キー制約のため削除順序重要）
  */
 export const DROP_TABLES = {
-  shortcutValues: 'DROP TABLE IF EXISTS shortcut_values;',
   shortcutProfiles: 'DROP TABLE IF EXISTS shortcut_profiles;',
   shortcuts: 'DROP TABLE IF EXISTS shortcuts;',
   systemVariableFormats: 'DROP TABLE IF EXISTS system_variable_formats;',

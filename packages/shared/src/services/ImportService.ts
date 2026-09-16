@@ -203,7 +203,6 @@ export class ImportService {
       restoreData.shortcutProfiles.forEach((row) =>
         ShortcutMapper.restoreProfileLink(row)
       );
-      restoreData.shortcutValues.forEach((row) => ShortcutMapper.restoreValue(row));
 
       /* 壊れたバックアップに標準・アクティブが無い場合だけ補完する。 */
       ProfileService.ensureDefaultAndActive();
@@ -226,11 +225,10 @@ export class ImportService {
     try {
       mainDbAdapter.run('DELETE FROM system_variable_formats');
 
-      /* ショートカットは値・紐づけ（shortcut_profiles）・本体の3表をすべて全件削除する。
-         どれかを消し忘れると、復元後に旧データの行が残り、同じIDの値や紐づけが混ざってしまう。
+      /* ショートカットは紐づけ（shortcut_profiles）・本体の2表をすべて全件削除する。
+         どちらかを消し忘れると、復元後に旧データの行が残り、同じIDの紐づけが混ざってしまう。
          いずれも条件なしの全件削除で、実行時に外部キーも強制していないため順序は結果に影響しない。
-         宣言上の依存（子→親）に合わせて、値・紐づけを本体より先に書いている */
-      mainDbAdapter.run('DELETE FROM shortcut_values');
+         宣言上の依存（子→親）に合わせて、紐づけを本体より先に書いている */
       mainDbAdapter.run('DELETE FROM shortcut_profiles');
       mainDbAdapter.run('DELETE FROM shortcuts');
 

@@ -36,7 +36,7 @@ import {
   useFilteredSnippets,
   type Category,
   type Shortcut,
-  type ShortcutValue,
+ 
   type ShortcutWithDisplay,
   type SnippetWithDisplay,
   type Profile,
@@ -87,7 +87,7 @@ export interface UseSearchScreenReturn {
   handleCopySnippetTitle: (snippet: SnippetWithDisplay) => Promise<void>;
   handleEditSnippet: (snippet: SnippetWithDisplay) => void;
   handleDeleteSnippet: (snippet: SnippetWithDisplay) => void;
-  handleCopyShortcutValue: (value: ShortcutValue) => Promise<void>;
+  handleCopyShortcut: (shortcut: Shortcut) => Promise<void>;
   handleEditShortcut: (shortcut: Shortcut) => void;
   handleDeleteShortcut: (shortcut: Shortcut) => void;
   handleClose: () => void;
@@ -172,7 +172,7 @@ export function useSearchScreen(params: UseSearchScreenParams): UseSearchScreenR
     displayShortcuts,
     getProfileShortcutCount,
     handleRefreshShortcuts,
-    handleCopyShortcutValue,
+    handleCopyShortcut,
     handleEditShortcut,
     handleDeleteShortcut,
   } = useSearchShortcuts({
@@ -329,7 +329,7 @@ export function useSearchScreen(params: UseSearchScreenParams): UseSearchScreenR
     handleCopySnippetTitle,
     handleEditSnippet,
     handleDeleteSnippet,
-    handleCopyShortcutValue,
+    handleCopyShortcut,
     handleEditShortcut,
     handleDeleteShortcut,
     handleClose,

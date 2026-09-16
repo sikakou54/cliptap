@@ -75,15 +75,11 @@ export {
 /* ==================== Shortcut ==================== */
 export {
   ShortcutSchema,
-  ShortcutValueSchema,
-  ShortcutValueInputSchema,
   ShortcutRowSchema,
   ShortcutProfileSchema,
   CreateShortcutInputSchema,
   UpdateShortcutInputSchema,
   type Shortcut,
-  type ShortcutValue,
-  type ShortcutValueInput,
   type ShortcutRow,
   type ShortcutProfile,
   type CreateShortcutInput,

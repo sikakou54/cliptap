@@ -140,7 +140,6 @@ export {
   FREE_VARIABLES_LIMIT,   /* 無料プランの変数上限 */
   FREE_SNIPPETS_LIMIT,    /* 無料プランの定型文登録上限 */
   FREE_SHORTCUTS_LIMIT,   /* 無料プランのショートカット登録上限 */
-  FREE_SHORTCUT_VALUES_LIMIT, /* 無料プランのショートカット1件あたりの値の上限 */
   type VariableResolverContext,       /* 変数解決コンテキスト */
   type ValidFlagsUpdater,             /* 有効フラグ更新関数型 */
   createValidFlagsUpdater,            /* ValidFlagsUpdater共通実装ファクトリ */

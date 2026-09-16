@@ -130,7 +130,6 @@ function AppContent({ isTabletDevice }: { isTabletDevice: boolean }) {
                   {/* ショートカット値編集画面 */}
                   <Stack.Screen name="shortcut/value-edit" options={MODAL_SLIDE_OPTIONS} />
                   {/* ショートカットの値入力画面 */}
-                  <Stack.Screen name="shortcut/value-text-edit" options={MODAL_SLIDE_OPTIONS} />
                   {/* 設定画面 */}
                   <Stack.Screen name="settings" />
                   {/* サブスクリプション課金画面（フルスクリーンモーダル） */}

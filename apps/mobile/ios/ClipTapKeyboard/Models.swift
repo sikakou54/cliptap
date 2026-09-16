@@ -82,20 +82,8 @@ struct Shortcut {
     let id: String
     let categoryId: String?    /* 所属カテゴリID（定型文と共通のcategories。未分類はnil） */
     let name: String
-    let sortOrder: Int
-    let createdAt: String
-    let updatedAt: String
-    var values: [ShortcutValue] = []  /* shortcut_valuesから取得（getAllで一括ロード） */
-}
-
-// MARK: - ShortcutValue
-
-struct ShortcutValue {
-    let id: String
-    let shortcutId: String
-    let name: String        /* 値を識別する名称（例: 母） */
-    let value: String       /* 保存された文字列（例: 090-0000-0000）。変数トークンは未展開で、表示・挿入の時点で展開する */
-    let useCount: Int       /* 拡張キーボードから挿入した回数（候補の並べ替え用） */
+    let value: String          /* 挿入する文字列（例: 090-0000-0000）。変数トークンは未展開で、表示・挿入の時点で展開する */
+    let useCount: Int          /* コピーと拡張キーボードからの挿入の回数（使用頻度順の根拠） */
     let sortOrder: Int
     let createdAt: String
     let updatedAt: String
