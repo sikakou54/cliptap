@@ -5,7 +5,6 @@ import {
   translateError,
   useSharedSubscription,
   useTranslation,
-  useVariableExpansion,
   type Category,
   type Profile,
   type ProfileVariable,
@@ -15,6 +14,7 @@ import {
 } from '@cliptap/shared';
 import { ProfileMultiSelect } from '@components/profile/ProfileMultiSelect';
 import { VariableBadges } from '@components/snippet/VariableBadges';
+import { ShortcutPreview } from './ShortcutPreview';
 import { QuickCategoryCreateButton } from '@components/category/QuickCategoryCreateButton';
 import { useBodyScrollLock } from '@hooks/useBodyScrollLock';
 import { useEscapeClose } from '@hooks/useEscapeClose';
@@ -63,7 +63,7 @@ export function ShortcutEditModal({
   onSave,
   onClose,
 }: ShortcutEditModalProps) {
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
   const { canAddShortcutValue } = useSharedSubscription();
   const [name, setName] = useState('');
   const [categoryId, setCategoryId] = useState<string | null>(null);
@@ -72,14 +72,6 @@ export function ShortcutEditModal({
   const [initialSnapshot, setInitialSnapshot] = useState('');
   const [focusedValueKey, setFocusedValueKey] = useState<string | null>(null);
   const selectionByKey = useRef(new Map<string, number>());
-
-  const { expandVariables } = useVariableExpansion({ variables, profileVariables, locale: language });
-  const previewProfileId = useMemo(() => {
-    if (profileIds.length === 0 || (activeProfileId && profileIds.includes(activeProfileId))) {
-      return activeProfileId;
-    }
-    return profiles.find((profile) => profileIds.includes(profile.id))?.id ?? activeProfileId;
-  }, [profileIds, activeProfileId, profiles]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -185,8 +177,10 @@ export function ShortcutEditModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 dark:bg-black/80" onMouseDown={handleClose}>
+      {/* モーダルコンテナ。デスクトップは画面の8割（幅80vw・高さ80vh）を占め、はみ出した内容は左右のカラムの中でスクロールする。
+          スマートフォンは幅いっぱい（背景の余白ぶんを除く）で、高さは内容に合わせて最大94vhまで伸ばす */}
       <div
-        className="flex max-h-[94vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-[#1A1A1A]"
+        className="flex max-h-[94vh] w-full flex-col overflow-hidden rounded-2xl bg-white shadow-xl md:h-[80vh] md:w-[80vw] dark:bg-[#1A1A1A]"
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-[#2A2A2A]">
@@ -196,8 +190,8 @@ export function ShortcutEditModal({
           <button type="button" onClick={handleClose} className="min-h-11 min-w-11 rounded-lg text-2xl text-gray-500 hover:bg-gray-100 dark:text-[#A0A0A0] dark:hover:bg-[#2A2A2A]" aria-label={t('common.close')}>×</button>
         </div>
 
-        <div className="grid min-h-0 flex-1 md:grid-cols-[minmax(0,1fr)_18rem]">
-          <div className="space-y-6 overflow-y-auto p-6">
+        <div className="grid min-h-0 flex-1 overflow-y-auto md:grid-cols-[minmax(0,1fr)_22rem] md:overflow-hidden">
+          <div className="space-y-6 p-6 md:overflow-y-auto">
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-[#A0A0A0]">{t('shortcut.name')} *</label>
               <input
@@ -235,10 +229,9 @@ export function ShortcutEditModal({
               </div>
 
               <div className="space-y-4">
-                {values.map((entry, index) => (
+                {values.map((entry) => (
                   <div key={entry.key} className="rounded-xl border border-gray-200 p-4 dark:border-[#2A2A2A]">
                     <div className="mb-3 flex items-center gap-3">
-                      <span className="text-sm font-semibold text-gray-500 dark:text-[#A0A0A0]">{index + 1}</span>
                       <input
                         value={entry.name}
                         onChange={(event) => updateValue(entry.key, { name: event.target.value })}
@@ -260,9 +253,6 @@ export function ShortcutEditModal({
                       className="w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-[#333333] dark:bg-[#242424] dark:text-white"
                       placeholder={t('shortcut.value_value_placeholder')}
                     />
-                    <p className="mt-2 whitespace-pre-wrap text-sm text-gray-500 dark:text-[#A0A0A0]">
-                      {expandVariables(entry.value, previewProfileId, defaultProfileId)}
-                    </p>
                   </div>
                 ))}
                 {values.length === 0 && <p className="rounded-xl border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 dark:border-[#333333] dark:text-[#A0A0A0]">{t('error.shortcut_value_required')}</p>}
@@ -270,8 +260,19 @@ export function ShortcutEditModal({
             </div>
           </div>
 
-          <aside className="overflow-y-auto border-t border-gray-200 bg-gray-50 p-5 md:border-l md:border-t-0 dark:border-[#2A2A2A] dark:bg-[#141414]">
+          <aside className="space-y-6 border-t border-gray-200 bg-gray-50 p-5 md:overflow-y-auto md:border-l md:border-t-0 dark:border-[#2A2A2A] dark:bg-[#141414]">
             <VariableBadges variables={variables} onInsertVariable={handleInsertVariable} />
+
+            <div className="h-px bg-gray-200 dark:bg-[#2A2A2A]" />
+
+            <ShortcutPreview
+              values={values}
+              selectedProfileIds={profileIds}
+              profiles={profiles}
+              variables={variables}
+              profileVariables={profileVariables}
+              defaultProfileId={defaultProfileId}
+            />
           </aside>
         </div>
 

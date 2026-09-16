@@ -9,8 +9,10 @@
  * - 所属プロファイルの選択（選択画面へ遷移。複数選択可、0件は全プロファイル向け）
  * - 値の追加/編集/削除（値の実体は保存時にまとめてDBへ反映）
  * - 値が1件も無い状態では保存できない
+ * - 値の変数展開結果のプレビュー（プロファイル切替・値ごとのコピー。値一覧は保存する文字列のまま表示）
  *
  * @see src/hooks/screens/useShortcutEditScreen.ts - ビジネスロジック
+ * @see src/components/shortcut/ShortcutValuePreview.tsx - 値のプレビュー
  * @see app/profile/select.tsx - プロファイル選択画面（定型文フォームと共有）
  * @see docs/機能仕様書.md §8.24 ショートカット管理
  */
@@ -23,6 +25,7 @@ import { useTheme } from '@lib/themeSystem';
 import { useShortcutEditScreen } from '@hooks/screens/useShortcutEditScreen';
 import { CategoryBadge } from '@components/category/CategoryBadge';
 import { ScreenContainer } from '@components/common/ScreenContainer';
+import { ShortcutValuePreview } from '@components/shortcut/ShortcutValuePreview';
 import { UI_CONSTANTS } from '@constants/ui';
 
 export default function ShortcutEditModal() {
@@ -245,8 +248,8 @@ export default function ShortcutEditModal() {
                   >
                     {draft.name}
                   </Text>
-                  {/* 挿入する値。ホームの一覧と同じく、変数トークンを展開した文字列で表示する
-                      （基準のプロファイルは useShortcutEditScreen の displayProfileId） */}
+                  {/* 挿入する値。保存する文字列のまま表示し、変数トークンは展開しない
+                      （展開結果は画面下部のプレビューで確かめる。定型文フォームの入力欄とプレビューと同じ分担） */}
                   <Text
                     style={[
                       styles.valueText,
@@ -258,7 +261,7 @@ export default function ShortcutEditModal() {
                     ]}
                     numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.DOUBLE}
                   >
-                    {draft.displayValue}
+                    {draft.value}
                   </Text>
                 </View>
 
@@ -298,6 +301,10 @@ export default function ShortcutEditModal() {
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* 値のプレビュー（選んだプロファイルで変数を展開した結果を値ごとに表示し、行のタップでその値だけをコピーする）。
+            定型文フォームの VariablePreview と同じく画面の最下部に置く */}
+        <ShortcutValuePreview values={values} selectedProfileIds={profileIds} />
       </ScrollView>
     </ScreenContainer>
   );

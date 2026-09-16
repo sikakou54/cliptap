@@ -181,11 +181,12 @@ export function SnippetEditModal({
       背景クリックで閉じる機能付き。未保存の変更がある場合は確認ダイアログを表示。 */
   return (
     <div className="fixed inset-0 bg-black/50 dark:bg-black/80 flex items-center justify-center p-4 z-50" onClick={handleClose}>
-      {/* モーダルコンテナ（最大幅制限、クリックイベントの伝播を停止）
-          最大幅1200px、最大高さ90vhで、コンテンツがはみ出した場合はスクロール可能。
+      {/* モーダルコンテナ（画面の8割の大きさ、クリックイベントの伝播を停止）
+          デスクトップは幅80vw・高さ80vhで固定し、はみ出した内容は各カラムの中でスクロールする。
+          スマートフォンでは幅いっぱい（背景の余白ぶんを除く）とし、高さは内容に合わせて最大90vhまで伸ばす。
           背景クリックで閉じる機能を実現するため、コンテナ内のクリックは伝播を停止。 */}
       <div
-        className="bg-white dark:bg-[#1A1A1A] rounded-2xl max-w-[1200px] w-full max-h-[90vh] overflow-hidden flex flex-col"
+        className="bg-white dark:bg-[#1A1A1A] rounded-2xl w-full md:w-[80vw] max-h-[90vh] md:h-[80vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ヘッダー（タイトルと閉じるボタン）

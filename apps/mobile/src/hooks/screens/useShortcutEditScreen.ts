@@ -7,10 +7,13 @@
  * 主な責務:
  * - ショートカット名・所属プロファイル（0件以上。0件は全プロファイル向け）・カテゴリ・値一覧の下書き状態の管理
  * - プロファイル選択画面・値編集モーダルとの往復（値は追加・更新・削除）
- * - 値一覧に出す、変数を展開した表示用の文字列の算出
  * - 保存可否の判定と保存処理（新規作成/更新）
  *
+ * 値は変数トークンを展開していない保存文字列のまま扱う。展開結果は画面下部のプレビュー
+ * （ShortcutValuePreview）がプロファイルを切り替えて表示するため、このフックでは展開しない。
+ *
  * @see app/shortcut/edit.tsx - UIコンポーネント
+ * @see src/components/shortcut/ShortcutValuePreview.tsx - 値のプレビュー
  * @see app/shortcut/value-edit.tsx - 値編集モーダル
  * @see app/profile/select.tsx - プロファイル選択画面（定型文フォームと共有）
  * @see packages/shared/src/providers/ShortcutProvider.tsx - ショートカットCRUD操作（useShortcuts）
@@ -25,8 +28,6 @@ import {
   useProfiles,
   useSharedSubscription,
   useShortcuts,
-  useVariableExpansion,
-  useVariables,
   type Category,
   type ShortcutValueInput,
 } from '@cliptap/shared';
@@ -57,17 +58,6 @@ export interface ShortcutValueDraft {
 }
 
 /**
- * 値一覧に表示する値1件
- *
- * @remarks
- * 保存と値編集モーダルへの受け渡しには展開前の value を使い、画面の表示にだけ displayValue を使う。
- */
-export interface ShortcutValueDraftWithDisplay extends ShortcutValueDraft {
-  /** 変数トークンを展開した表示用の文字列 */
-  displayValue: string;
-}
-
-/**
  * useShortcutEditScreenの引数の型
  */
 interface UseShortcutEditScreenParams {
@@ -90,8 +80,8 @@ export interface UseShortcutEditScreenReturn {
   selectedProfileNames: string[];
   /** 選択中のカテゴリ（未分類ならnull） */
   selectedCategory: Category | null;
-  /** 編集中の値一覧（表示順。変数を展開した表示用の文字列を持つ） */
-  values: ShortcutValueDraftWithDisplay[];
+  /** 編集中の値一覧（表示順。変数トークンを展開していない保存文字列のまま） */
+  values: ShortcutValueDraft[];
   /** 保存処理中フラグ */
   saving: boolean;
 
@@ -153,19 +143,12 @@ export function useShortcutEditScreen(
 ): UseShortcutEditScreenReturn {
   const { shortcutId } = params;
 
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
   const router = useRouter();
   const { activeProfileId, createShortcut, updateShortcut, getById } = useShortcuts();
   /* 既定のチェックは選択画面に出る有効なプロファイル（validProfiles）だけから選ぶ。
      選択済みの名前は無効なプロファイルへの保存済みの紐づけも含めて出すため、profilesから引く */
-  const { profiles, validProfiles, profileVariables, defaultProfile } = useProfiles();
-  const { variables } = useVariables();
-  /* 値一覧の変数はホームの一覧と同じ規則で展開する */
-  const { expandVariables } = useVariableExpansion({
-    variables,
-    profileVariables,
-    locale: language,
-  });
+  const { profiles, validProfiles } = useProfiles();
   const { categories } = useCategories();
   const { isLoading: isSubscriptionLoading } = useSharedSubscription();
   const { ensureCanAddShortcut, ensureCanAddShortcutValue } = useItemLimitGuard();
@@ -221,37 +204,6 @@ export function useShortcutEditScreen(
         .map((profile) => profile.name),
     [profiles, profileIds]
   );
-
-  /**
-   * 値一覧の変数を展開する基準のプロファイルID
-   *
-   * @remarks
-   * ホームの一覧と同じくアクティブなプロファイルを使う。
-   * ただし選んでいるプロファイルにアクティブなプロファイルが含まれない場合（検索画面から他のプロファイルの
-   * ショートカットを開いたときなど）、このショートカットはアクティブなプロファイルの一覧に出ない。
-   * その値で見せると実際に使う場面と食い違うため、選んでいるプロファイルのうち一覧の並びで先頭のものを使う。
-   * 0件（全プロファイル向け）はアクティブなプロファイルでも表示されるため、アクティブなプロファイルのまま。
-   */
-  const displayProfileId = useMemo(() => {
-    if (profileIds.length === 0 || (activeProfileId && profileIds.includes(activeProfileId))) {
-      return activeProfileId;
-    }
-    return profiles.find((profile) => profileIds.includes(profile.id))?.id ?? activeProfileId;
-  }, [profileIds, activeProfileId, profiles]);
-
-  /**
-   * 変数を展開した表示用の文字列を持たせた値一覧
-   *
-   * @remarks
-   * 保存する値（value）は置き換えない。値編集モーダルへは展開前の値を渡して編集させるため。
-   */
-  const displayValues = useMemo<ShortcutValueDraftWithDisplay[]>(() => {
-    const defaultProfileId = defaultProfile?.id ?? null;
-    return values.map((draft) => ({
-      ...draft,
-      displayValue: expandVariables(draft.value, displayProfileId, defaultProfileId),
-    }));
-  }, [values, expandVariables, displayProfileId, defaultProfile]);
 
   /* ======================================== */
   /* 新規作成時の初期選択（アクティブなプロファイル） */
@@ -532,7 +484,7 @@ export function useShortcutEditScreen(
     profileIds,
     selectedProfileNames,
     selectedCategory,
-    values: displayValues,
+    values,
     saving,
     isEdit,
     canSave,
