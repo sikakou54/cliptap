@@ -46,7 +46,7 @@ export const FREE_SNIPPETS_LIMIT = 50;
  *
  * @remarks 超過分を無効化せず新規登録だけを止める点は FREE_SNIPPETS_LIMIT と同じ。
  */
-export const FREE_SHORTCUTS_LIMIT = 10;
+export const FREE_SHORTCUTS_LIMIT = 50;
 
 /**
  * 上限なしを表す番兵値。

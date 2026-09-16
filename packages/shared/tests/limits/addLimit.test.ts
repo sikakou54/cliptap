@@ -41,9 +41,9 @@ describe('add limit judgement', () => {
       expect(SubscriptionService.canAddVariable(FREE_VARIABLES_LIMIT)).toBe(true);
     });
 
-    it('stops new snippets from 50 and shortcuts from 10 for a free user, including totals kept beyond them', () => {
+    it('stops new snippets and shortcuts from 50 for a free user, including totals kept beyond them', () => {
       expect(FREE_SNIPPETS_LIMIT).toBe(50);
-      expect(FREE_SHORTCUTS_LIMIT).toBe(10);
+      expect(FREE_SHORTCUTS_LIMIT).toBe(50);
 
       SubscriptionService.setAdapter(adapterFor(false));
       expect(SubscriptionService.canAddSnippet(FREE_SNIPPETS_LIMIT - 1)).toBe(true);

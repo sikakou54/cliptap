@@ -77,7 +77,7 @@ Changing phones? Back up all your data as a .cliptap file and restore it on the 
 
 FREE AND PRO
 
-Free: 50 templates, 10 shortcuts with 2 values each, unlimited categories, the snippet keyboard, all 7 text expander variables with all 94 format presets, 3 profiles, 5 custom variables.
+Free: 50 templates, 50 shortcuts, unlimited categories, the snippet keyboard, all 7 text expander variables with all 94 format presets, 3 profiles, 5 custom variables.
 Pro (monthly or yearly): no ads, unlimited templates, shortcuts and values, profiles and custom variables. Prices vary by region; see the app or this page for the current price. Billing runs through your store account, cancel any time.
 
 FROM THE DEVELOPER
