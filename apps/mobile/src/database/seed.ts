@@ -18,7 +18,13 @@
  * - スニペット: 24種類（仕事7、SNS4、プロンプト4、コード4、日常3、連絡先2）
  * - プロファイル: 2種類（取引先別。デフォルトの「Main」と合わせて無料プラン上限の3件）
  * - カスタム変数: 5種類（取引先担当者名、自社名、送信者名、案件名、メール署名）
- * - ショートカット: 17種類（全プロファイル向け 6件、Main 4件、A社用 3件、B社用 2件、A社用とB社用の両方 2件）
+ * - ショートカット: 18種類（全プロファイル向け 7件、Main 4件、A社用 3件、B社用 2件、A社用とB社用の両方 2件）
+ *
+ * dummy.jsonは ja / en の2組を持ち、端末の言語に合う組だけを投入する。
+ * 日本語UIに英語データ（またはその逆）が混ざったキャプチャはストアに出せないため、
+ * 言語判定は i18n/config.ts の getDeviceLanguage と同じ規則にしてある。
+ * 投入済みかどうかは件数だけで判定するので、言語を切り替えて撮り直すときは
+ * データベースを空にしてから起動すること（投入済みのまま言語だけ変えても入れ替わらない）。
  *
  * 一覧の既定の並びは作成日時の新しい順のため、dummy.jsonの配列の末尾ほど一覧の上に出る。
  * 撮影の一枚目に見せたいものを配列の後ろへ置いている。
@@ -48,6 +54,7 @@ import {
   type Profile,             /* プロファイル名の解決で標準プロファイルを受け取るため */
 } from '@cliptap/shared';
 import { Logger } from '@cliptap/shared';
+import * as Localization from 'expo-localization';
 
 /* ======================================== */
 /* テストデータ定義 */
@@ -55,10 +62,27 @@ import { Logger } from '@cliptap/shared';
 
 /**
  * JSONファイルからテストデータをインポート
- * dummy.jsonには開発用のサンプルデータが定義されている
+ * dummy.jsonには開発用のサンプルデータが ja / en の2組で定義されている
  * 注意: tsconfig.jsonでresolveJsonModule: trueが必要
  */
-import dummyTemplates from '@root/dummy.json';
+import dummyData from '@root/dummy.json';
+
+/**
+ * 端末の言語に合うサンプルデータの組を選ぶ
+ *
+ * i18n/config.ts の getDeviceLanguage と同じ規則で、ja 以外はすべて en とみなす。
+ * i18next の初期化を待たずに済ませているのは、シードがデータベース初期化の一部として
+ * 走り、画面より前に呼ばれ得るため。判定規則が2か所に分かれるが、参照する情報
+ * （端末の先頭ロケール）は同じなので結果は一致する。
+ *
+ * @returns dummy.jsonのキー（'ja' または 'en'）
+ */
+function resolveSeedLanguage(): 'ja' | 'en' {
+  return Localization.getLocales()[0]?.languageCode === 'ja' ? 'ja' : 'en';
+}
+
+/** 投入対象の言語のサンプルデータ */
+const dummyTemplates = dummyData[resolveSeedLanguage()];
 
 /**
  * カテゴリテストデータ
@@ -505,12 +529,12 @@ async function seedShortcuts(
  * - 既存データがある場合は自動的にスキップ
  * - 複数回実行しても安全
  *
- * 生成されるデータ:
+ * 生成されるデータ（端末の言語に合う組だけ）:
  * 1. カテゴリ 6種類
  * 2. プロファイル 2種類（デフォルトの「Main」と合わせて計3件）
  * 3. スニペット 24種類（うち2件はプロファイルを限定。残りは全プロファイル向け）
  * 4. カスタム変数 5種類 + 各プロファイル別の値
- * 5. ショートカット 17種類（カテゴリ付きと未分類の両方を含む）
+ * 5. ショートカット 18種類（現在のdummy.jsonは全件カテゴリ付き。未分類も登録できる）
  *
  * デフォルトプロファイル「Main」の作成はこの関数の責務ではなく、
  * src/database/database.ts の setupDatabase / reset が担う。

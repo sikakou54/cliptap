@@ -1,528 +1,1058 @@
 {
-  "categories": [
-    {
-      "name": "仕事",
-      "color": "#3B82F6"
-    },
-    {
-      "name": "SNS",
-      "color": "#10B981"
-    },
-    {
-      "name": "プロンプト",
-      "color": "#8B5CF6"
-    },
-    {
-      "name": "コード",
-      "color": "#06B6D4"
-    },
-    {
-      "name": "連絡先",
-      "color": "#F59E0B"
-    },
-    {
-      "name": "日常",
-      "color": "#EC4899"
-    }
-  ],
-  "profiles": [
-    {
-      "name": "A社用"
-    },
-    {
-      "name": "B社用"
-    }
-  ],
-  "custom_variables": [
-    {
-      "name": "client_name",
-      "label": "取引先担当者名",
-      "icon": "person-outline",
-      "standardValue": "ご担当者様",
-      "profileValues": {
-        "A社用": "株式会社A\n田中様",
-        "B社用": "株式会社B\n鈴木様"
+  "ja": {
+    "categories": [
+      {
+        "name": "仕事",
+        "color": "#3B82F6"
+      },
+      {
+        "name": "SNS",
+        "color": "#10B981"
+      },
+      {
+        "name": "プロンプト",
+        "color": "#8B5CF6"
+      },
+      {
+        "name": "コード",
+        "color": "#06B6D4"
+      },
+      {
+        "name": "連絡先",
+        "color": "#F59E0B"
+      },
+      {
+        "name": "日常",
+        "color": "#EC4899"
       }
-    },
-    {
-      "name": "company",
-      "label": "自社名",
-      "icon": "business-outline",
-      "standardValue": "株式会社サンプル",
-      "profileValues": {
-        "A社用": "株式会社A商事",
-        "B社用": "株式会社B商事"
+    ],
+    "profiles": [
+      {
+        "name": "A社用"
+      },
+      {
+        "name": "B社用"
       }
-    },
-    {
-      "name": "sender_name",
-      "label": "送信者名",
-      "icon": "person-circle-outline",
-      "standardValue": "山田"
-    },
-    {
-      "name": "project_name",
-      "label": "案件名",
-      "icon": "briefcase-outline",
-      "standardValue": "サンプル案件",
-      "profileValues": {
-        "A社用": "サンプル基幹システム更改",
-        "B社用": "サンプルECサイト構築"
+    ],
+    "custom_variables": [
+      {
+        "name": "client_name",
+        "label": "取引先担当者名",
+        "icon": "person-outline",
+        "standardValue": "ご担当者様",
+        "profileValues": {
+          "A社用": "株式会社A\n田中様",
+          "B社用": "株式会社B\n鈴木様"
+        }
+      },
+      {
+        "name": "company",
+        "label": "自社名",
+        "icon": "business-outline",
+        "standardValue": "株式会社サンプル",
+        "profileValues": {
+          "A社用": "株式会社A商事",
+          "B社用": "株式会社B商事"
+        }
+      },
+      {
+        "name": "sender_name",
+        "label": "送信者名",
+        "icon": "person-circle-outline",
+        "standardValue": "山田"
+      },
+      {
+        "name": "project_name",
+        "label": "案件名",
+        "icon": "briefcase-outline",
+        "standardValue": "サンプル案件",
+        "profileValues": {
+          "A社用": "サンプル基幹システム更改",
+          "B社用": "サンプルECサイト構築"
+        }
+      },
+      {
+        "name": "signature",
+        "label": "メール署名",
+        "icon": "create-outline",
+        "standardValue": "株式会社サンプル 営業部\n山田 太郎\nTEL 03-xxxx-xxxx\nyaxxxx@example.co.jp",
+        "profileValues": {
+          "A社用": "株式会社A商事 第一営業部\n山田 太郎\nTEL 03-xxxx-xxxx\nyaxxxx@a-shoji.example.jp",
+          "B社用": "株式会社B商事 営業推進部\n山田 太郎\nTEL 011-xxx-xxxx\nyaxxxx@b-shoji.example.jp"
+        }
       }
-    },
-    {
-      "name": "signature",
-      "label": "メール署名",
-      "icon": "create-outline",
-      "standardValue": "株式会社サンプル 営業部\n山田 太郎\nTEL 03-xxxx-xxxx\nyaxxxx@example.co.jp",
-      "profileValues": {
-        "A社用": "株式会社A商事 第一営業部\n山田 太郎\nTEL 03-xxxx-xxxx\nyaxxxx@a-shoji.example.jp",
-        "B社用": "株式会社B商事 営業推進部\n山田 太郎\nTEL 011-xxx-xxxx\nyaxxxx@b-shoji.example.jp"
+    ],
+    "snippets": [
+      {
+        "id": "tpl_008",
+        "category": "仕事",
+        "title": "見積送付のご案内",
+        "body": "{{client_name}}\nお世話になっております。{{company}} の {{sender_name}} です。\n\nご依頼いただいた {{project_name}} のお見積りをお送りいたします。\n\n【ご提案内容】\n・\n・\n\n【お見積金額】\n・　　　　円（税抜）\n\n【有効期限】\n・{{today}} から30日間\n\nご不明な点がございましたら、お気軽にお申し付けください。\n\n──────────\n{{signature}}",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_017",
+        "category": "プロンプト",
+        "title": "添削プロンプト",
+        "body": "以下の文章を添削してください。\n\n# 対象\n- \n\n# 読み手\n- \n\n# 出力条件\n- 修正後の全文を先に出す\n- 直した理由を箇条書きで添える\n- 元の意図を変えない",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_012",
+        "category": "コード",
+        "title": "コードレビュー依頼",
+        "body": "以下のコードをレビューしてください。\n\n# 言語・フレームワーク\n- \n\n# コード\n```\n\n```\n\n# 見てほしい点\n- バグと例外処理の漏れ\n- 命名と可読性\n- 明らかな性能上の問題\n\n# 出力条件\n- 指摘は重要度の高い順に並べる\n- 修正案はコードで示す",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_011",
+        "category": "SNS",
+        "title": "今月の振り返り",
+        "body": "{{year}}年{{month}}月の振り返りです。\n\n【やったこと】\n・\n・\n・\n\n【うまくいったこと】\n・\n\n【来月やること】\n・\n・\n\n#振り返り #継続は力なり",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_024",
+        "category": "仕事",
+        "title": "作業報告（B社様式）",
+        "body": "{{client_name}}\nお疲れ様です。{{company}} の {{sender_name}} です。\n\n{{project_name}} の作業報告です。\n\n【作業日】\n・{{today}}\n\n【作業内容】\n・\n・\n\n【所要時間】\n・　　時間\n\n【次回作業予定】\n・\n\nご確認のほど、よろしくお願いいたします。",
+        "profiles": [
+          "B社用"
+        ],
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_007",
+        "category": "仕事",
+        "title": "打ち合わせ議事録",
+        "body": "# 議事録（{{today}}）\n案件：{{project_name}}\n出席者：\n\n## 決定事項\n・\n・\n\n## 宿題\n・（担当：　／期限：　）\n・\n\n## 次回\n・日時：\n・議題：",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_020",
+        "category": "日常",
+        "title": "持ち物チェック",
+        "body": "# 持ち物チェック（{{today}}）\n- [ ] 財布・鍵・スマホ\n- [ ] 充電器・モバイルバッテリー\n- [ ] 常備薬\n- [ ] 着替え\n- [ ] \n- [ ] ",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_016",
+        "category": "プロンプト",
+        "title": "翻訳プロンプト",
+        "body": "以下を英訳してください。\n\n# 原文\n- \n\n# 用途\n- 取引先へのビジネスメール\n\n# 出力条件\n- 直訳ではなく自然な言い回しにする\n- 敬意が伝わる表現にする\n- 訳文だけを出力する",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_014",
+        "category": "コード",
+        "title": "PR説明テンプレ",
+        "body": "## 概要\n- \n\n## 変更内容\n- \n- \n\n## 動作確認\n- [ ] 単体テスト\n- [ ] 実機で確認\n- [ ] 既存機能に影響なし\n\n## 影響範囲\n- \n\n## レビュー観点\n- ",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_010",
+        "category": "SNS",
+        "title": "よく使うハッシュタグ",
+        "body": "#今日の積み上げ\n#学習記録\n#毎日更新\n#もくもく会\n#",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_001",
+        "category": "仕事",
+        "title": "業務開始報告（{{today}}）",
+        "body": "お疲れ様です。\n{{today}} の業務を開始します。\n\n本日の予定：\n・\n・\n・\n\n以上、よろしくお願いいたします。",
+        "copyWithTitle": true
+      },
+      {
+        "id": "tpl_022",
+        "category": "連絡先",
+        "title": "振込先のご案内",
+        "body": "お振込先は下記のとおりです。\n\n【銀行】\n・サンプル銀行 サンプル支店\n\n【口座】\n・普通 xxxxxxx\n\n【名義】\n・カ）サンプル\n\n恐れ入りますが、振込手数料はご負担をお願いいたします。",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_019",
+        "category": "日常",
+        "title": "予約の問い合わせ",
+        "body": "はじめまして。\n下記の内容で予約をお願いできますでしょうか。\n\n【希望日時】\n・第1希望：\n・第2希望：\n\n【人数】\n・大人　名／子ども　名\n\n【連絡先】\n・090-xxxx-xxxx\n\nご確認のほど、よろしくお願いいたします。",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_004",
+        "category": "プロンプト",
+        "title": "調査プロンプト",
+        "body": "以下について調査してください。\n\n# 調査対象\n- \n\n# 調査目的\n- \n\n# 調査項目\n- \n\n# 出力条件\n- 初心者にも分かるように説明する\n- 必要に応じて表で比較する\n- 出典となるURLを添える",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_013",
+        "category": "コード",
+        "title": "コミットメッセージ",
+        "body": "feat: 変更内容を1行で\n\n変更点\n- \n\n理由・背景\n- \n\n動作確認\n- [ ] 単体テスト\n- [ ] 実機確認\n\nRefs: #",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_009",
+        "category": "SNS",
+        "title": "プロフィール文",
+        "body": "{{company}} の {{sender_name}} です。\n毎日の仕事と学びを発信しています。\n\n・\n・\n・\n\nお仕事のご相談は DM からお願いします。",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_023",
+        "category": "仕事",
+        "title": "週次報告（A社様式）",
+        "body": "{{client_name}}\nいつもお世話になっております。{{company}} の {{sender_name}} です。\n\n{{project_name}} の週次報告をお送りいたします。\n\n【今週の実施内容】\n・\n・\n\n【来週の予定】\n・\n・\n\n【課題・ご相談】\n・\n\n以上、よろしくお願いいたします。",
+        "profiles": [
+          "A社用"
+        ],
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_002",
+        "category": "仕事",
+        "title": "進捗報告（{{today}}）",
+        "body": "{{client_name}}\nいつもお世話になっております。\n{{company}} の {{sender_name}} です。\n\n担当案件の進捗をご報告いたします。\n\n【本日の実施内容】\n・\n・\n\n【次回予定】\n・\n・\n\n以上です。ご不明点などありましたらお知らせください。",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_021",
+        "category": "連絡先",
+        "title": "はじめましての挨拶",
+        "body": "はじめまして。\n{{company}} の {{sender_name}} と申します。\n\n【担当】\n・\n\n【対応時間】\n・平日 10:00〜18:00\n\n【携帯】\n・090-xxxx-xxxx\n\nどうぞよろしくお願いいたします。\n\n──────────\n{{signature}}",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_018",
+        "category": "日常",
+        "title": "発送のご連絡",
+        "body": "このたびはご購入ありがとうございます。\n本日 {{today}}、商品を発送いたしました。\n\n【配送方法】\n・\n\n【お問い合わせ番号】\n・\n\n到着まで今しばらくお待ちください。\n何かございましたら、こちらのメッセージからご連絡ください。",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_005",
+        "category": "プロンプト",
+        "title": "要約プロンプト",
+        "body": "以下を要約してください。\n\n# 対象\n- \n\n# 出力条件\n- 結論から先に書く\n- 箇条書きで3点以内にまとめる\n- 原文にない情報は補わない",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_015",
+        "category": "コード",
+        "title": "よく使うコマンド",
+        "body": "# 開発サーバー起動\nnpm run dev\n\n# テスト\nnpm test\n\n# 型チェック\nnpm run type-check\n\n# ビルド\nnpm run build",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_003",
+        "category": "SNS",
+        "title": "今日の積み上げ",
+        "body": "# 今日の積み上げ\n\n## 🎯 今日やること\n- [ ]\n- [ ]\n- [ ]",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_006",
+        "category": "仕事",
+        "title": "日程調整のお願い",
+        "body": "いつもお世話になっております。\n{{company}} の {{sender_name}} です。\n\n{{project_name}} の件で、打ち合わせのお時間をいただけますでしょうか。\n\n【候補日時】\n・\n・\n・\n\n【所要時間】\n・30分程度\n\nご都合のよい日時をお知らせください。\n\n──────────\n{{signature}}",
+        "copyWithTitle": false
       }
-    }
-  ],
-  "snippets": [
-    {
-      "id": "tpl_008",
-      "category": "仕事",
-      "title": "見積送付のご案内",
-      "body": "{{client_name}}\nお世話になっております。{{company}} の {{sender_name}} です。\n\nご依頼いただいた {{project_name}} のお見積りをお送りいたします。\n\n【ご提案内容】\n・\n・\n\n【お見積金額】\n・　　　　円（税抜）\n\n【有効期限】\n・{{today}} から30日間\n\nご不明な点がございましたら、お気軽にお申し付けください。\n\n──────────\n{{signature}}",
-      "copyWithTitle": false
-    },
-    {
-      "id": "tpl_017",
-      "category": "プロンプト",
-      "title": "添削プロンプト",
-      "body": "以下の文章を添削してください。\n\n# 対象\n- \n\n# 読み手\n- \n\n# 出力条件\n- 修正後の全文を先に出す\n- 直した理由を箇条書きで添える\n- 元の意図を変えない",
-      "copyWithTitle": false
-    },
-    {
-      "id": "tpl_012",
-      "category": "コード",
-      "title": "コードレビュー依頼",
-      "body": "以下のコードをレビューしてください。\n\n# 言語・フレームワーク\n- \n\n# コード\n```\n\n```\n\n# 見てほしい点\n- バグと例外処理の漏れ\n- 命名と可読性\n- 明らかな性能上の問題\n\n# 出力条件\n- 指摘は重要度の高い順に並べる\n- 修正案はコードで示す",
-      "copyWithTitle": false
-    },
-    {
-      "id": "tpl_011",
-      "category": "SNS",
-      "title": "今月の振り返り",
-      "body": "{{year}}年{{month}}月の振り返りです。\n\n【やったこと】\n・\n・\n・\n\n【うまくいったこと】\n・\n\n【来月やること】\n・\n・\n\n#振り返り #継続は力なり",
-      "copyWithTitle": false
-    },
-    {
-      "id": "tpl_024",
-      "category": "仕事",
-      "title": "作業報告（B社様式）",
-      "body": "{{client_name}}\nお疲れ様です。{{company}} の {{sender_name}} です。\n\n{{project_name}} の作業報告です。\n\n【作業日】\n・{{today}}\n\n【作業内容】\n・\n・\n\n【所要時間】\n・　　時間\n\n【次回作業予定】\n・\n\nご確認のほど、よろしくお願いいたします。",
-      "profiles": [
-        "B社用"
-      ],
-      "copyWithTitle": false
-    },
-    {
-      "id": "tpl_007",
-      "category": "仕事",
-      "title": "打ち合わせ議事録",
-      "body": "# 議事録（{{today}}）\n案件：{{project_name}}\n出席者：\n\n## 決定事項\n・\n・\n\n## 宿題\n・（担当：　／期限：　）\n・\n\n## 次回\n・日時：\n・議題：",
-      "copyWithTitle": false
-    },
-    {
-      "id": "tpl_020",
-      "category": "日常",
-      "title": "持ち物チェック",
-      "body": "# 持ち物チェック（{{today}}）\n- [ ] 財布・鍵・スマホ\n- [ ] 充電器・モバイルバッテリー\n- [ ] 常備薬\n- [ ] 着替え\n- [ ] \n- [ ] ",
-      "copyWithTitle": false
-    },
-    {
-      "id": "tpl_016",
-      "category": "プロンプト",
-      "title": "翻訳プロンプト",
-      "body": "以下を英訳してください。\n\n# 原文\n- \n\n# 用途\n- 取引先へのビジネスメール\n\n# 出力条件\n- 直訳ではなく自然な言い回しにする\n- 敬意が伝わる表現にする\n- 訳文だけを出力する",
-      "copyWithTitle": false
-    },
-    {
-      "id": "tpl_014",
-      "category": "コード",
-      "title": "PR説明テンプレ",
-      "body": "## 概要\n- \n\n## 変更内容\n- \n- \n\n## 動作確認\n- [ ] 単体テスト\n- [ ] 実機で確認\n- [ ] 既存機能に影響なし\n\n## 影響範囲\n- \n\n## レビュー観点\n- ",
-      "copyWithTitle": false
-    },
-    {
-      "id": "tpl_010",
-      "category": "SNS",
-      "title": "よく使うハッシュタグ",
-      "body": "#今日の積み上げ\n#学習記録\n#毎日更新\n#もくもく会\n#",
-      "copyWithTitle": false
-    },
-    {
-      "id": "tpl_001",
-      "category": "仕事",
-      "title": "業務開始報告（{{today}}）",
-      "body": "お疲れ様です。\n{{today}} の業務を開始します。\n\n本日の予定：\n・\n・\n・\n\n以上、よろしくお願いいたします。",
-      "copyWithTitle": true
-    },
-    {
-      "id": "tpl_022",
-      "category": "連絡先",
-      "title": "振込先のご案内",
-      "body": "お振込先は下記のとおりです。\n\n【銀行】\n・サンプル銀行 サンプル支店\n\n【口座】\n・普通 xxxxxxx\n\n【名義】\n・カ）サンプル\n\n恐れ入りますが、振込手数料はご負担をお願いいたします。",
-      "copyWithTitle": false
-    },
-    {
-      "id": "tpl_019",
-      "category": "日常",
-      "title": "予約の問い合わせ",
-      "body": "はじめまして。\n下記の内容で予約をお願いできますでしょうか。\n\n【希望日時】\n・第1希望：\n・第2希望：\n\n【人数】\n・大人　名／子ども　名\n\n【連絡先】\n・090-xxxx-xxxx\n\nご確認のほど、よろしくお願いいたします。",
-      "copyWithTitle": false
-    },
-    {
-      "id": "tpl_004",
-      "category": "プロンプト",
-      "title": "調査プロンプト",
-      "body": "以下について調査してください。\n\n# 調査対象\n- \n\n# 調査目的\n- \n\n# 調査項目\n- \n\n# 出力条件\n- 初心者にも分かるように説明する\n- 必要に応じて表で比較する\n- 出典となるURLを添える",
-      "copyWithTitle": false
-    },
-    {
-      "id": "tpl_013",
-      "category": "コード",
-      "title": "コミットメッセージ",
-      "body": "feat: 変更内容を1行で\n\n変更点\n- \n\n理由・背景\n- \n\n動作確認\n- [ ] 単体テスト\n- [ ] 実機確認\n\nRefs: #",
-      "copyWithTitle": false
-    },
-    {
-      "id": "tpl_009",
-      "category": "SNS",
-      "title": "プロフィール文",
-      "body": "{{company}} の {{sender_name}} です。\n毎日の仕事と学びを発信しています。\n\n・\n・\n・\n\nお仕事のご相談は DM からお願いします。",
-      "copyWithTitle": false
-    },
-    {
-      "id": "tpl_023",
-      "category": "仕事",
-      "title": "週次報告（A社様式）",
-      "body": "{{client_name}}\nいつもお世話になっております。{{company}} の {{sender_name}} です。\n\n{{project_name}} の週次報告をお送りいたします。\n\n【今週の実施内容】\n・\n・\n\n【来週の予定】\n・\n・\n\n【課題・ご相談】\n・\n\n以上、よろしくお願いいたします。",
-      "profiles": [
-        "A社用"
-      ],
-      "copyWithTitle": false
-    },
-    {
-      "id": "tpl_002",
-      "category": "仕事",
-      "title": "進捗報告（{{today}}）",
-      "body": "{{client_name}}\nいつもお世話になっております。\n{{company}} の {{sender_name}} です。\n\n担当案件の進捗をご報告いたします。\n\n【本日の実施内容】\n・\n・\n\n【次回予定】\n・\n・\n\n以上です。ご不明点などありましたらお知らせください。",
-      "copyWithTitle": false
-    },
-    {
-      "id": "tpl_021",
-      "category": "連絡先",
-      "title": "はじめましての挨拶",
-      "body": "はじめまして。\n{{company}} の {{sender_name}} と申します。\n\n【担当】\n・\n\n【対応時間】\n・平日 10:00〜18:00\n\n【携帯】\n・090-xxxx-xxxx\n\nどうぞよろしくお願いいたします。\n\n──────────\n{{signature}}",
-      "copyWithTitle": false
-    },
-    {
-      "id": "tpl_018",
-      "category": "日常",
-      "title": "発送のご連絡",
-      "body": "このたびはご購入ありがとうございます。\n本日 {{today}}、商品を発送いたしました。\n\n【配送方法】\n・\n\n【お問い合わせ番号】\n・\n\n到着まで今しばらくお待ちください。\n何かございましたら、こちらのメッセージからご連絡ください。",
-      "copyWithTitle": false
-    },
-    {
-      "id": "tpl_005",
-      "category": "プロンプト",
-      "title": "要約プロンプト",
-      "body": "以下を要約してください。\n\n# 対象\n- \n\n# 出力条件\n- 結論から先に書く\n- 箇条書きで3点以内にまとめる\n- 原文にない情報は補わない",
-      "copyWithTitle": false
-    },
-    {
-      "id": "tpl_015",
-      "category": "コード",
-      "title": "よく使うコマンド",
-      "body": "# 開発サーバー起動\nnpm run dev\n\n# テスト\nnpm test\n\n# 型チェック\nnpm run type-check\n\n# ビルド\nnpm run build",
-      "copyWithTitle": false
-    },
-    {
-      "id": "tpl_003",
-      "category": "SNS",
-      "title": "今日の積み上げ",
-      "body": "# 今日の積み上げ\n\n## 🎯 今日やること\n- [ ]\n- [ ]\n- [ ]",
-      "copyWithTitle": false
-    },
-    {
-      "id": "tpl_006",
-      "category": "仕事",
-      "title": "日程調整のお願い",
-      "body": "いつもお世話になっております。\n{{company}} の {{sender_name}} です。\n\n{{project_name}} の件で、打ち合わせのお時間をいただけますでしょうか。\n\n【候補日時】\n・\n・\n・\n\n【所要時間】\n・30分程度\n\nご都合のよい日時をお知らせください。\n\n──────────\n{{signature}}",
-      "copyWithTitle": false
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "社員番号",
-      "profiles": [
-        "Main"
-      ],
-      "category": "仕事",
-      "values": [
-        {
-          "value": "EMP-xxxxxx",
-          "isMasked": false
+    ],
+    "shortcuts": [
+      {
+        "name": "社員番号",
+        "profiles": [
+          "Main"
+        ],
+        "category": "仕事",
+        "values": [
+          {
+            "value": "EMP-xxxxxx",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "振込口座",
+        "profiles": [
+          "Main"
+        ],
+        "category": "連絡先",
+        "values": [
+          {
+            "value": "サンプル銀行",
+            "isMasked": false
+          },
+          {
+            "value": "サンプル支店",
+            "isMasked": false
+          },
+          {
+            "value": "普通 xxxxxxx",
+            "isMasked": false
+          },
+          {
+            "value": "カ）サンプル",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "会社メール",
+        "profiles": [
+          "Main"
+        ],
+        "category": "仕事",
+        "values": [
+          {
+            "value": "yaxxxx@example.co.jp",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "内線番号",
+        "profiles": [
+          "Main"
+        ],
+        "category": "連絡先",
+        "values": [
+          {
+            "value": "内線 xxxx",
+            "isMasked": false
+          },
+          {
+            "value": "03-xxxx-xxxx",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "請求先",
+        "profiles": [
+          "B社用"
+        ],
+        "category": "仕事",
+        "values": [
+          {
+            "value": "株式会社B商事 経理部",
+            "isMasked": false
+          },
+          {
+            "value": "〒060-xxxx 北海道札幌市中央区北一条西x-x",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "B社 窓口",
+        "profiles": [
+          "B社用"
+        ],
+        "category": "連絡先",
+        "values": [
+          {
+            "value": "株式会社B商事 営業推進部",
+            "isMasked": false
+          },
+          {
+            "value": "鈴木様",
+            "isMasked": false
+          },
+          {
+            "value": "suxxxx@b-shoji.example.jp",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "A社 窓口",
+        "profiles": [
+          "A社用"
+        ],
+        "category": "連絡先",
+        "values": [
+          {
+            "value": "株式会社A商事 第一営業部",
+            "isMasked": false
+          },
+          {
+            "value": "田中様",
+            "isMasked": false
+          },
+          {
+            "value": "taxxxx@a-shoji.example.jp",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "Xアカウント",
+        "profiles": [
+          "A社用"
+        ],
+        "category": "SNS",
+        "values": [
+          {
+            "value": "@sample_a_xxxx",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "確認中の連絡",
+        "profiles": [
+          "A社用",
+          "B社用"
+        ],
+        "category": "仕事",
+        "values": [
+          {
+            "value": "{{client_name}}\n{{today}} 時点で確認中です。改めてご連絡いたします。",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "打ち合わせURL",
+        "profiles": [
+          "A社用",
+          "B社用"
+        ],
+        "category": "仕事",
+        "values": [
+          {
+            "value": "https://meet.example.com/xxxx-xxxx",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "請求書番号",
+        "profiles": [],
+        "category": "仕事",
+        "values": [
+          {
+            "value": "INV-{{year}}{{month}}-xxxx",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "よく使う返信",
+        "profiles": [],
+        "category": "仕事",
+        "values": [
+          {
+            "value": "承知いたしました。確認のうえ、改めてご連絡いたします。",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "GitHubアカウント",
+        "profiles": [],
+        "category": "コード",
+        "values": [
+          {
+            "value": "@sample-xxxx",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "自宅の住所",
+        "profiles": [],
+        "category": "日常",
+        "values": [
+          {
+            "value": "〒150-xxxx 東京都渋谷区神宮前x-x-x サンプルマンションxxx",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "Instagram",
+        "profiles": [],
+        "category": "SNS",
+        "values": [
+          {
+            "value": "@sample_xxxx",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "社内システム",
+        "profiles": [],
+        "category": "コード",
+        "values": [
+          {
+            "value": "sample.taro",
+            "isMasked": false
+          },
+          {
+            "value": "Pxxxxxxxxxxx",
+            "isMasked": true
+          }
+        ]
+      },
+      {
+        "name": "請求先",
+        "profiles": [
+          "A社用"
+        ],
+        "category": "仕事",
+        "values": [
+          {
+            "value": "株式会社A商事 経理部",
+            "isMasked": false
+          },
+          {
+            "value": "〒101-xxxx 東京都千代田区外神田x-x-x",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "携帯番号",
+        "profiles": [],
+        "category": "連絡先",
+        "values": [
+          {
+            "value": "090-xxxx-xxxx",
+            "isMasked": false
+          }
+        ]
+      }
+    ]
+  },
+  "en": {
+    "categories": [
+      {
+        "name": "Work",
+        "color": "#3B82F6"
+      },
+      {
+        "name": "Social media",
+        "color": "#10B981"
+      },
+      {
+        "name": "Prompt",
+        "color": "#8B5CF6"
+      },
+      {
+        "name": "Code",
+        "color": "#06B6D4"
+      },
+      {
+        "name": "Contacts",
+        "color": "#F59E0B"
+      },
+      {
+        "name": "Daily",
+        "color": "#EC4899"
+      }
+    ],
+    "profiles": [
+      {
+        "name": "Client A"
+      },
+      {
+        "name": "Client B"
+      }
+    ],
+    "custom_variables": [
+      {
+        "name": "client_name",
+        "label": "Contact",
+        "icon": "person-outline",
+        "standardValue": "Dear Customer",
+        "profileValues": {
+          "Client A": "Alpha Corp\nAlex",
+          "Client B": "Beta Corp\nJamie"
         }
-      ]
-    },
-    {
-      "name": "振込口座",
-      "profiles": [
-        "Main"
-      ],
-      "category": "連絡先",
-      "values": [
-        {
-          "value": "サンプル銀行",
-          "isMasked": false
-        },
-        {
-          "value": "サンプル支店",
-          "isMasked": false
-        },
-        {
-          "value": "普通 xxxxxxx",
-          "isMasked": false
-        },
-        {
-          "value": "カ）サンプル",
-          "isMasked": false
+      },
+      {
+        "name": "company",
+        "label": "Your company",
+        "icon": "business-outline",
+        "standardValue": "Acme Corp",
+        "profileValues": {
+          "Client A": "Alpha Trading",
+          "Client B": "Beta Trading"
         }
-      ]
-    },
-    {
-      "name": "会社メール",
-      "profiles": [
-        "Main"
-      ],
-      "category": "仕事",
-      "values": [
-        {
-          "value": "yaxxxx@example.co.jp",
-          "isMasked": false
+      },
+      {
+        "name": "sender_name",
+        "label": "Your name",
+        "icon": "person-circle-outline",
+        "standardValue": "Taylor"
+      },
+      {
+        "name": "project_name",
+        "label": "Project",
+        "icon": "briefcase-outline",
+        "standardValue": "Sample project",
+        "profileValues": {
+          "Client A": "Sample core system upgrade",
+          "Client B": "Sample storefront build"
         }
-      ]
-    },
-    {
-      "name": "内線番号",
-      "profiles": [
-        "Main"
-      ],
-      "category": "連絡先",
-      "values": [
-        {
-          "value": "内線 xxxx",
-          "isMasked": false
-        },
-        {
-          "value": "03-xxxx-xxxx",
-          "isMasked": false
+      },
+      {
+        "name": "signature",
+        "label": "Email signature",
+        "icon": "create-outline",
+        "standardValue": "Acme Corp Sales\nTaylor Morgan\nTel +1 555-xxx-xxxx\ntaxxxx@example.com",
+        "profileValues": {
+          "Client A": "Alpha Trading Sales Team 1\nTaylor Morgan\nTel +1 555-xxx-xxxx\ntaxxxx@alpha.example.com",
+          "Client B": "Beta Trading Sales Development\nTaylor Morgan\nTel +1 555-xxx-xxxx\ntaxxxx@beta.example.com"
         }
-      ]
-    },
-    {
-      "name": "請求先",
-      "profiles": [
-        "B社用"
-      ],
-      "category": "仕事",
-      "values": [
-        {
-          "value": "株式会社B商事 経理部",
-          "isMasked": false
-        },
-        {
-          "value": "〒060-xxxx 北海道札幌市中央区北一条西x-x",
-          "isMasked": false
-        }
-      ]
-    },
-    {
-      "name": "B社 窓口",
-      "profiles": [
-        "B社用"
-      ],
-      "category": "連絡先",
-      "values": [
-        {
-          "value": "株式会社B商事 営業推進部",
-          "isMasked": false
-        },
-        {
-          "value": "鈴木様",
-          "isMasked": false
-        },
-        {
-          "value": "suxxxx@b-shoji.example.jp",
-          "isMasked": false
-        }
-      ]
-    },
-    {
-      "name": "請求先",
-      "profiles": [
-        "A社用"
-      ],
-      "category": "仕事",
-      "values": [
-        {
-          "value": "株式会社A商事 経理部",
-          "isMasked": false
-        },
-        {
-          "value": "〒101-xxxx 東京都千代田区外神田x-x-x",
-          "isMasked": false
-        }
-      ]
-    },
-    {
-      "name": "A社 窓口",
-      "profiles": [
-        "A社用"
-      ],
-      "category": "連絡先",
-      "values": [
-        {
-          "value": "株式会社A商事 第一営業部",
-          "isMasked": false
-        },
-        {
-          "value": "田中様",
-          "isMasked": false
-        },
-        {
-          "value": "taxxxx@a-shoji.example.jp",
-          "isMasked": false
-        }
-      ]
-    },
-    {
-      "name": "Xアカウント",
-      "profiles": [
-        "A社用"
-      ],
-      "category": "SNS",
-      "values": [
-        {
-          "value": "@sample_a_xxxx",
-          "isMasked": false
-        }
-      ]
-    },
-    {
-      "name": "確認中の連絡",
-      "profiles": [
-        "A社用",
-        "B社用"
-      ],
-      "category": "仕事",
-      "values": [
-        {
-          "value": "{{client_name}}\n{{today}} 時点で確認中です。改めてご連絡いたします。",
-          "isMasked": false
-        }
-      ]
-    },
-    {
-      "name": "打ち合わせURL",
-      "profiles": [
-        "A社用",
-        "B社用"
-      ],
-      "category": "仕事",
-      "values": [
-        {
-          "value": "https://meet.example.com/xxxx-xxxx",
-          "isMasked": false
-        }
-      ]
-    },
-    {
-      "name": "請求書番号",
-      "profiles": [],
-      "category": "仕事",
-      "values": [
-        {
-          "value": "INV-{{year}}{{month}}-xxxx",
-          "isMasked": false
-        }
-      ]
-    },
-    {
-      "name": "よく使う返信",
-      "profiles": [],
-      "category": "仕事",
-      "values": [
-        {
-          "value": "承知いたしました。確認のうえ、改めてご連絡いたします。",
-          "isMasked": false
-        }
-      ]
-    },
-    {
-      "name": "GitHubアカウント",
-      "profiles": [],
-      "category": "コード",
-      "values": [
-        {
-          "value": "@sample-xxxx",
-          "isMasked": false
-        }
-      ]
-    },
-    {
-      "name": "自宅の住所",
-      "profiles": [],
-      "category": "日常",
-      "values": [
-        {
-          "value": "〒150-xxxx 東京都渋谷区神宮前x-x-x サンプルマンションxxx",
-          "isMasked": false
-        }
-      ]
-    },
-    {
-      "name": "Instagram",
-      "profiles": [],
-      "category": "SNS",
-      "values": [
-        {
-          "value": "@sample_xxxx",
-          "isMasked": false
-        }
-      ]
-    },
-    {
-      "name": "携帯番号",
-      "profiles": [],
-      "category": "連絡先",
-      "values": [
-        {
-          "value": "090-xxxx-xxxx",
-          "isMasked": false
-        }
-      ]
-    },
-    {
-      "name": "社内システム",
-      "profiles": [],
-      "category": "コード",
-      "values": [
-        {
-          "value": "sample.taro",
-          "isMasked": false
-        },
-        {
-          "value": "Pxxxxxxxxxxx",
-          "isMasked": true
-        }
-      ]
-    }
-  ]
+      }
+    ],
+    "snippets": [
+      {
+        "id": "tpl_008",
+        "category": "Work",
+        "title": "Sending your quote",
+        "body": "{{client_name}}\nThank you for getting in touch. This is {{sender_name}} from {{company}}.\n\nHere is our quote for {{project_name}}.\n\n[What we propose]\n- \n- \n\n[Quote]\n- $          (excl. tax)\n\n[Valid until]\n- 30 days from {{today}}\n\nLet me know if anything is unclear.\n\n──────────\n{{signature}}",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_017",
+        "category": "Prompt",
+        "title": "Proofreading prompt",
+        "body": "Please proofread the text below.\n\n# Target\n- \n\n# Audience\n- \n\n# Output rules\n- Give the corrected text in full first\n- Add a bullet list of what you changed and why\n- Keep the original intent",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_012",
+        "category": "Code",
+        "title": "Code review request",
+        "body": "Please review the code below.\n\n# Language and framework\n- \n\n# Code\n```\n\n```\n\n# What to look at\n- Bugs and missing error handling\n- Naming and readability\n- Obvious performance problems\n\n# Output rules\n- Order the findings by severity\n- Show fixes as code",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_011",
+        "category": "Social media",
+        "title": "Monthly review",
+        "body": "My review of {{month}}/{{year}}.\n\n[What I did]\n- \n- \n- \n\n[What went well]\n- \n\n[Next month]\n- \n- \n\n#review #keepgoing",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_024",
+        "category": "Work",
+        "title": "Work report (Client B)",
+        "body": "{{client_name}}\nThis is {{sender_name}} from {{company}}.\n\nHere is the work report for {{project_name}}.\n\n[Date]\n- {{today}}\n\n[Work done]\n- \n- \n\n[Time spent]\n-      hours\n\n[Next session]\n- \n\nPlease take a look when you get a chance.",
+        "profiles": [
+          "Client B"
+        ],
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_007",
+        "category": "Work",
+        "title": "Meeting notes",
+        "body": "# Meeting notes ({{today}})\nProject: {{project_name}}\nAttendees: \n\n## Decisions\n- \n- \n\n## Action items\n- (owner:      / due:      )\n- \n\n## Next meeting\n- When: \n- Agenda: ",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_020",
+        "category": "Daily",
+        "title": "Packing checklist",
+        "body": "# Packing checklist ({{today}})\n- [ ] Wallet, keys, phone\n- [ ] Charger and power bank\n- [ ] Medication\n- [ ] Change of clothes\n- [ ] \n- [ ] ",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_016",
+        "category": "Prompt",
+        "title": "Translation prompt",
+        "body": "Please translate the text below into Japanese.\n\n# Source\n- \n\n# Use\n- A business email to a client\n\n# Output rules\n- Sound natural rather than literal\n- Keep the tone polite\n- Return the translation only",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_014",
+        "category": "Code",
+        "title": "Pull request template",
+        "body": "## Summary\n- \n\n## Changes\n- \n- \n\n## Verification\n- [ ] Unit tests\n- [ ] Checked on a device\n- [ ] No impact on existing features\n\n## Scope\n- \n\n## Review notes\n- ",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_010",
+        "category": "Social media",
+        "title": "Hashtags I use",
+        "body": "#buildinpublic\n#learninginpublic\n#dailyupdate\n#100daysofcode\n#",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_001",
+        "category": "Work",
+        "title": "Start of day ({{today}})",
+        "body": "Morning.\nStarting my day, {{today}}.\n\nPlan for today:\n- \n- \n- \n\nPing me if anything comes up.",
+        "copyWithTitle": true
+      },
+      {
+        "id": "tpl_022",
+        "category": "Contacts",
+        "title": "Bank transfer details",
+        "body": "Here are our bank details.\n\n[Bank]\n- Sample Bank, Sample Branch\n\n[Account]\n- Checking xxxxxxx\n\n[Account name]\n- ACME CORP\n\nPlease note that transfer fees are payable by the sender.",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_019",
+        "category": "Daily",
+        "title": "Booking enquiry",
+        "body": "Hello,\n\nI would like to make a booking as follows.\n\n[Preferred date and time]\n- First choice: \n- Second choice: \n\n[Party size]\n-      adults /      children\n\n[Phone]\n- +1 555-xxx-xxxx\n\nPlease let me know if that works.",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_004",
+        "category": "Prompt",
+        "title": "Research prompt",
+        "body": "Please research the topic below.\n\n# Topic\n- \n\n# Why it matters\n- \n\n# What to cover\n- \n\n# Output rules\n- Explain it so a beginner can follow\n- Use a table to compare where it helps\n- Include the source URLs",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_013",
+        "category": "Code",
+        "title": "Commit message",
+        "body": "feat: one line describing the change\n\nWhat changed\n- \n\nWhy\n- \n\nVerification\n- [ ] Unit tests\n- [ ] Checked on a device\n\nRefs: #",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_009",
+        "category": "Social media",
+        "title": "Bio",
+        "body": "I'm {{sender_name}} at {{company}}.\nI post about my work and what I'm learning every day.\n\n- \n- \n- \n\nDM me for work enquiries.",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_023",
+        "category": "Work",
+        "title": "Weekly report (Client A)",
+        "body": "{{client_name}}\nThank you for your continued support. This is {{sender_name}} from {{company}}.\n\nHere is the weekly report for {{project_name}}.\n\n[This week]\n- \n- \n\n[Next week]\n- \n- \n\n[Issues and questions]\n- \n\nThank you.",
+        "profiles": [
+          "Client A"
+        ],
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_002",
+        "category": "Work",
+        "title": "Progress report ({{today}})",
+        "body": "{{client_name}}\nThank you for your continued support.\nThis is {{sender_name}} from {{company}}.\n\nHere is where your project stands.\n\n[Done today]\n- \n- \n\n[Coming next]\n- \n- \n\nLet me know if anything is unclear.",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_021",
+        "category": "Contacts",
+        "title": "Introducing myself",
+        "body": "Hello,\n\nMy name is {{sender_name}} from {{company}}.\n\n[My role]\n- \n\n[Hours]\n- Weekdays 10:00-18:00\n\n[Mobile]\n- +1 555-xxx-xxxx\n\nLooking forward to working with you.\n\n──────────\n{{signature}}",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_018",
+        "category": "Daily",
+        "title": "Shipping notice",
+        "body": "Thank you for your order.\nIt shipped today, {{today}}.\n\n[Carrier]\n- \n\n[Tracking number]\n- \n\nIt should reach you shortly.\nReply here if anything comes up.",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_005",
+        "category": "Prompt",
+        "title": "Summary prompt",
+        "body": "Please summarise the text below.\n\n# Target\n- \n\n# Output rules\n- Lead with the conclusion\n- Use no more than three bullet points\n- Do not add anything that is not in the source",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_015",
+        "category": "Code",
+        "title": "Commands I use",
+        "body": "# Start the dev server\nnpm run dev\n\n# Tests\nnpm test\n\n# Type check\nnpm run type-check\n\n# Build\nnpm run build",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_003",
+        "category": "Social media",
+        "title": "Daily progress post",
+        "body": "# Today's progress\n\n## 🎯 Plan for today\n- [ ]\n- [ ]\n- [ ]",
+        "copyWithTitle": false
+      },
+      {
+        "id": "tpl_006",
+        "category": "Work",
+        "title": "Finding a time to meet",
+        "body": "Thank you for your continued support.\nThis is {{sender_name}} from {{company}}.\n\nCould we find a time to talk about {{project_name}}?\n\n[Options]\n- \n- \n- \n\n[Length]\n- About 30 minutes\n\nLet me know what suits you.\n\n──────────\n{{signature}}",
+        "copyWithTitle": false
+      }
+    ],
+    "shortcuts": [
+      {
+        "name": "Employee ID",
+        "profiles": [
+          "Main"
+        ],
+        "category": "Work",
+        "values": [
+          {
+            "value": "EMP-xxxxxx",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "Bank account",
+        "profiles": [
+          "Main"
+        ],
+        "category": "Contacts",
+        "values": [
+          {
+            "value": "Sample Bank",
+            "isMasked": false
+          },
+          {
+            "value": "Sample Branch",
+            "isMasked": false
+          },
+          {
+            "value": "Checking xxxxxxx",
+            "isMasked": false
+          },
+          {
+            "value": "ACME CORP",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "Work email",
+        "profiles": [
+          "Main"
+        ],
+        "category": "Work",
+        "values": [
+          {
+            "value": "taxxxx@example.com",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "Desk phone",
+        "profiles": [
+          "Main"
+        ],
+        "category": "Contacts",
+        "values": [
+          {
+            "value": "Ext. xxxx",
+            "isMasked": false
+          },
+          {
+            "value": "+1 555-xxx-xxxx",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "Billing address",
+        "profiles": [
+          "Client B"
+        ],
+        "category": "Work",
+        "values": [
+          {
+            "value": "Beta Trading Accounts",
+            "isMasked": false
+          },
+          {
+            "value": "xxx Pine St, Suite xxx, Seattle, WA 981xx",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "Client B contact",
+        "profiles": [
+          "Client B"
+        ],
+        "category": "Contacts",
+        "values": [
+          {
+            "value": "Beta Trading Sales Development",
+            "isMasked": false
+          },
+          {
+            "value": "Jamie",
+            "isMasked": false
+          },
+          {
+            "value": "jaxxxx@beta.example.com",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "Client A contact",
+        "profiles": [
+          "Client A"
+        ],
+        "category": "Contacts",
+        "values": [
+          {
+            "value": "Alpha Trading Sales Team 1",
+            "isMasked": false
+          },
+          {
+            "value": "Alex",
+            "isMasked": false
+          },
+          {
+            "value": "alxxxx@alpha.example.com",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "X account",
+        "profiles": [
+          "Client A"
+        ],
+        "category": "Social media",
+        "values": [
+          {
+            "value": "@sample_a_xxxx",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "Still checking",
+        "profiles": [
+          "Client A",
+          "Client B"
+        ],
+        "category": "Work",
+        "values": [
+          {
+            "value": "{{client_name}}\nStill checking as of {{today}}. I will follow up shortly.",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "Meeting link",
+        "profiles": [
+          "Client A",
+          "Client B"
+        ],
+        "category": "Work",
+        "values": [
+          {
+            "value": "https://meet.example.com/xxxx-xxxx",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "Invoice number",
+        "profiles": [],
+        "category": "Work",
+        "values": [
+          {
+            "value": "INV-{{year}}{{month}}-xxxx",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "Go-to reply",
+        "profiles": [],
+        "category": "Work",
+        "values": [
+          {
+            "value": "Got it. I will check and get back to you.",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "GitHub account",
+        "profiles": [],
+        "category": "Code",
+        "values": [
+          {
+            "value": "@sample-xxxx",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "Home address",
+        "profiles": [],
+        "category": "Daily",
+        "values": [
+          {
+            "value": "xxx Cedar Ave, Apt xxx, Portland, OR 972xx",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "Instagram",
+        "profiles": [],
+        "category": "Social media",
+        "values": [
+          {
+            "value": "@sample_xxxx",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "Internal system",
+        "profiles": [],
+        "category": "Code",
+        "values": [
+          {
+            "value": "sample.taylor",
+            "isMasked": false
+          },
+          {
+            "value": "Pxxxxxxxxxxx",
+            "isMasked": true
+          }
+        ]
+      },
+      {
+        "name": "Billing address",
+        "profiles": [
+          "Client A"
+        ],
+        "category": "Work",
+        "values": [
+          {
+            "value": "Alpha Trading Accounts",
+            "isMasked": false
+          },
+          {
+            "value": "xxx Market St, Suite xxx, San Francisco, CA 941xx",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "Mobile",
+        "profiles": [],
+        "category": "Contacts",
+        "values": [
+          {
+            "value": "+1 555-xxx-xxxx",
+            "isMasked": false
+          }
+        ]
+      }
+    ]
+  }
 }
