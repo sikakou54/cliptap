@@ -22,8 +22,6 @@ import { EmptySnippetGrid } from '@components/snippet/EmptySnippetGrid';
 export type SnippetGridItem = SnippetWithDisplay & {
   /** 行を一意にする値（横断検索のときだけ入る） */
   rowKey?: string;
-  /** この行に対応するプロファイル名（横断検索のときだけ入る） */
-  profileLabel?: string | null;
   /** この展開結果になったプロファイル（横断検索のときだけ入る） */
   matchedProfileIds?: string[];
 };
@@ -120,7 +118,6 @@ export function SnippetGrid({
             isTitleCopied={copiedTitleId === (snippet.rowKey ?? snippet.id)}
             categoryColor={categoryInfo?.color ?? null}
             categoryName={categoryInfo?.name ?? null}
-            profileLabel={snippet.profileLabel}
             onCopy={() => onCopy(snippet)}
             onCopyTitle={() => onCopyTitle(snippet)}
             onEdit={() => onEdit(snippet)}

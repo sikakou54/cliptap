@@ -47,8 +47,6 @@ import { ShortcutCard } from '@components/shortcut/ShortcutCard';
 export type ShortcutListItem = ShortcutWithDisplay & {
   /** 行を一意にする値（横断検索のときだけ入る） */
   rowKey?: string;
-  /** この行に対応するプロファイル名（横断検索のときだけ入る） */
-  profileLabel?: string | null;
   /** 値をコピーするときに展開の基準にするプロファイル（横断検索のときだけ入る） */
   copyProfileId?: string | null;
 };
@@ -106,7 +104,6 @@ export function ShortcutList({
             shortcut={item}
             category={category}
             onCopyValue={onCopyValue}
-            profileLabel={item.profileLabel}
             copyProfileId={item.copyProfileId}
             onEdit={onEdit}
             onDelete={onDelete}

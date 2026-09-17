@@ -35,8 +35,6 @@ import { Category } from '@cliptap/shared';
 export type SnippetListItem = SnippetWithDisplay & {
   /** 行を一意にする値（横断検索のときだけ入る） */
   rowKey?: string;
-  /** この行に対応するプロファイル名（横断検索のときだけ入る） */
-  profileLabel?: string | null;
   /** この展開結果になったプロファイル（横断検索のときだけ入る。コピー時の展開の基準に使う） */
   matchedProfileIds?: string[];
 };
@@ -135,7 +133,6 @@ export function SnippetList({
             onPressTitle={onPressTitle}
             disableCopy={disableCopy}
             category={category}
-            profileLabel={item.profileLabel}
             isLast={index === snippets.length - 1}
           />
         </View>

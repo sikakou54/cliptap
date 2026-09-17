@@ -24,9 +24,8 @@
  * @see packages/shared/src/providers/ShortcutProvider.tsx - ショートカットCRUD操作（useShortcuts）
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18next from '@i18n/config';
 import {
   attachDisplayValues,
@@ -48,23 +47,7 @@ import {
 } from '@cliptap/shared';
 import { showConfirm, showErrorAlert } from '@utils/alerts';
 import { useItemLimitGuard } from '@hooks/useItemLimitGuard';
-
-/**
- * 並べ替え設定の保存キー
- *
- * @remarks
- * 定型文の並べ替えはSortPreferenceAdapter経由で保存しているが、あれはWebとも共有する仕組みで、
- * ショートカットはモバイルだけの機能。共有インターフェースへショートカット用の口を足すと
- * Webに使われないメソッドが増えるため、ここで直接保存する
- * （モバイル固有の保存をAsyncStorageへ直接行う例は src/utils/devAdsOverride.ts にもある）。
- */
-const SORT_PREFERENCE_KEY = '@shortcut_sort_preference';
-
-/** 並べ替えの既定値（定型文と同じ） */
-const DEFAULT_SORT: SnippetSortBy = 'created';
-
-/** 保存値として受け付ける並べ替え基準 */
-const SORT_VALUES: readonly SnippetSortBy[] = ['created', 'updated', 'title', 'usage'];
+import { useShortcutSortPreference } from '@hooks/useShortcutSortPreference';
 
 /**
  * useHomeShortcutsの引数の型
@@ -131,29 +114,8 @@ export function useHomeShortcuts(params: UseHomeShortcutsParams): UseHomeShortcu
   /* 状態管理 */
   /* ======================================== */
 
-  const [currentSort, setCurrentSort] = useState<SnippetSortBy>(DEFAULT_SORT);
-
-  /* 保存した並べ替え基準を1回だけ読み込む。読めない場合は既定のままにする */
-  useEffect(() => {
-    let isActive = true;
-
-    void (async () => {
-      try {
-        const saved = await AsyncStorage.getItem(SORT_PREFERENCE_KEY);
-        if (!isActive) return;
-        if (saved !== null && SORT_VALUES.includes(saved as SnippetSortBy)) {
-          setCurrentSort(saved as SnippetSortBy);
-        }
-      } catch (error) {
-        Logger.error('[HomeShortcuts] Failed to load the sort preference:', error);
-      }
-    })();
-
-    /* 読み込み中に画面を離れた場合、戻ってきたときの選択を上書きしない */
-    return () => {
-      isActive = false;
-    };
-  }, []);
+  /* 並べ替えは検索結果とも同じ設定に従うため、共通フックが保存と読み込みを持つ */
+  const { currentSort, handleSortChange } = useShortcutSortPreference();
 
   /* ======================================== */
   /* 派生状態 */
@@ -190,14 +152,6 @@ export function useHomeShortcuts(params: UseHomeShortcutsParams): UseHomeShortcu
    *
    * 保存に失敗しても画面の並びは変わるため、次回の起動で既定へ戻るだけに留める。
    */
-  const handleSortChange = useCallback((sortBy: SnippetSortBy) => {
-    setCurrentSort(sortBy);
-
-    void AsyncStorage.setItem(SORT_PREFERENCE_KEY, sortBy).catch((error) => {
-      Logger.error('[HomeShortcuts] Failed to save the sort preference:', error);
-    });
-  }, []);
-
   /**
    * ショートカット値をクリップボードへコピーする
    *

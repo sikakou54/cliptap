@@ -57,8 +57,6 @@ interface ShortcutCardProps {
   shortcut: ShortcutWithDisplay;
   category: Category | null;
   onCopyValue: (value: ShortcutValue, profileId: string | null) => Promise<void>;
-  /** この行に対応するプロファイル名（横断検索のときだけ渡す。通常の一覧では出さない） */
-  profileLabel?: string | null;
   /** 値をコピーするときに展開の基準にするプロファイル（横断検索のときだけ渡す） */
   copyProfileId?: string | null;
   onEdit: (shortcut: Shortcut) => void;
@@ -70,7 +68,6 @@ function ShortcutCardComponent({
   shortcut,
   category,
   onCopyValue,
-  profileLabel,
   copyProfileId,
   onEdit,
   onDelete,
@@ -145,18 +142,10 @@ function ShortcutCardComponent({
           />
         </View>
 
-        {/* カテゴリバッジと、横断検索のときだけ添えるプロファイル名。
-            同じショートカットがプロファイルごとの展開結果に分かれて並ぶため、どの環境の結果かを示す（§8.7） */}
-        {(category !== null || profileLabel) && (
-          <View style={styles.badgeRow}>
-            {category !== null && <CategoryBadge category={category} size="small" />}
-            {profileLabel && (
-              <View style={[styles.profileBadge, { borderColor: colors.border, backgroundColor: colors.surface }]}>
-                <Text style={[styles.profileBadgeText, { color: colors.textSecondary, fontSize: responsiveFontSizes.xs }]}>
-                  {profileLabel}
-                </Text>
-              </View>
-            )}
+        {/* カテゴリバッジ */}
+        {category !== null && (
+          <View style={styles.categoryBadgeContainer}>
+            <CategoryBadge category={category} size="small" />
           </View>
         )}
 
@@ -206,7 +195,6 @@ export const ShortcutCard = React.memo(ShortcutCardComponent, (prevProps, nextPr
     prevProps.shortcut.categoryId === nextProps.shortcut.categoryId &&
     prevProps.shortcut.values === nextProps.shortcut.values &&
     prevProps.category?.id === nextProps.category?.id &&
-    prevProps.profileLabel === nextProps.profileLabel &&
     prevProps.copyProfileId === nextProps.copyProfileId
   );
 });
@@ -230,22 +218,8 @@ const styles = StyleSheet.create({
     flex: 1,
     fontWeight: UI_CONSTANTS.FONT_WEIGHT.SEMIBOLD,
   },
-  badgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: UI_CONSTANTS.GAP.XS,
+  categoryBadgeContainer: {
     marginTop: UI_CONSTANTS.GAP.XS,
-  },
-  /* プロファイル名のバッジ。定型文カード（SnippetCard.profileBadge）と同じ見た目に揃える */
-  profileBadge: {
-    paddingHorizontal: UI_CONSTANTS.GAP.XS,
-    paddingVertical: 2,
-    borderRadius: UI_CONSTANTS.BORDER_RADIUS.SM,
-    borderWidth: UI_CONSTANTS.BORDER_WIDTH.THIN,
-  },
-  profileBadgeText: {
-    fontWeight: UI_CONSTANTS.FONT_WEIGHT.MEDIUM,
   },
   expandButton: {
     position: 'absolute',

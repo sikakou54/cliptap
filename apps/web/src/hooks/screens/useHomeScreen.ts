@@ -446,56 +446,26 @@ export function useHomeScreen(): UseHomeScreenReturn {
     [searchResultCounts]
   );
 
-  /* 環境名の引き当て。行に添えるプロファイル名を作るために使う */
-  const profileNameById = useMemo(
-    () => new Map(validProfiles.map((profile) => [profile.id, profile.name])),
-    [validProfiles]
-  );
-
-  /**
-   * 行に添えるプロファイル名を作る
-   *
-   * @param matchedProfileIds - その行の展開結果になったプロファイル
-   * @returns 添える文言。1つの環境へ絞っている間と、環境が1つしかないときはnull
-   *
-   * @remarks
-   * 絞り込み中はチップが環境を示しているため、行にも出すと同じ情報が二重になる。
-   */
-  const buildProfileLabel = useCallback(
-    (matchedProfileIds: string[]): string | null => {
-      if (searchProfileId !== null || validProfiles.length <= 1) return null;
-      const names = matchedProfileIds
-        .map((profileId) => profileNameById.get(profileId))
-        .filter((name): name is string => Boolean(name));
-      return names.length > 0 ? names.join(' / ') : null;
-    },
-    [searchProfileId, validProfiles.length, profileNameById]
-  );
-
   /* 検索画面に出す定型文。「すべて」なら横断結果そのまま、環境を選んでいればその環境の行だけ */
   const searchSnippetRows = useMemo<SnippetGridItem[]>(
     () =>
-      allSearchSnippetRows
-        .filter((row) => searchProfileId === null || row.matchedProfileIds.includes(searchProfileId))
-        .map((row) => ({ ...row, profileLabel: buildProfileLabel(row.matchedProfileIds) })),
-    [allSearchSnippetRows, searchProfileId, buildProfileLabel]
+      allSearchSnippetRows.filter(
+        (row) => searchProfileId === null || row.matchedProfileIds.includes(searchProfileId)
+      ),
+    [allSearchSnippetRows, searchProfileId]
   );
 
   /* 検索画面に出すショートカット。コピーの基準は行が持つプロファイルにする。
-     Webは検索結果にも選択中の並べ替えをそのまま適用する（§8.7。モバイルは表示順を保つ） */
+     並べ替えはダッシュボードの一覧と同じ設定を使う（§8.7。モバイルも同じ） */
   const searchShortcutRows = useMemo<ShortcutGridItem[]>(
     () =>
       sortShortcuts(
         allSearchShortcutRows
           .filter((row) => searchProfileId === null || row.matchedProfileIds.includes(searchProfileId))
-          .map((row) => ({
-            ...row,
-            profileLabel: buildProfileLabel(row.matchedProfileIds),
-            copyProfileId: row.matchedProfileIds[0],
-          })),
+          .map((row) => ({ ...row, copyProfileId: row.matchedProfileIds[0] })),
         shortcutSort
       ),
-    [allSearchShortcutRows, searchProfileId, buildProfileLabel, shortcutSort]
+    [allSearchShortcutRows, searchProfileId, shortcutSort]
   );
 
   /* ======================================== */

@@ -20,9 +20,11 @@
  * 展開は定型文の一覧と同じ useVariableExpansion を使い、定型文と同じ結果にする。
  *
  * 【フォーカス時に読み直す理由】
- * 検索結果から編集画面へ進んで保存すると、この画面の一覧は古くなる。
- * Providerの一覧の変化をきっかけにすると、コピーで使用回数を進めるたびに全プロファイルを読み直してしまうため、
- * 画面へ戻ったときに読み直す（useHomeScreen と同じ形）。
+ * 画面を開いた時点ではProviderがまだプロファイルを読み終えていないことがあり、
+ * 初期読み込みが空の一覧のままになる。有効なプロファイルが変わると読み直しの関数が作り直され、
+ * フォーカス中でも読み直しが走るようにしてある。
+ * Providerの一覧の変化をきっかけにすると、コピーで使用回数を進めるたびに全プロファイルを
+ * 読み直してしまうため、この形にしている（useHomeScreen と同じ）。
  *
  * 【使用回数を手元で進めない理由】
  * 検索結果は使用回数で並べず、表示もしない。加算はProviderのコピー経路が行う。
@@ -37,6 +39,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import {
   searchShortcutsAcrossProfiles,
+  sortShortcuts,
   useProfiles,
   useShortcuts,
   useTranslation,
@@ -50,6 +53,7 @@ import {
   type ShortcutValue,
 } from '@cliptap/shared';
 import { showConfirm, showErrorAlert } from '@utils/alerts';
+import { useShortcutSortPreference } from '@hooks/useShortcutSortPreference';
 
 /**
  * useSearchShortcutsの引数の型
@@ -117,6 +121,8 @@ export function useSearchShortcuts(params: UseSearchShortcutsParams): UseSearchS
   const { validProfiles, profileVariables, defaultProfile } = useProfiles();
   const { variables } = useVariables();
   const { deleteShortcut, copyShortcutValue } = useShortcuts();
+  /* 検索結果もホームと同じ並べ替えに従う（§8.7） */
+  const { currentSort } = useShortcutSortPreference();
   const { expandVariables } = useVariableExpansion({
     variables,
     profileVariables,
@@ -154,16 +160,21 @@ export function useSearchShortcuts(params: UseSearchShortcutsParams): UseSearchS
 
   /* 有効な全プロファイルを横断して絞り込む。キー入力のたびにDBを読まないよう、
      読み込み済みの一覧をメモリ上で評価する。
-     プロファイルごとの絞り込みと件数は、この結果から画面側で求める（useSearchScreen） */
+     プロファイルごとの絞り込みと件数は、この結果から画面側で求める（useSearchScreen）。
+     並べ替えはホームの一覧と同じ設定を使う。画面によって並び順が変わると、
+     ホームで見えていた順を手掛かりに探せなくなるためである（§8.7） */
   const allShortcutRows = useMemo(
     () =>
-      searchShortcutsAcrossProfiles({
-        shortcutsByProfile,
-        profiles: validProfiles,
-        query,
-        expand: (text, id) => expandVariables(text, id, defaultProfileId),
-      }),
-    [shortcutsByProfile, validProfiles, query, expandVariables, defaultProfileId]
+      sortShortcuts(
+        searchShortcutsAcrossProfiles({
+          shortcutsByProfile,
+          profiles: validProfiles,
+          query,
+          expand: (text, id) => expandVariables(text, id, defaultProfileId),
+        }),
+        currentSort
+      ),
+    [shortcutsByProfile, validProfiles, query, expandVariables, defaultProfileId, currentSort]
   );
 
   /* ======================================== */
@@ -195,10 +206,11 @@ export function useSearchShortcuts(params: UseSearchShortcutsParams): UseSearchS
    * ショートカット編集画面へ遷移
    *
    * ホームの一覧と同じく、カード右上の「・・・」メニューから編集へ進む。
+   * 定型文と同じく検索画面を編集画面で置き換え、検索へは戻さない（Webと同じ・§8.7）。
    */
   const handleEditShortcut = useCallback(
     (shortcut: Shortcut) => {
-      router.push({
+      router.replace({
         pathname: '/shortcut/edit',
         params: { id: shortcut.id },
       });

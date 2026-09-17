@@ -12,8 +12,6 @@ import { ShortcutCard } from './ShortcutCard';
 export type ShortcutGridItem = ShortcutWithDisplay & {
   /** 行を一意にする値（横断検索のときだけ入る） */
   rowKey?: string;
-  /** この行に対応するプロファイル名（横断検索のときだけ入る） */
-  profileLabel?: string | null;
   /** 値をコピーするときに展開の基準にするプロファイル（横断検索のときだけ入る） */
   copyProfileId?: string | null;
 };
@@ -70,7 +68,6 @@ export function ShortcutGrid({
             categoryColor={category?.color ?? null}
             categoryName={category?.name ?? null}
             onCopyValue={onCopyValue}
-            profileLabel={shortcut.profileLabel}
             copyProfileId={shortcut.copyProfileId}
             onEdit={() => onEdit(shortcut)}
             onDelete={() => onDelete(shortcut)}

@@ -60,17 +60,12 @@ interface UseSearchScreenParams {
  * @remarks
  * 横断検索では同じ定型文がプロファイルごとの展開結果に分かれるため、行はプロファイルを持つ。
  */
-export type SearchSnippetRow = CrossProfileSnippet & {
-  /** 行に添えるプロファイル名（1つのプロファイルに絞っている間はnull） */
-  profileLabel: string | null;
-};
+export type SearchSnippetRow = CrossProfileSnippet;
 
 /**
  * 検索結果のショートカット1行
  */
 export type SearchShortcutRow = CrossProfileShortcut & {
-  /** 行に添えるプロファイル名（1つのプロファイルに絞っている間はnull） */
-  profileLabel: string | null;
   /** 値をコピーするときに展開の基準にするプロファイル */
   copyProfileId: string;
 };
@@ -278,39 +273,13 @@ export function useSearchScreen(params: UseSearchScreenParams): UseSearchScreenR
     return validProfiles;
   }, [validProfiles, hasSearchQuery, getProfileResultCount]);
 
-  /* 環境名の引き当て。行に添えるプロファイル名を作るために使う */
-  const profileNameById = useMemo(
-    () => new Map(validProfiles.map((p: Profile) => [p.id, p.name])),
-    [validProfiles]
-  );
-
-  /**
-   * 行に添えるプロファイル名を作る
-   *
-   * @param matchedProfileIds - その行の展開結果になったプロファイル
-   * @returns 添える文言。1つの環境へ絞っている間と、環境が1つしかないときはnull
-   *
-   * @remarks
-   * 絞り込み中はチップが環境を示しているため、行にも出すと同じ情報が二重になる。
-   */
-  const buildProfileLabel = useCallback(
-    (matchedProfileIds: string[]): string | null => {
-      if (selectedProfileId !== null || validProfiles.length <= 1) return null;
-      const names = matchedProfileIds
-        .map((id) => profileNameById.get(id))
-        .filter((name): name is string => Boolean(name));
-      return names.length > 0 ? names.join(' / ') : null;
-    },
-    [selectedProfileId, validProfiles.length, profileNameById]
-  );
-
   /* 画面に出す定型文。「すべて」なら横断結果そのまま、環境を選んでいればその環境の行だけ */
   const displaySnippets = useMemo<SearchSnippetRow[]>(
     () =>
-      allSnippetRows
-        .filter((row) => selectedProfileId === null || row.matchedProfileIds.includes(selectedProfileId))
-        .map((row) => ({ ...row, profileLabel: buildProfileLabel(row.matchedProfileIds) })),
-    [allSnippetRows, selectedProfileId, buildProfileLabel]
+      allSnippetRows.filter(
+        (row) => selectedProfileId === null || row.matchedProfileIds.includes(selectedProfileId)
+      ),
+    [allSnippetRows, selectedProfileId]
   );
 
   /* 画面に出すショートカット。コピーの基準は行が持つプロファイルにする */
@@ -318,12 +287,8 @@ export function useSearchScreen(params: UseSearchScreenParams): UseSearchScreenR
     () =>
       allShortcutRows
         .filter((row) => selectedProfileId === null || row.matchedProfileIds.includes(selectedProfileId))
-        .map((row) => ({
-          ...row,
-          profileLabel: buildProfileLabel(row.matchedProfileIds),
-          copyProfileId: row.matchedProfileIds[0],
-        })),
-    [allShortcutRows, selectedProfileId, buildProfileLabel]
+        .map((row) => ({ ...row, copyProfileId: row.matchedProfileIds[0] })),
+    [allShortcutRows, selectedProfileId]
   );
 
   /* ======================================== */
@@ -377,10 +342,15 @@ export function useSearchScreen(params: UseSearchScreenParams): UseSearchScreenR
 
   /**
    * 定型文編集画面へ遷移
+   *
+   * @remarks
+   * 検索画面を編集画面で置き換え、検索へは戻さない（Webと同じ・§8.7）。
+   * 直した項目が検索語に合わなくなって一覧から消えると、作業の続きが見失われるためである。
+   * pushではなくreplaceを使うのは、閉じると開くを2回に分けると順序が navigator 任せになるためである。
    */
   const handleEditSnippet = useCallback(
     (snippet: SnippetWithDisplay) => {
-      router.push({
+      router.replace({
         pathname: '/snippet/edit',
         params: { id: snippet.id },
       });
