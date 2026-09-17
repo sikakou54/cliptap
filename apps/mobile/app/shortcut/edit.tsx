@@ -29,6 +29,14 @@ import { ScreenContainer } from '@components/common/ScreenContainer';
 import { ShortcutPreview } from '@components/shortcut/ShortcutPreview';
 import { UI_CONSTANTS } from '@constants/ui';
 
+/**
+ * 値の行に重ねる丸ボタンの下地の不透明度（16進のアルファ）
+ *
+ * 下地を不透明にすると、隠れた分の値が読めなくなる。
+ * 逆に薄くしすぎるとアイコンの線と値の文字が混ざるため、値が透けて読める濃さで止める。
+ */
+const VALUE_ICON_BADGE_ALPHA = '99';
+
 export default function ShortcutEditModal() {
   const { t } = useTranslation();
   const { colors, responsiveFontSizes, responsiveLineHeights } = useTheme();
@@ -237,7 +245,9 @@ export default function ShortcutEditModal() {
               >
                 {/* 挿入する値。保存する文字列のまま表示し、変数トークンは展開しない
                     （展開結果は画面下部のプレビューで確かめる。定型文フォームの入力欄とプレビューと同じ分担）。
-                    伏せている値はこの画面でも記号に置き換える。見たいときは目のボタンで戻す */}
+                    伏せている値はこの画面でも記号に置き換える。見たいときは目のボタンで戻す。
+                    1行に固定するのは、値の長さで箱の高さが変わらないようにするため。
+                    収まらない分は末尾を省略し、全文は値の編集画面とプレビューで確かめる */}
                 <Text
                   style={[
                     styles.valueText,
@@ -247,42 +257,58 @@ export default function ShortcutEditModal() {
                       lineHeight: responsiveLineHeights.base,
                     },
                   ]}
-                  numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.DOUBLE}
+                  numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.SINGLE}
                 >
                   {draft.isMasked ? MASKED_VALUE_TEXT : draft.value}
                 </Text>
 
-                {/* 表示を伏せるかの切り替え。ここで決めた状態は一覧・プレビュー・拡張キーボードにも効く */}
-                <TouchableOpacity
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    handleToggleValueMask(draft);
-                  }}
-                  hitSlop={UI_CONSTANTS.HIT_SLOP.DEFAULT}
-                  style={styles.valueIconButton}
-                  accessibilityRole="button"
-                  accessibilityLabel={
-                    draft.isMasked ? t('shortcut.unmask_value') : t('shortcut.mask_value')
-                  }
-                >
-                  <Ionicons
-                    name={draft.isMasked ? 'eye-off-outline' : 'eye-outline'}
-                    size={UI_CONSTANTS.ICON_SIZE.SM}
-                    color={draft.isMasked ? colors.primary : colors.textSecondary}
-                  />
-                </TouchableOpacity>
+                {/* 目・削除のボタン。横並びの列としては場所を取らせず、箱の右端へ重ねて置く
+                    （値の文字が箱の幅をすべて使えるようにするため。位置はこれまでと同じ右端・縦中央） */}
+                <View style={styles.valueActions}>
+                  {/* 表示を伏せるかの切り替え。ここで決めた状態は一覧・プレビュー・拡張キーボードにも効く */}
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleToggleValueMask(draft);
+                    }}
+                    hitSlop={UI_CONSTANTS.HIT_SLOP.DEFAULT}
+                    style={[
+                      styles.valueIconButton,
+                      {
+                        backgroundColor: colors.surfaceElevated + VALUE_ICON_BADGE_ALPHA,
+                        borderColor: colors.border,
+                      },
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      draft.isMasked ? t('shortcut.unmask_value') : t('shortcut.mask_value')
+                    }
+                  >
+                    <Ionicons
+                      name={draft.isMasked ? 'eye-off-outline' : 'eye-outline'}
+                      size={UI_CONSTANTS.ICON_SIZE.SM}
+                      color={draft.isMasked ? colors.primary : colors.textSecondary}
+                    />
+                  </TouchableOpacity>
 
-                {/* 削除ボタン */}
-                <TouchableOpacity
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    handleDeleteValue(draft);
-                  }}
-                  hitSlop={UI_CONSTANTS.HIT_SLOP.DEFAULT}
-                  style={styles.valueIconButton}
-                >
-                  <Ionicons name="trash-outline" size={UI_CONSTANTS.ICON_SIZE.SM} color={colors.error} />
-                </TouchableOpacity>
+                  {/* 削除ボタン */}
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleDeleteValue(draft);
+                    }}
+                    hitSlop={UI_CONSTANTS.HIT_SLOP.DEFAULT}
+                    style={[
+                      styles.valueIconButton,
+                      {
+                        backgroundColor: colors.surfaceElevated + VALUE_ICON_BADGE_ALPHA,
+                        borderColor: colors.border,
+                      },
+                    ]}
+                  >
+                    <Ionicons name="trash-outline" size={UI_CONSTANTS.ICON_SIZE.SM} color={colors.error} />
+                  </TouchableOpacity>
+                </View>
               </TouchableOpacity>
             ))}
 
@@ -375,6 +401,7 @@ const styles = StyleSheet.create({
     gap: UI_CONSTANTS.GAP.SM,
   },
   /* 名前・プロファイル・カテゴリの入力欄（input / categoryButton）と同じ角丸・余白の箱。
+     値は1行に固定するため、箱の高さは値の長さによらず一定になる。
      下地の色はテーマに従うため描画時に渡す */
   valueRow: {
     flexDirection: 'row',
@@ -384,14 +411,34 @@ const styles = StyleSheet.create({
     minHeight: UI_CONSTANTS.BUTTON_HEIGHT.MEDIUM,
   },
   /* 保存する文字列をそのまま出すため、一覧・プレビューと同じ等幅で表示する。
-     目・削除のボタンは右へ寄せ、値の文字が幅をすべて使う */
+     目・削除のボタンは箱へ重ねて置くため、値の文字は箱の幅をすべて使う */
   valueText: {
     flex: 1,
-    paddingRight: UI_CONSTANTS.GAP.MD,
     fontFamily: 'monospace',
   },
+  /* 目・削除のボタンを箱の右端へ重ねる。
+     上下いっぱいに広げて縦中央へ揃えるのは、値が2行になって箱が高くなっても位置が変わらないようにするため。
+     右の位置を箱の余白（valueRow.padding）と同じにして、重ねる前と同じ位置に見せる */
+  valueActions: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    right: UI_CONSTANTS.SPACING.BASE,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: UI_CONSTANTS.GAP.MD,
+  },
+  /* 値の文字の上に重なるため、下地と枠線を持つ丸いボタンにする（定型文カードの丸ボタンと同じ形）。
+     下地が無いと重なった文字とアイコンの線が混ざって読み取れず、不透明にすると隠れた値が読めない。
+     そのため下地は半透明にする（VALUE_ICON_BADGE_ALPHA）。
+     下地の色と枠線の色はテーマに従うため描画時に渡す */
   valueIconButton: {
-    padding: UI_CONSTANTS.SPACING.XS,
+    width: UI_CONSTANTS.SIZE.ICON_CONTAINER_MD,
+    height: UI_CONSTANTS.SIZE.ICON_CONTAINER_MD,
+    borderRadius: UI_CONSTANTS.SIZE.ICON_CONTAINER_MD / 2,
+    borderWidth: UI_CONSTANTS.BORDER_WIDTH.THIN,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   addValueButton: {
     flexDirection: 'row',

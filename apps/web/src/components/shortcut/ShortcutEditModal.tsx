@@ -228,42 +228,48 @@ export function ShortcutEditModal({
               <div className="space-y-4">
                 {values.map((entry) => (
                   <div key={entry.key} className="rounded-xl border border-gray-200 p-4 dark:border-[#2A2A2A]">
-                    <div className="mb-3 flex items-center justify-end gap-1">
-                      {/* 表示を伏せるかの切り替え。ここで決めた状態は一覧・プレビュー・拡張キーボードにも効く */}
-                      <button
-                        type="button"
-                        onClick={() => updateValue(entry.key, { isMasked: !entry.isMasked })}
-                        className={`min-h-10 min-w-10 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2A2A2A] ${entry.isMasked ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-[#A0A0A0]'}`}
-                        aria-label={entry.isMasked ? t('shortcut.unmask_value') : t('shortcut.mask_value')}
-                        title={entry.isMasked ? t('shortcut.unmask_value') : t('shortcut.mask_value')}
-                      >
-                        {entry.isMasked ? (
-                          <svg className="mx-auto h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                          </svg>
-                        ) : (
-                          <svg className="mx-auto h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                        )}
-                      </button>
-                      <button type="button" onClick={() => handleDeleteValue(entry)} className="min-h-10 min-w-10 rounded-lg text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20" aria-label={t('common.delete')}>×</button>
+                    {/* 入力欄と操作アイコンを重ねるための基準。アイコンが別の行を占めると
+                        入力欄がその分だけ下へ押し出されるため、入力欄の上へ重ねて置く */}
+                    <div className="relative">
+                      {/* 伏せる指定にしても入力欄は実際の値のまま出す。書き換えるには中身が見えている必要があるため。
+                          隠れるのは一覧・プレビュー・拡張キーボードの表示だけ */}
+                      <textarea
+                        value={entry.value}
+                        onChange={(event) => updateValue(entry.key, { value: event.target.value })}
+                        onFocus={(event) => {
+                          setFocusedValueKey(entry.key);
+                          selectionByKey.current.set(entry.key, event.currentTarget.selectionStart);
+                        }}
+                        onSelect={(event) => selectionByKey.current.set(entry.key, event.currentTarget.selectionStart)}
+                        rows={3}
+                        className="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-[#333333] dark:bg-[#242424] dark:text-white"
+                        placeholder={t('shortcut.value_value_placeholder')}
+                      />
+                      {/* 操作アイコンは入力欄の右上へ重ねる。
+                          値が隠れないよう、下地は半透明の丸いボタンにする */}
+                      <div className="absolute right-2 top-2 flex items-center gap-2">
+                        {/* 表示を伏せるかの切り替え。ここで決めた状態は一覧・プレビュー・拡張キーボードにも効く */}
+                        <button
+                          type="button"
+                          onClick={() => updateValue(entry.key, { isMasked: !entry.isMasked })}
+                          className={`flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white/60 dark:border-[#333333] dark:bg-[#2A2A2A]/60 hover:bg-gray-100 dark:hover:bg-[#333333] ${entry.isMasked ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-[#A0A0A0]'}`}
+                          aria-label={entry.isMasked ? t('shortcut.unmask_value') : t('shortcut.mask_value')}
+                          title={entry.isMasked ? t('shortcut.unmask_value') : t('shortcut.mask_value')}
+                        >
+                          {entry.isMasked ? (
+                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                            </svg>
+                          ) : (
+                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          )}
+                        </button>
+                        <button type="button" onClick={() => handleDeleteValue(entry)} className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white/60 dark:border-[#333333] dark:bg-[#2A2A2A]/60 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20" aria-label={t('common.delete')}>×</button>
+                      </div>
                     </div>
-                    {/* 伏せる指定にしても入力欄は実際の値のまま出す。書き換えるには中身が見えている必要があるため。
-                        隠れるのは一覧・プレビュー・拡張キーボードの表示だけ */}
-                    <textarea
-                      value={entry.value}
-                      onChange={(event) => updateValue(entry.key, { value: event.target.value })}
-                      onFocus={(event) => {
-                        setFocusedValueKey(entry.key);
-                        selectionByKey.current.set(entry.key, event.currentTarget.selectionStart);
-                      }}
-                      onSelect={(event) => selectionByKey.current.set(entry.key, event.currentTarget.selectionStart)}
-                      rows={3}
-                      className="w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-[#333333] dark:bg-[#242424] dark:text-white"
-                      placeholder={t('shortcut.value_value_placeholder')}
-                    />
                   </div>
                 ))}
                 {values.length === 0 && <p className="rounded-xl border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 dark:border-[#333333] dark:text-[#A0A0A0]">{t('error.shortcut_value_required')}</p>}
