@@ -2,6 +2,13 @@
 <!--
   スライド 02 — 使う場面。
   見出しとリードは LP の scenes セクション（apps/web/index.html:215-）から逐語流用。
+
+  左は投稿コンポーザ、右はメールの作成欄。どちらも撮影用ホスト（store/screen/host/）を
+  シミュレータのホーム画面へ追加し、その入力欄へ ClipTap キーボードから挿入したところ。
+  ホストは実在するサービスに似せない無印のUIで、リードが言う「SNS」「メール」という
+  場面だけを示す。理由と方針は store/screen/host/README.md を参照。
+  かつては X と Gmail の実機キャプチャを使っていたが、他社のUIを掲載画像へ持ち込むのをやめ、
+  言語別（-ja / -en）に撮り直せる形へ移した。
 -->
 <meta charset="utf-8" />
 <template id="slide">
@@ -25,7 +32,7 @@
     <figure class="shot">
       <div class="phone">
         <div class="phone-inner">
-          <img src="{{IMG}}/02-scene-2-sns.png" width="1170" height="2532" alt="" />
+          <img src="{{IMG}}/02-scene-2-sns-{{LANG}}.png" width="1206" height="2622" alt="" />
         </div>
       </div>
       <figcaption class="cap"></figcaption>
@@ -33,7 +40,7 @@
     <figure class="shot">
       <div class="phone">
         <div class="phone-inner">
-          <img src="{{IMG}}/02-scene-3-mail.png" width="1170" height="2532" alt="" />
+          <img src="{{IMG}}/02-scene-3-mail-{{LANG}}.png" width="1206" height="2622" alt="" />
         </div>
       </div>
       <figcaption class="cap"></figcaption>

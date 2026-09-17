@@ -2,12 +2,11 @@
 <!--
   スライド 05 — ショートカット。
   仕様書 §8.24（拡張キーボードから呼び出す値を、ショートカットとその値として管理する機能）を訴求する。
-  左はアプリのショートカット一覧。シミュレータで撮影し、開発用シード（apps/mobile/dummy.json）の架空データを
-  プロファイル「A社用」で表示している。
-  右は他のアプリで ClipTap キーボードからショートカットの値を挿入したところ（キーボードの切り替えはシミュレータで
-  再現できないため実機で撮影）。
-  シミュレータのキャプチャは 1206×2622 で、既存の 1170×2532 よりわずかに縦長のため、枠の中で上下が合計約0.5%
-  （元画像で各約6px）切れる。切り方は _shared.css の .phone-inner を参照。
+  左はアプリのショートカット一覧、右はメッセージAppで ClipTap キーボードからショートカットの値を
+  挿入したところ。どちらもシミュレータで撮影し、開発用シード（apps/mobile/dummy.json）の架空データを
+  プロファイル「A社用」（en は Client A）で表示している。
+  一覧の先頭が「携帯番号」「請求先」になるのは dummy.json の並びによる（配列の末尾ほど一覧の上に出る）。
+  見出しの「電話番号や請求先」と写っているものを合わせるための並びなので、入れ替えると崩れる。
 -->
 <meta charset="utf-8" />
 <template id="slide">
@@ -31,7 +30,7 @@
     <figure class="shot">
       <div class="phone">
         <div class="phone-inner">
-          <img src="{{IMG}}/05-shortcuts-left-list.png" width="1206" height="2622" alt="" />
+          <img src="{{IMG}}/05-shortcuts-left-list-{{LANG}}.png" width="1206" height="2622" alt="" />
         </div>
       </div>
       <figcaption class="cap"></figcaption>
@@ -39,7 +38,7 @@
     <figure class="shot">
       <div class="phone">
         <div class="phone-inner">
-          <img src="{{IMG}}/05-shortcuts-right-keyboard.png" width="1170" height="2532" alt="" />
+          <img src="{{IMG}}/05-shortcuts-right-keyboard-{{LANG}}.png" width="1206" height="2622" alt="" />
         </div>
       </div>
       <figcaption class="cap"></figcaption>

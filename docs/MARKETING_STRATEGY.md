@@ -152,13 +152,22 @@ ClipTapが取りに行くべき語の仮説：
 
 ### 4-5. スクリーンショット改善案
 
-**現状素材**: `store/screen/` に7枚のHTMLソース。LP（`apps/web/lp/lp.css`）と同一のデザインシステムで組んであり、各スライドにはアプリ画面のキャプチャ（`apps/web/public/image/`）が入る。ホームの定型文一覧（`01-hero-left-home.png`）とショートカット一覧（`05-shortcuts-left-list.png`）はシミュレータ（1206×2622、ダークモード、開発用シードの架空データ）で撮影し、それ以外は実機キャプチャ（1170×2532）。
+**現状素材**: `store/screen/` に7枚のHTMLソース。LP（`apps/web/lp/lp.css`）と同一のデザインシステムで組んであり、各スライドにはアプリ画面のキャプチャ（`apps/web/public/image/`）が入る。
+
+キャプチャは**すべてシミュレータ撮影**（1206×2622、ダークモード、開発用シード `apps/mobile/dummy.json` の架空データ、プロファイルは「A社用」／en は「Client A」）で、ファイル名に `-ja` / `-en` を持ち言語別に出し分ける。実機キャプチャは残っていない。
+
+他アプリへの挿入面は2通りある。
+
+- **メッセージApp**（`01-hero-right-insert` / `05-shortcuts-right-keyboard`）— iOS標準アプリをそのままホストにする
+- **撮影用ホスト**（`02-scene-*`）— `store/screen/host/` の無印の入力欄をホーム画面へ追加して使う。
+  リードが言う「SNS」「メール」「AIとの対話」の場面が要るが、該当するアプリがシミュレータに無いため。
+  実在するサービスに似せない方針と理由は `store/screen/host/README.md` を正とする
 
 | # | ファイル | 訴求 |
 |---|---|---|
 | 1 | `00-hero.html` | アイキャッチ。LPのヒーロー「何度も打つ文章は、もう打たない。」を逐語。見出しのみ他より大きく組む |
 | 2 | `01-keyboard.html` | 拡張キーボードで他アプリに挿入（最大価値を前方に） |
-| 3 | `02-scenes.html` | 使う場面。SNS / メールの実画面 |
+| 3 | `02-scenes.html` | 使う場面。投稿欄とメール作成欄へキーボードから挿入 |
 | 4 | `03-variables.html` | システム変数7種 × 書式94種 |
 | 5 | `04-profiles.html` | カスタム変数とプロファイル切り替え |
 | 6 | `05-shortcuts.html` | ショートカット。電話番号や請求先などの値だけをキーボードから入力 |
@@ -176,8 +185,27 @@ node ~/.claude/skills/html-to-png/scripts/html_to_png.js store/screen/jobs.json
 出力先は `store/out/<canvas>/<lang>/` と `apps/web/public/ogp/`。canvas は `ios69`（1290×2796）と `ipad13`（2064×2752）、言語は ja / en。OGP（1200×630）は `00-hero` から生成され、LP の `og:image` の実体をそのまま置き換える（シェアカードとリンク先ページの第一声が一致する）。
 文言を直すときは `store/screen/NN-*.html` を1つ編集すれば ja / en とすべての canvas に同時に反映される。
 
+**端末キャプチャの撮り直し手順**
+
+`.claude/skills/full-test/scripts/` の `sim.sh` / `state.sh` を使う。言語ごとに1巡し、`-ja` / `-en` の両方を揃える（片方だけだと `build.mjs` が止まる）。
+
+1. `state.sh wipe` → `state.sh plan pro` → `state.sh pref set '@dev_ads_disabled' '1'`。Proかつ広告オフにしないとバナーと訴求バナーが写り込む。シードは空のDBにしか入らないため、言語を変えるたびに wipe が要る
+2. `sim.sh locale <ja|en>`（端末が再起動する）→ `sim.sh launch`。シードが端末の言語に合う組を投入する
+3. `xcrun simctl status_bar <udid> override --time <HH:MM> --batteryState discharging --batteryLevel 100 --wifiBars 3 --cellularBars 4`
+   時刻は **9:41 ではなく、システム変数画面に出ている実時刻に合わせる**。`{{time}}` は端末の実時刻で描画されるので、9:41 に固定すると同じ画面の中で状態バーと値が食い違う
+4. アプリはプロファイル「A社用」（en は Client A）に切り替えてから撮る
+5. キーボード面を撮る。**DBを wipe したあとは必ずシミュレータごと再起動する**。拡張キーボードは消えたDBを掴んだままになり、「No snippets available」と出たまま直らない
+   - メッセージAppの面は、ホーム画面から起動して「◀ ClipTap」の戻り表示が出ないようにする
+   - 撮影用ホストの面は `node store/screen/host/serve.mjs` を起こし、ホーム画面のアイコンから開く。
+     **必ずメニューからレイアウトを選び直す**（入力欄の画面はDOMごと復元されるため、前回の本文が残る）
+   - 定型文はキーボードのカテゴリで絞ると目的のものが上位に来る。en の「Social media」はチップ幅に収まらず
+     「So…edia」と省略されるので、英語面は絞らず「All」から選ぶ
+6. 撮ったPNGを `apps/web/public/image/<name>-<lang>.png` へ置き、`build.mjs` → `html_to_png.js` を回す
+
 **残っている改善余地**
-- 英語版のスライドに写っているアプリUIが日本語ロケールのまま（キャプチャが ja しかないため。LP英語版も同じ状態）。英語ロケールで撮り直すと英語圏のCVRに効く可能性がある。
+- 撮影用ホストはWebのため、キーボードの上にSafariのフォーム用アクセサリバー（∧ ∨ ✓）が必ず出る。
+  ページ側からは消せない（`contenteditable` にしても出る）。無くすなら撮影用のネイティブアプリが要る。
+- iPad面7枚はiPhoneのフレーム合成で、iPadの画面が1枚も入っていない（`_shared.css` に `.phone` が1種類しか無い）。
 - 可能なら1枚目を**App Preview動画**化（キーボードで挿入する3秒の動き）。動きは静止画より伝わる。
 - Google Play 用（1080×1920、縦横比9:16が上限）とフィーチャーグラフィック（1024×500）は未対応。`_shared.css` に canvas 定義を1ブロック足せば同じソースから出力できる。
 

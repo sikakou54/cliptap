@@ -6,6 +6,10 @@
   （左=ホーム一覧、右=キーボード挿入）で、重なり方も lp.css の .hero-shots に従う。
   デッキの先頭に置くアイキャッチなので、見出しだけ他の面より大きく組む
   （lp.css の .hero h1 が .section-title より大きいのと同じ）。
+
+  端末キャプチャはファイル名に -{{LANG}} を持ち、ja / en で中身が入れ替わる
+  （日本語UIのキャプチャを英語面へ出さないため）。両言語ぶんが揃っていないと
+  build.mjs の assertImagesExist で止まる。
 -->
 <meta charset="utf-8" />
 <template id="slide">
@@ -27,7 +31,7 @@
     <figure class="shot">
       <div class="phone">
         <div class="phone-inner">
-          <img src="{{IMG}}/01-hero-left-home.png" width="1206" height="2622" alt="" />
+          <img src="{{IMG}}/01-hero-left-home-{{LANG}}.png" width="1206" height="2622" alt="" />
         </div>
       </div>
       <figcaption class="cap"></figcaption>
@@ -35,7 +39,7 @@
     <figure class="shot">
       <div class="phone">
         <div class="phone-inner">
-          <img src="{{IMG}}/01-hero-right-insert.png" width="1170" height="2532" alt="" />
+          <img src="{{IMG}}/01-hero-right-insert-{{LANG}}.png" width="1206" height="2622" alt="" />
         </div>
       </div>
       <figcaption class="cap"></figcaption>
