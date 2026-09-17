@@ -14,6 +14,7 @@ import { useAuth, useTranslation, useSharedSubscription } from '@cliptap/shared'
 import { useHomeScreen } from '@hooks/screens/useHomeScreen';
 import { SnippetEditModal } from '@components/snippet/SnippetEditModal';
 import { DashboardHeader } from '@components/dashboard/DashboardHeader';
+import { SearchScreen } from '@components/dashboard/SearchScreen';
 import { SnippetGrid } from '@components/dashboard/SnippetGrid';
 import { ShortcutGrid } from '@components/shortcut/ShortcutGrid';
 import { ShortcutEditModal } from '@components/shortcut/ShortcutEditModal';
@@ -48,12 +49,17 @@ export function Dashboard() {
     copiedTitleId,
     copiedShortcutValueId,
     showProfileDropdown,
-    showSearchBar,
+    isSearchOpen,
+    searchProfileId,
+    getSearchResultCount,
+    allSearchResultCount,
+    searchSnippetRows,
+    searchShortcutRows,
     gridColumns,
     listMode,
-    searchProfileId,
 
-    isMobileMenuOpen,
+    isSideMenuOpen,
+    isSideMenuOverlay,
 
     snippetModal,
     shortcutModal,
@@ -76,11 +82,12 @@ export function Dashboard() {
 
     setSearchQuery,
     setSelectedCategory,
-    setShowSearchBar,
+    openSearch,
+    closeSearch,
+    setSearchProfileId,
     setGridColumns,
     setShowProfileDropdown,
     setListMode,
-    setSearchProfileId,
 
     handleCopySnippet,
     handleCopySnippetTitle,
@@ -88,11 +95,10 @@ export function Dashboard() {
     handleCopyShortcutValue,
     handleDeleteShortcut,
     handleSelectProfile,
-    handleToggleMobileMenu,
-    handleCloseMobileMenu,
+    handleToggleSideMenu,
+    handleCloseSideMenu,
     getCategoryColor,
     getCategoryName,
-    getSearchResultCount,
   } = useHomeScreen();
 
   /**
@@ -115,6 +121,62 @@ export function Dashboard() {
     [validProfiles, activeProfile]
   );
 
+  /**
+   * 定型文の編集を開く
+   *
+   * @remarks
+   * 編集画面（モーダル）を開くときは検索画面を閉じる。閉じないと、編集を終えたあとに
+   * 検索結果へ戻ることになり、編集した項目が検索語に合わなくなって一覧から消える。
+   * 検索画面を開いていないときは何も起きない。
+   */
+  const handleEditSnippet = useCallback((snippet: Parameters<typeof snippetModal.handleEdit>[0]) => {
+    closeSearch();
+    snippetModal.handleEdit(snippet);
+  }, [closeSearch, snippetModal]);
+
+  /** ショートカットの編集を開く（定型文と同じく検索画面を閉じる） */
+  const handleEditShortcut = useCallback((shortcut: Parameters<typeof shortcutModal.handleEdit>[0]) => {
+    closeSearch();
+    shortcutModal.handleEdit(shortcut);
+  }, [closeSearch, shortcutModal]);
+
+  /**
+   * 一覧（定型文またはショートカットのグリッド）
+   *
+   * @remarks
+   * 通常表示と検索画面で同じものを出す。検索画面はヘッダーと一覧の範囲を覆うだけで、
+   * 見せる一覧そのものは変わらないため、2か所へ同じ組み立てを書かない。
+   */
+  const listContent = listMode === 'snippet' ? (
+    <SnippetGrid
+      /* 検索中は有効な全プロファイルを横断した結果を出す。同じ定型文でも
+         プロファイルごとに展開結果が違えば別の行になる（§8.7） */
+      filteredSnippets={isSearchOpen ? searchSnippetRows : filteredSnippets}
+      gridColumns={gridColumns}
+      copiedId={copiedId}
+      copiedTitleId={copiedTitleId}
+      categories={categories}
+      getCategoryColor={getCategoryColor}
+      getCategoryName={getCategoryName}
+      onCopy={handleCopySnippet}
+      onCopyTitle={handleCopySnippetTitle}
+      onEdit={handleEditSnippet}
+      onDelete={handleDeleteSnippet}
+    />
+  ) : (
+    <ShortcutGrid
+      shortcuts={isSearchOpen ? searchShortcutRows : filteredShortcuts}
+      gridColumns={gridColumns}
+      copiedValueId={copiedShortcutValueId}
+      categories={categories}
+      onCopyValue={handleCopyShortcutValue}
+      onEdit={handleEditShortcut}
+      onDelete={handleDeleteShortcut}
+      /* 検索画面には追加ボタンが無いため、0件のときの「+ ボタンから追加」の案内は出さない */
+      showEmptyHint={!isSearchOpen}
+    />
+  );
+
   /* DB未読み込み時は何も表示しない（nullを返す） */
   if (!isLoaded) {
     return null;
@@ -129,16 +191,18 @@ export function Dashboard() {
       <SideMenu
         onExport={exportScreen.openExportModal}
         onImport={importScreen.openFileModal}
-        isOpen={isMobileMenuOpen}
-        onClose={handleCloseMobileMenu}
+        isOpen={isSideMenuOpen}
+        isOverlay={isSideMenuOverlay}
+        onClose={handleCloseSideMenu}
         onAccountLink={openAccountLinkModal}
       />
 
-      {/* メインコンテンツエリア（デスクトップではサイドメニュー分の左マージンを確保）
-          サイドメニューの幅（72 = 18rem = 288px）分のマージンを左側に設定。 */}
-      <div className="md:ml-72 transition-all duration-300">
+      {/* メインコンテンツエリア（サイドメニューを開いている間は、その幅の分だけ右へ寄せる）
+          サイドメニューの幅（72 = 18rem = 288px）分のマージンを左側に設定。
+          狭い画面ではサイドメニューが覆いかぶさるため、余白は空けない。 */}
+      <div className={`${isSideMenuOpen ? 'md:ml-72' : ''} transition-all duration-300`}>
         {shouldShowSubscriptionVerificationWarning(Boolean(user), verificationFailed) && (
-          <div className="fixed left-0 right-0 top-0 z-50 flex items-center justify-center gap-3 bg-amber-100 px-4 py-2 text-sm text-amber-900 md:left-72 dark:bg-amber-900/60 dark:text-amber-100">
+          <div className={`fixed left-0 right-0 top-0 z-50 flex items-center justify-center gap-3 bg-amber-100 px-4 py-2 text-sm text-amber-900 dark:bg-amber-900/60 dark:text-amber-100 ${isSideMenuOpen ? 'md:left-72' : ''}`}>
             <span>{t('settings.web_specific.subscription_check_failed')}</span>
             <button className="font-semibold underline" onClick={() => void refresh()}>
               {t('settings.web_specific.retry_subscription')}
@@ -154,14 +218,12 @@ export function Dashboard() {
           showProfileDropdown={showProfileDropdown}
           setShowProfileDropdown={setShowProfileDropdown}
           handleProfileSelect={handleSelectProfile}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          showSearchBar={showSearchBar}
-          setShowSearchBar={setShowSearchBar}
+          onOpenSearch={openSearch}
           categories={filterCategories}
           selectedCategory={selectedCategory}
           setSelectedCategory={setSelectedCategory}
-          onToggleMobileMenu={handleToggleMobileMenu}
+          isSideMenuOpen={isSideMenuOpen}
+          onToggleSideMenu={handleToggleSideMenu}
           onCreate={listMode === 'shortcut' ? shortcutModal.handleCreate : snippetModal.handleCreate}
           gridColumns={gridColumns}
           setGridColumns={setGridColumns}
@@ -169,41 +231,30 @@ export function Dashboard() {
           onSortChange={handleSortChange}
           listMode={listMode}
           onListModeChange={setListMode}
-          searchProfileId={searchProfileId}
-          getSearchResultCount={getSearchResultCount}
-          onSearchProfileSelect={setSearchProfileId}
         />
 
         {/* メインコンテンツ（定型文グリッド）
             pt-36でヘッダー分の上部マージンを確保（固定ヘッダーの下にコンテンツが表示されるように）。 */}
-        <main className="px-6 py-6 pt-36">
-          {listMode === 'snippet' ? (
-            <SnippetGrid
-              filteredSnippets={filteredSnippets}
-              gridColumns={gridColumns}
-              copiedId={copiedId}
-              copiedTitleId={copiedTitleId}
-              categories={categories}
-              getCategoryColor={getCategoryColor}
-              getCategoryName={getCategoryName}
-              onCopy={handleCopySnippet}
-              onCopyTitle={handleCopySnippetTitle}
-              onEdit={snippetModal.handleEdit}
-              onDelete={handleDeleteSnippet}
-            />
-          ) : (
-            <ShortcutGrid
-              shortcuts={filteredShortcuts}
-              gridColumns={gridColumns}
-              copiedValueId={copiedShortcutValueId}
-              categories={categories}
-              onCopyValue={handleCopyShortcutValue}
-              onEdit={shortcutModal.handleEdit}
-              onDelete={handleDeleteShortcut}
-            />
-          )}
-        </main>
+        {/* 検索中は描画しない。検索画面と同時に出すと同じ一覧が二重にマウントされる */}
+        {!isSearchOpen && <main className="px-6 py-6 pt-36">{listContent}</main>}
       </div>
+
+      {/* 検索画面（画面全体を覆う）。一覧は通常表示と同じものをそのまま出す */}
+      {isSearchOpen && (
+        <SearchScreen
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          onClose={closeSearch}
+          placeholderKey={listMode === 'shortcut' ? 'shortcut.search_placeholder' : 'snippet.search_placeholder'}
+          profiles={validProfiles}
+          searchProfileId={searchProfileId}
+          getSearchResultCount={getSearchResultCount}
+          allSearchResultCount={allSearchResultCount}
+          onSearchProfileSelect={setSearchProfileId}
+        >
+          {listContent}
+        </SearchScreen>
+      )}
 
       {/* バックアップ用パスワード入力モーダル
           全データを.cliptapファイルとして出力する。出力中は閉じられず、成功時に閉じる。 */}

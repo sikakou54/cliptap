@@ -38,6 +38,8 @@ interface SnippetCardProps {
   categoryColor: string | null;
   /** カテゴリ名（未分類または削除済みカテゴリの場合はnull） */
   categoryName: string | null;
+  /** この行に対応するプロファイル名（横断検索のときだけ渡す。通常の一覧では出さない） */
+  profileLabel?: string | null;
   onCopy: () => void;
   onCopyTitle: () => void;
   /** メニューで「編集」が選ばれたときのコールバック */
@@ -52,6 +54,7 @@ function SnippetCardComponent({
   isTitleCopied,
   categoryColor,
   categoryName,
+  profileLabel,
   onCopy,
   onCopyTitle,
   onEdit,
@@ -117,18 +120,27 @@ function SnippetCardComponent({
           <ItemActionMenu itemName={snippet.displayTitle || t('snippet.no_title')} onEdit={onEdit} onDelete={onDelete} />
         </div>
 
-        {/* カテゴリバッジ（未分類の場合はモバイル版と同じく表示しない） */}
-        {categoryName && (
-          <div className="mt-1">
-            <span
-              className="inline-block text-xs font-medium px-1.5 py-[3px] rounded-md"
-              style={{
-                backgroundColor: `${badgeColor}20`,
-                color: badgeColor,
-              }}
-            >
-              {categoryName}
-            </span>
+        {/* カテゴリバッジ（未分類の場合はモバイル版と同じく表示しない）と、
+            横断検索のときだけ添えるプロファイル名。同じ定型文がプロファイルごとの
+            展開結果に分かれて並ぶため、どの環境の結果かを示す（§8.7） */}
+        {(categoryName || profileLabel) && (
+          <div className="mt-1 flex flex-wrap items-center gap-1">
+            {categoryName && (
+              <span
+                className="inline-block text-xs font-medium px-1.5 py-[3px] rounded-md"
+                style={{
+                  backgroundColor: `${badgeColor}20`,
+                  color: badgeColor,
+                }}
+              >
+                {categoryName}
+              </span>
+            )}
+            {profileLabel && (
+              <span className="inline-block rounded-md border border-[#E5E7EB] bg-[#F8FAFC] px-1.5 py-[3px] text-xs font-medium text-[#6B7280] dark:border-[#2A2A2A] dark:bg-[#1A1A1A] dark:text-[#A0A0A0]">
+                {profileLabel}
+              </span>
+            )}
           </div>
         )}
 

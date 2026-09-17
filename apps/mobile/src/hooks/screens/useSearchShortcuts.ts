@@ -5,14 +5,14 @@
  *
  * 主な責務:
  * - 有効な各プロファイルから見えるショートカットの取得
- * - 各プロファイルでの値の変数展開と、検索語での絞り込み・プロファイルごとの一致件数の算出
+ * - 各プロファイルでの値の変数展開と、プロファイル横断での絞り込み
  * - 検索結果の値のコピー・編集・削除
  *
  * 【プロファイルごとに読み込む理由】
- * 検索は定型文と同じくプロファイルを跨ぎ、画面内で選んだプロファイルの分を表示する（§8.7）。
+ * 検索は定型文と同じく有効な全プロファイルを横断する（§8.7）。
  * どのショートカットが見えるかと、値の変数トークンがどう展開されるかはプロファイルごとに変わり、
  * 検索語に一致するかどうかも変わる。そのため全件を1つの一覧にまとめず、
- * プロファイルごとに一覧と展開した表示用の値を持つ。
+ * プロファイルごとに一覧を持ち、展開結果ごとに行を作る。
  * Providerはアクティブなプロファイルの分しか持たないため、この画面で読み込む。
  *
  * 【展開後の値で照合する理由】
@@ -27,7 +27,8 @@
  * 【使用回数を手元で進めない理由】
  * 検索結果は使用回数で並べず、表示もしない。加算はProviderのコピー経路が行う。
  *
- * @see src/hooks/screens/useSearchScreen.ts - 検索語とプロファイル選択の正本
+ * @see src/hooks/screens/useSearchScreen.ts - 検索語とプロファイル絞り込みの正本
+ * @see packages/shared/src/shortcuts/crossProfileSearch.ts - 横断検索と行のまとめ方
  * @see packages/shared/src/shortcuts/search.ts - 検索語の突き合わせの規則
  * @see packages/shared/src/shortcuts/display.ts - 表示用の値の展開
  */
@@ -35,8 +36,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import {
-  attachDisplayValues,
-  searchShortcuts,
+  searchShortcutsAcrossProfiles,
   useProfiles,
   useShortcuts,
   useTranslation,
@@ -44,10 +44,10 @@ import {
   useVariables,
   Logger,
   ShortcutService,
+  type CrossProfileShortcut,
   type Profile,
   type Shortcut,
   type ShortcutValue,
-  type ShortcutWithDisplay,
 } from '@cliptap/shared';
 import { showConfirm, showErrorAlert } from '@utils/alerts';
 
@@ -59,8 +59,6 @@ interface UseSearchShortcutsParams {
   enabled: boolean;
   /** 絞り込みに使う検索語（デバウンス済み） */
   query: string;
-  /** 表示するプロファイルのID（画面内の一時選択。未確定ならnull） */
-  selectedProfileId: string | null;
 }
 
 /**
@@ -68,18 +66,14 @@ interface UseSearchShortcutsParams {
  */
 export interface UseSearchShortcutsReturn {
   /* データ */
-  /** 選択中のプロファイルで検索語に一致したショートカット（表示順。値は選択中のプロファイルで展開済み） */
-  displayShortcuts: ShortcutWithDisplay[];
-
-  /* 派生関数 */
-  /** 指定したプロファイルで検索語に一致したショートカットの件数を返す */
-  getProfileShortcutCount: (profileId: string) => number;
+  /** 有効な全プロファイルを横断して検索語に一致したショートカット（展開結果ごとの行） */
+  allShortcutRows: CrossProfileShortcut[];
 
   /* ハンドラ */
   /** 一覧を読み直す */
   handleRefreshShortcuts: () => void;
-  /** 値をクリップボードへコピーする */
-  handleCopyShortcutValue: (value: ShortcutValue) => Promise<void>;
+  /** 値をクリップボードへコピーする（展開の基準にするプロファイルを添える） */
+  handleCopyShortcutValue: (value: ShortcutValue, profileId: string | null) => Promise<void>;
   /** 編集画面を開く */
   handleEditShortcut: (shortcut: Shortcut) => void;
   /** 確認のうえ削除する */
@@ -94,6 +88,7 @@ export interface UseSearchShortcutsReturn {
  *
  * @remarks
  * 読み込みに失敗しても検索画面は開いたままにしたいため、例外は記録して空の一覧を返す。
+ * 検索画面のチップで対象を切り替えるため、選択中のプロファイルだけでなく全件を読む。
  */
 function loadShortcutsByProfile(profiles: readonly Profile[]): Map<string, Shortcut[]> {
   const shortcutsByProfile = new Map<string, Shortcut[]>();
@@ -115,7 +110,7 @@ function loadShortcutsByProfile(profiles: readonly Profile[]): Map<string, Short
  * @returns 画面に必要な状態とハンドラ
  */
 export function useSearchShortcuts(params: UseSearchShortcutsParams): UseSearchShortcutsReturn {
-  const { enabled, query, selectedProfileId } = params;
+  const { enabled, query } = params;
 
   const { t, language } = useTranslation();
   const router = useRouter();
@@ -157,37 +152,18 @@ export function useSearchShortcuts(params: UseSearchShortcutsParams): UseSearchS
   /* 派生状態 */
   /* ======================================== */
 
-  /* 各プロファイルの一覧に、そのプロファイルで変数を展開した表示用の値を持たせる。
-     検索語とは別に持ち、キー入力のたびに展開し直さない */
-  const displayedByProfile = useMemo(() => {
-    const displayed = new Map<string, ShortcutWithDisplay[]>();
-    for (const [profileId, shortcuts] of shortcutsByProfile) {
-      displayed.set(
-        profileId,
-        attachDisplayValues(shortcuts, (text) => expandVariables(text, profileId, defaultProfileId))
-      );
-    }
-    return displayed;
-  }, [shortcutsByProfile, expandVariables, defaultProfileId]);
-
-  /* キー入力のたびにDBを読まないよう、読み込み済みの一覧をメモリ上で絞り込む */
-  const matchedByProfile = useMemo(() => {
-    const matched = new Map<string, ShortcutWithDisplay[]>();
-    for (const [profileId, shortcuts] of displayedByProfile) {
-      matched.set(profileId, searchShortcuts(shortcuts, query));
-    }
-    return matched;
-  }, [displayedByProfile, query]);
-
-  /* 選択中のプロファイルに一致が無くても、別のプロファイルへは切り替えない（定型文と同じ。§8.7） */
-  const displayShortcuts = useMemo(
-    () => (selectedProfileId ? matchedByProfile.get(selectedProfileId) ?? [] : []),
-    [matchedByProfile, selectedProfileId]
-  );
-
-  const getProfileShortcutCount = useCallback(
-    (profileId: string): number => matchedByProfile.get(profileId)?.length ?? 0,
-    [matchedByProfile]
+  /* 有効な全プロファイルを横断して絞り込む。キー入力のたびにDBを読まないよう、
+     読み込み済みの一覧をメモリ上で評価する。
+     プロファイルごとの絞り込みと件数は、この結果から画面側で求める（useSearchScreen） */
+  const allShortcutRows = useMemo(
+    () =>
+      searchShortcutsAcrossProfiles({
+        shortcutsByProfile,
+        profiles: validProfiles,
+        query,
+        expand: (text, id) => expandVariables(text, id, defaultProfileId),
+      }),
+    [shortcutsByProfile, validProfiles, query, expandVariables, defaultProfileId]
   );
 
   /* ======================================== */
@@ -198,12 +174,13 @@ export function useSearchShortcuts(params: UseSearchShortcutsParams): UseSearchS
    * ショートカット値をクリップボードへコピーする
    *
    * ホームの一覧と同じ経路を使う（値だけをコピーし、値名は含めない）。
-   * 表示中の値は選択中のプロファイルで展開しているため、同じプロファイルを基準に展開してコピーする。
+   * 横断検索では行ごとに展開の基準プロファイルが違うため、行が持つプロファイルを受け取って展開する。
+   * これで画面に出ている文字列とコピーされる文字列が食い違わない。
    */
   const handleCopyShortcutValue = useCallback(
-    async (value: ShortcutValue) => {
+    async (value: ShortcutValue, profileId: string | null) => {
       try {
-        await copyShortcutValue(value, selectedProfileId ?? undefined);
+        await copyShortcutValue(value, profileId ?? undefined);
       } catch (error) {
         Logger.error('[SearchShortcuts] Failed to copy the shortcut value:', error);
         showErrorAlert(t('error.generic'));
@@ -211,7 +188,7 @@ export function useSearchShortcuts(params: UseSearchShortcutsParams): UseSearchS
         throw error;
       }
     },
-    [copyShortcutValue, selectedProfileId, t]
+    [copyShortcutValue, t]
   );
 
   /**
@@ -255,8 +232,7 @@ export function useSearchShortcuts(params: UseSearchShortcutsParams): UseSearchS
   );
 
   return {
-    displayShortcuts,
-    getProfileShortcutCount,
+    allShortcutRows,
     handleRefreshShortcuts: reloadShortcuts,
     handleCopyShortcutValue,
     handleEditShortcut,

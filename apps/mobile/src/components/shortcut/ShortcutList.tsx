@@ -36,13 +36,32 @@ import { ShortcutCard } from '@components/shortcut/ShortcutCard';
  * @property onDelete - カードのメニューで「削除」が選ばれたときのコールバック（確認ダイアログは呼び出し側が出す）
  * @property onRefresh - 引き下げ更新のコールバック
  */
+/**
+ * 一覧に並べる項目
+ *
+ * @remarks
+ * 検索画面の横断検索では、同じショートカットがプロファイルごとの展開結果に分かれて
+ * 複数行になる（§8.7）。IDだけでは行を区別できないため、行を示す値・行のプロファイル名・
+ * コピーの基準にするプロファイルを任意項目として持つ。
+ */
+export type ShortcutListItem = ShortcutWithDisplay & {
+  /** 行を一意にする値（横断検索のときだけ入る） */
+  rowKey?: string;
+  /** この行に対応するプロファイル名（横断検索のときだけ入る） */
+  profileLabel?: string | null;
+  /** 値をコピーするときに展開の基準にするプロファイル（横断検索のときだけ入る） */
+  copyProfileId?: string | null;
+};
+
 interface ShortcutListProps {
-  shortcuts: ShortcutWithDisplay[];
+  shortcuts: ShortcutListItem[];
   categories: Category[];
-  onCopyValue: (value: ShortcutValue) => Promise<void>;
+  onCopyValue: (value: ShortcutValue, profileId: string | null) => Promise<void>;
   onEdit: (shortcut: Shortcut) => void;
   onDelete: (shortcut: Shortcut) => void;
   onRefresh: () => void;
+  /** 0件のときに「＋ボタンから追加」の案内を出すか（既定: true） */
+  showEmptyHint?: boolean;
 }
 
 export function ShortcutList({
@@ -52,6 +71,7 @@ export function ShortcutList({
   onEdit,
   onDelete,
   onRefresh,
+  showEmptyHint = true,
 }: ShortcutListProps) {
   const { t } = useTranslation();
   const { isTablet, responsiveSpacing } = useTheme();
@@ -67,7 +87,7 @@ export function ShortcutList({
   );
 
   const renderItem = useCallback(
-    ({ item, index }: ListRenderItemInfo<ShortcutWithDisplay>) => {
+    ({ item, index }: ListRenderItemInfo<ShortcutListItem>) => {
       /* 未分類、またはカテゴリが削除された直後はバッジを出さない */
       const category = item.categoryId ? categoryMap.get(item.categoryId) ?? null : null;
 
@@ -86,6 +106,8 @@ export function ShortcutList({
             shortcut={item}
             category={category}
             onCopyValue={onCopyValue}
+            profileLabel={item.profileLabel}
+            copyProfileId={item.copyProfileId}
             onEdit={onEdit}
             onDelete={onDelete}
             isLast={index === shortcuts.length - 1}
@@ -98,13 +120,14 @@ export function ShortcutList({
 
   if (shortcuts.length === 0) {
     /* 空状態（ショートカットが無い、またはカテゴリ・検索語で絞り込んで0件になった場合）。
-       追加の導線はヘッダーの＋ボタンなので、そこへ誘導する文言をそのまま使う */
+       追加の導線はヘッダーの＋ボタンなので、そこへ誘導する文言をそのまま使う。
+       検索画面には＋ボタンが無いため、案内は呼び出し側で止める（WebのShortcutGridと同じ） */
     return (
       <View style={styles.emptyContainer}>
         <EmptyState
           icon="flash-outline"
           message={t('shortcut.empty')}
-          description={t('shortcut.empty_hint')}
+          description={showEmptyHint ? t('shortcut.empty_hint') : undefined}
         />
       </View>
     );
@@ -114,11 +137,15 @@ export function ShortcutList({
   return (
     <View style={styles.listStyle}>
       {/* FlashList: FlatListの代替として使用（大量データでも高速） */}
-      <FlashList<ShortcutWithDisplay>
+      <FlashList<ShortcutListItem>
+        /* 検索画面ではキーボードが出たままカードを操作する。既定のままだと最初のタップが
+           キーボードを閉じるだけで消費され、コピーや「・・・」が1回では効かない */
+        keyboardShouldPersistTaps="handled"
         data={shortcuts}
         estimatedItemSize={140}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        /* 横断検索では同じショートカットが複数行に分かれるため、IDだけでは重複する */
+        keyExtractor={(item) => item.rowKey ?? item.id}
         contentContainerStyle={{
           paddingHorizontal: responsiveSpacing.containerPadding,
           paddingBottom: responsiveSpacing.sectionGap,

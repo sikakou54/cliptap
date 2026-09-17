@@ -18,7 +18,7 @@ import { ExportPasswordModal } from '@components/export';
 import { ImportFileModal } from '@components/import';
 import { AccountLinkModal } from '@components/auth/AccountLinkModal';
 import { useBodyScrollLock } from '@hooks/useBodyScrollLock';
-import { useMobileMenu } from '@hooks/useMobileMenu';
+import { useSideMenu } from '@hooks/useSideMenu';
 import { useExportScreen } from '@hooks/screens/useExportScreen';
 import { useImportScreen } from '@hooks/screens/useImportScreen';
 import { PageHeader } from './PageHeader';
@@ -48,14 +48,20 @@ export function PageLayout({ title, icon, children, rightAction }: PageLayoutPro
     setShowAccountLinkModal(false);
   }, []);
 
-  const { isOpen: isMobileMenuOpen, toggle: toggleMobileMenu, close: closeMobileMenu } = useMobileMenu();
+  const {
+    isOpen: isSideMenuOpen,
+    isOverlay: isSideMenuOverlay,
+    toggle: toggleSideMenu,
+    close: closeSideMenu,
+  } = useSideMenu();
 
   /* バックアップ・復元はDashboardと同じフックで扱い、閉じる防止や一時DBの破棄の扱いを揃える */
   const exportScreen = useExportScreen();
   const importScreen = useImportScreen({ user, setLoaded });
 
-  const isModalOpen = exportScreen.showExportModal || isMobileMenuOpen || importScreen.showFileModal || showAccountLinkModal;
-  useBodyScrollLock(isModalOpen);
+  const isModalOpen = exportScreen.showExportModal || importScreen.showFileModal || showAccountLinkModal;
+  /* サイドメニューは本文へ覆いかぶさるときだけ背景を止める（押し出して並べているときは本文をスクロールできる） */
+  useBodyScrollLock(isModalOpen || (isSideMenuOverlay && isSideMenuOpen));
 
   /* ページレイアウト（サイドメニュー、ヘッダー、メインコンテンツ、モーダル群） */
   return (
@@ -64,19 +70,21 @@ export function PageLayout({ title, icon, children, rightAction }: PageLayoutPro
       <SideMenu
         onExport={exportScreen.openExportModal}
         onImport={importScreen.openFileModal}
-        isOpen={isMobileMenuOpen}
-        onClose={closeMobileMenu}
+        isOpen={isSideMenuOpen}
+        isOverlay={isSideMenuOverlay}
+        onClose={closeSideMenu}
         onAccountLink={openAccountLinkModal}
       />
 
-      {/* メインコンテンツエリア（デスクトップではサイドメニュー分の左マージンを確保） */}
-      <div className="md:ml-72 transition-all duration-300">
+      {/* メインコンテンツエリア（サイドメニューを開いている間は、その幅の分だけ右へ寄せる） */}
+      <div className={`${isSideMenuOpen ? 'md:ml-72' : ''} transition-all duration-300`}>
         {/* ページヘッダー（固定表示、モバイルではハンバーガーメニューボタン付き） */}
         <PageHeader
           title={title}
           icon={icon}
           rightAction={rightAction}
-          onToggleMobileMenu={toggleMobileMenu}
+          isSideMenuOpen={isSideMenuOpen}
+          onToggleSideMenu={toggleSideMenu}
         />
 
         {/* メインコンテンツ（ページ固有の内容） */}

@@ -9,6 +9,12 @@
  * - 親への通知は requestAnimationFrame で次フレームに逃がし、一覧の再計算で入力が詰まらないようにする
  * - 親が持つ selectedCategory が変わったときは localSelected を追従させ、バー以外から選択が
  *   変わった場合でも表示がずれないようにする
+ *
+ * 【チップの見た目の出どころ】
+ * 角丸・枠線・配色は、モバイルのチップ実装（apps/mobile/src/components/profile/ProfileChipSelector.tsx と
+ * apps/mobile/src/components/category/CategoryFilter.tsx）が使うテーマトークンと同じ値に揃えている。
+ * Web内の3つのチップ（dashboard/SearchProfileBar、common/CategoryFilterBar、variable/ProfileFilter）は
+ * すべて同じ値のため、見た目を変えるときは3つとモバイル側をまとめて直す。
  */
 import React, { useState, useEffect } from 'react';
 import type { Category } from '@cliptap/shared';
@@ -50,9 +56,9 @@ function CategoryFilterBarComponent({
       {/* 全カテゴリボタン */}
       <button
         onClick={() => handleSelect(null)}
-        className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap ${localSelected === null
-          ? 'bg-blue-600 text-white'
-          : 'bg-gray-100 dark:bg-[#2A2A2A] text-gray-700 dark:text-[#A0A0A0] hover:bg-gray-200 dark:hover:bg-[#333333]'
+        className={`whitespace-nowrap rounded-2xl border px-3 py-1.5 text-sm font-medium ${localSelected === null
+          ? 'border-[#3B82F6] bg-[#3B82F6] text-white dark:border-[#60A5FA] dark:bg-[#60A5FA]'
+          : 'border-[#E5E7EB] bg-[#F8FAFC] text-[#111827] hover:bg-[#F3F4F6] dark:border-[#2A2A2A] dark:bg-[#1A1A1A] dark:text-white dark:hover:bg-[#2A2A2A]'
           }`}
       >
         {allLabel}
@@ -61,9 +67,9 @@ function CategoryFilterBarComponent({
       {showUncategorized && (
         <button
           onClick={() => handleSelect('uncategorized')}
-          className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap ${localSelected === 'uncategorized'
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-100 dark:bg-[#2A2A2A] text-gray-700 dark:text-[#A0A0A0] hover:bg-gray-200 dark:hover:bg-[#333333]'
+          className={`whitespace-nowrap rounded-2xl border px-3 py-1.5 text-sm font-medium ${localSelected === 'uncategorized'
+            ? 'border-[#3B82F6] bg-[#3B82F6] text-white dark:border-[#60A5FA] dark:bg-[#60A5FA]'
+            : 'border-[#E5E7EB] bg-[#F8FAFC] text-[#111827] hover:bg-[#F3F4F6] dark:border-[#2A2A2A] dark:bg-[#1A1A1A] dark:text-white dark:hover:bg-[#2A2A2A]'
             }`}
         >
           {uncategorizedLabel}
@@ -75,13 +81,13 @@ function CategoryFilterBarComponent({
         <button
           key={category.id}
           onClick={() => handleSelect(category.id)}
-          className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap ${localSelected === category.id
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-100 dark:bg-[#2A2A2A] text-gray-700 dark:text-[#A0A0A0] hover:bg-gray-200 dark:hover:bg-[#333333]'
+          className={`whitespace-nowrap rounded-2xl border px-3 py-1.5 text-sm font-medium ${localSelected === category.id
+            ? 'border-[#3B82F6] bg-[#3B82F6] text-white dark:border-[#60A5FA] dark:bg-[#60A5FA]'
+            : 'border-[#E5E7EB] bg-[#F8FAFC] text-[#111827] hover:bg-[#F3F4F6] dark:border-[#2A2A2A] dark:bg-[#1A1A1A] dark:text-white dark:hover:bg-[#2A2A2A]'
             }`}
           style={
             localSelected === category.id && category.color
-              ? { backgroundColor: category.color }
+              ? { backgroundColor: category.color, borderColor: category.color }
               : undefined
           }
         >

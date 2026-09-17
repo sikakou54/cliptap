@@ -9,6 +9,7 @@
 
 import { useMemo } from 'react';
 import type { Snippet, SnippetProfile, Variable, ProfileVariable } from '../types';
+import { matchesSnippetText } from '../utils/snippetFilterUtils';
 import { useVariableExpansion } from './useVariableExpansion';
 
 export interface SnippetWithDisplay extends Snippet {
@@ -79,17 +80,9 @@ export function useFilteredSnippets({
   }, [snippetProfiles]);
 
   const filteredSnippets = useMemo((): SnippetWithDisplay[] => {
-    /* 1. フィルタリング */
+    /* 1. フィルタリング（検索は変数を展開したあとに行うため、ここではカテゴリとプロファイルだけ） */
     const filtered = snippets.filter((snippet) => {
-      /* 1-1. 検索フィルター */
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const matchesTitle = snippet.title?.toLowerCase().includes(query);
-        const matchesContent = snippet.content.toLowerCase().includes(query);
-        if (!matchesTitle && !matchesContent) return false;
-      }
-
-      /* 1-2. カテゴリフィルター */
+      /* 1-1. カテゴリフィルター */
       if (selectedCategory !== null) {
         if (selectedCategory === 'uncategorized') {
           if (snippet.categoryId !== null) return false;
@@ -98,7 +91,7 @@ export function useFilteredSnippets({
         }
       }
 
-      /* 1-3. 環境（プロファイル）フィルター */
+      /* 1-2. 環境（プロファイル）フィルター */
       const restrictedProfiles = snippetProfileMap.get(snippet.id);
       if (restrictedProfiles && restrictedProfiles.length > 0) {
         if (!activeProfileId) {
@@ -113,7 +106,7 @@ export function useFilteredSnippets({
     });
 
     /* 2. 変数展開（ソートはDB側で実行済み） */
-    return filtered.map((snippet) => {
+    const expanded = filtered.map((snippet) => {
       if (enableVariableExpansion) {
         const expandedTitle = snippet.title
           ? expandVariables(snippet.title, activeProfileId, defaultProfileId)
@@ -133,6 +126,21 @@ export function useFilteredSnippets({
         displayContent: snippet.content,
       };
     });
+
+    /*
+     * 3. 検索フィルター
+     *
+     * 画面に出ている展開後の文字列で照合する。保存文字列（例: {{company}}）では照合しないため、
+     * 変数名では一致しない。ショートカットの検索（shortcuts/search.ts）と同じ規則で、
+     * 一覧に見えている文字列で探せるようにするためである（§8.7）。
+     * 変数展開を切っている呼び出しでは展開前の文字列がそのまま照合対象になる。
+     */
+    if (!searchQuery) return expanded;
+
+    const query = searchQuery.trim().toLowerCase();
+    return expanded.filter((snippet) =>
+      matchesSnippetText(snippet.displayTitle, snippet.displayContent, query)
+    );
   }, [
     snippets,
     searchQuery,

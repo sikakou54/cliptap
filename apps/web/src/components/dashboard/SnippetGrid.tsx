@@ -10,9 +10,27 @@ import type { Category, SnippetWithDisplay, Snippet } from '@cliptap/shared';
 import { SnippetCard } from '@components/snippet/SnippetCard';
 import { EmptySnippetGrid } from '@components/snippet/EmptySnippetGrid';
 
+/**
+ * グリッドに並べる項目
+ *
+ * @remarks
+ * 通常の一覧は定型文をそのまま並べるが、検索画面の横断検索では
+ * 同じ定型文がプロファイルごとの展開結果に分かれて複数行になる（§8.7）。
+ * IDだけでは行を区別できないため、行を示す値・行のプロファイル名・
+ * コピー時の展開の基準を任意項目として持つ。
+ */
+export type SnippetGridItem = SnippetWithDisplay & {
+  /** 行を一意にする値（横断検索のときだけ入る） */
+  rowKey?: string;
+  /** この行に対応するプロファイル名（横断検索のときだけ入る） */
+  profileLabel?: string | null;
+  /** この展開結果になったプロファイル（横断検索のときだけ入る） */
+  matchedProfileIds?: string[];
+};
+
 interface SnippetGridProps {
   /** フィルタリング済みスニペット一覧 */
-  filteredSnippets: SnippetWithDisplay[];
+  filteredSnippets: SnippetGridItem[];
   /** グリッドの列数 */
   gridColumns: 1 | 2 | 3;
   /** コピー済みスニペットのID */
@@ -95,12 +113,14 @@ export function SnippetGrid({
             isCopiedがtrueの場合はコピー済み状態を視覚的に表示。 */
         return (
           <SnippetCard
-            key={snippet.id}
+            /* 横断検索では同じ定型文が複数行に分かれるため、IDだけでは重複する */
+            key={snippet.rowKey ?? snippet.id}
             snippet={snippet}
-            isCopied={copiedId === snippet.id}
-            isTitleCopied={copiedTitleId === snippet.id}
+            isCopied={copiedId === (snippet.rowKey ?? snippet.id)}
+            isTitleCopied={copiedTitleId === (snippet.rowKey ?? snippet.id)}
             categoryColor={categoryInfo?.color ?? null}
             categoryName={categoryInfo?.name ?? null}
+            profileLabel={snippet.profileLabel}
             onCopy={() => onCopy(snippet)}
             onCopyTitle={() => onCopyTitle(snippet)}
             onEdit={() => onEdit(snippet)}

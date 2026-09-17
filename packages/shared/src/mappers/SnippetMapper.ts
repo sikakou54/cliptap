@@ -66,10 +66,6 @@ const SnippetQueries = {
   UPDATE: `UPDATE snippets SET title = ?, content = ?, categoryId = ?, copyWithTitle = ?, updatedAt = ? WHERE id = ?`,
   /* スニペットを削除 */
   DELETE: 'DELETE FROM snippets WHERE id = ?',
-  /* キーワードでスニペットを検索（タイトルまたは本文） */
-  SEARCH: `SELECT * FROM snippets WHERE title LIKE ? OR content LIKE ? ORDER BY createdAt ASC`,
-  /* カテゴリ内でキーワード検索 */
-  SEARCH_WITH_CATEGORY: `SELECT * FROM snippets WHERE (title LIKE ? OR content LIKE ?) AND categoryId = ? ORDER BY createdAt ASC`,
   /* スニペット総数を取得 */
   SELECT_COUNT: 'SELECT COUNT(*) as count FROM snippets',
   /* カテゴリ別スニペット数を取得 */
@@ -326,35 +322,6 @@ export class SnippetMapper {
     db.run(SnippetProfileQueries.DELETE_BY_SNIPPET, [id]);
     /* スニペット本体を削除（関連データは既に削除済み） */
     db.run(SnippetQueries.DELETE, [id]);
-  }
-
-  /**
-   * キーワードでスニペットを検索
-   * @param query - 検索キーワード
-   * @param categoryId - カテゴリIDで絞り込み（オプション）
-   * @returns 検索結果のスニペット一覧
-   * @description
-   * タイトルまたは本文に検索キーワードを含むスニペットを取得。
-   * LIKE検索を使用（部分一致）。
-   */
-  static search(query: string, categoryId?: string): Snippet[] {
-    const db = getMainDbAdapter();
-    /* LIKE検索用にワイルドカード（%）を付与（部分一致検索、前方・後方一致に対応） */
-    const searchQuery = `%${query}%`;
-
-    /* カテゴリフィルタが指定されている場合、カテゴリ内で検索 */
-    if (categoryId) {
-      const rows = db.all<any>(SnippetQueries.SEARCH_WITH_CATEGORY, [
-        searchQuery, /* タイトル検索用 */
-        searchQuery, /* 本文検索用 */
-        categoryId,
-      ]);
-      return toEntities(rows);
-    }
-
-    /* カテゴリフィルタなしの場合、タイトルまたは本文に部分一致するスニペットを検索 */
-    const rows = db.all<any>(SnippetQueries.SEARCH, [searchQuery, searchQuery]);
-    return toEntities(rows);
   }
 
   /**

@@ -28,11 +28,17 @@ interface SideMenuProps {
   onExport: () => void;
   onImport: () => void;
   isOpen: boolean;
+  /** 本文へ覆いかぶさる幅か（狭い画面ならtrue） */
+  isOverlay: boolean;
   onClose: () => void;
   onAccountLink?: () => void;
 }
 
-export function SideMenu({ onExport, onImport, isOpen, onClose, onAccountLink }: SideMenuProps) {
+/** 押し出して並べているときは、ページを移っても閉じない */
+const NOOP = () => {};
+
+export function SideMenu({ onExport, onImport, isOpen,
+  isOverlay, onClose, onAccountLink }: SideMenuProps) {
   const { t } = useTranslation();
   const { isSubscribed } = useSharedSubscription();
   const resetSubscription = () => SubscriptionService.reset();
@@ -101,12 +107,21 @@ export function SideMenu({ onExport, onImport, isOpen, onClose, onAccountLink }:
   ];
 
 
+  /**
+   * リンクなどでページを移るときに閉じるか
+   *
+   * @remarks
+   * 覆いかぶさっているときだけ閉じる。押し出して並べているときは本文を隠していないため、
+   * 移動のたびに閉じると開き直す手間が増えるだけになる。
+   */
+  const handleNavigate = isOverlay ? onClose : NOOP;
+
   return (
     <>
-      {/* モバイル用オーバーレイ */}
-      {isOpen && (
+      {/* 覆いかぶさっているときの暗幕 */}
+      {isOverlay && isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-20 md:hidden transition-opacity"
+          className="fixed inset-0 bg-black/50 z-20 transition-opacity"
           onClick={onClose}
         />
       )}
@@ -118,7 +133,6 @@ export function SideMenu({ onExport, onImport, isOpen, onClose, onAccountLink }:
           border-r border-gray-200 dark:border-[#2A2A2A]
           flex flex-col z-30
           transition-transform duration-300 ease-in-out
-          md:translate-x-0
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
@@ -126,7 +140,7 @@ export function SideMenu({ onExport, onImport, isOpen, onClose, onAccountLink }:
 
         <SideMenuNavigation
           menuItems={menuItems}
-          onClose={onClose}
+          onClose={handleNavigate}
           onImport={onImport}
           onExport={onExport}
           onCloseFile={handleCloseFile}
@@ -142,7 +156,7 @@ export function SideMenu({ onExport, onImport, isOpen, onClose, onAccountLink }:
           )}
           onUnlinkAccount={handleUnlinkAccount}
           onAccountLink={onAccountLink}
-          onClose={onClose}
+          onClose={handleNavigate}
         />
       </div>
     </>

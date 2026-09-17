@@ -53,6 +53,8 @@ interface SnippetCardProps {
   onPressTitle?: (snippet: SnippetWithDisplay) => void | Promise<void>;
   disableCopy?: boolean;
   category?: Category | null;
+  /** この行に対応するプロファイル名（横断検索のときだけ渡す。通常の一覧では出さない） */
+  profileLabel?: string | null;
   /** 一覧の最後の項目か（区切り線を引くかの判定に使う） */
   isLast: boolean;
 }
@@ -65,6 +67,7 @@ const SnippetCardComponent = ({
   onPressTitle,
   disableCopy = false,
   category: categoryProp,
+  profileLabel,
   isLast,
 }: SnippetCardProps) => {
   const { colors, isTablet, responsive, responsiveFontSizes, responsiveLineHeights } = useTheme();
@@ -159,10 +162,18 @@ const SnippetCardComponent = ({
           <ItemActionMenu itemName={displayTitle} onEdit={handleEdit} onDelete={handleDelete} />
         </View>
 
-        {/* カテゴリバッジ */}
-        {category && (
-          <View style={styles.categoryBadgeContainer}>
-            <CategoryBadge category={category} size="small" />
+        {/* カテゴリバッジと、横断検索のときだけ添えるプロファイル名。
+            同じ定型文がプロファイルごとの展開結果に分かれて並ぶため、どの環境の結果かを示す（§8.7） */}
+        {(category || profileLabel) && (
+          <View style={styles.badgeRow}>
+            {category && <CategoryBadge category={category} size="small" />}
+            {profileLabel && (
+              <View style={[styles.profileBadge, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+                <Text style={[styles.profileBadgeText, { color: colors.textSecondary, fontSize: responsiveFontSizes.xs }]}>
+                  {profileLabel}
+                </Text>
+              </View>
+            )}
           </View>
         )}
 
@@ -255,6 +266,7 @@ export const SnippetCard = React.memo(SnippetCardComponent, (prevProps, nextProp
     prevProps.snippet.displayTitle === nextProps.snippet.displayTitle &&
     prevProps.snippet.displayContent === nextProps.snippet.displayContent &&
     prevProps.disableCopy === nextProps.disableCopy &&
+    prevProps.profileLabel === nextProps.profileLabel &&
     prevProps.category?.id === nextProps.category?.id
   );
 });
@@ -288,8 +300,22 @@ const styles = StyleSheet.create({
   titleCopyIcon: {
     marginLeft: UI_CONSTANTS.GAP.XS,
   },
-  categoryBadgeContainer: {
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: UI_CONSTANTS.GAP.XS,
     marginTop: UI_CONSTANTS.GAP.XS,
+  },
+  /** プロファイル名のバッジ。カテゴリバッジより弱い見た目にして、分類と取り違えないようにする */
+  profileBadge: {
+    paddingHorizontal: UI_CONSTANTS.GAP.XS,
+    paddingVertical: 2,
+    borderRadius: UI_CONSTANTS.BORDER_RADIUS.SM,
+    borderWidth: UI_CONSTANTS.BORDER_WIDTH.THIN,
+  },
+  profileBadgeText: {
+    fontWeight: UI_CONSTANTS.FONT_WEIGHT.MEDIUM,
   },
   contentWrapper: {
     justifyContent: 'space-between',

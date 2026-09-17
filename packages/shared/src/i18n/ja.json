@@ -21,6 +21,7 @@
     "unsaved_changes_warning": "入力途中のデータがあります。破棄してもよろしいですか？",
     "closeModal": "モーダルを閉じる",
     "open_menu": "メニューを開く",
+    "close_menu": "メニューを閉じる",
     "more_actions": "{{name}}のその他の操作",
     "search": "検索"
   },
@@ -160,6 +161,7 @@
     "limit_message": "無料版では{{limit}}個までプロファイルを登録できます。無制限に登録するにはProプランにアップグレードしてください。",
     "disabled_message": "このプロファイルは無料版では使用できません。Proプランにアップグレードすると、すべてのプロファイルを無制限に使用できます。",
     "select_profiles_title": "プロファイルを選択",
+    "search_all": "すべて",
     "all_profiles": "全てのプロファイル",
     "profiles_selected": "{{count}}個のプロファイルを選択中"
   },

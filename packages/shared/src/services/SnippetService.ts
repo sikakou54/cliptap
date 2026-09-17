@@ -97,17 +97,6 @@ export class SnippetService {
   }
 
   /**
-   * スニペットを検索
-   *
-   * @param query - 検索クエリ（タイトルまたはコンテンツに部分一致）
-   * @param categoryId - カテゴリIDでフィルタリング（オプション）
-   * @returns 検索にマッチしたスニペットの配列
-   */
-  static search(query: string, categoryId?: string): Snippet[] {
-    return SnippetMapper.search(query, categoryId);
-  }
-
-  /**
    * ソート済みスニペットを取得
    *
    * @param sortBy - ソート基準（'created', 'updated', 'title', 'usage'）

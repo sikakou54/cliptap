@@ -47,10 +47,11 @@ export default function SearchScreen() {
     setSelectedProfileId,
     displaySnippets,
     displayShortcuts,
-    profiles,
+    validProfiles,
     filteredProfiles,
     categories,
     getProfileResultCount,
+    allResultCount,
     hasSearchQuery,
     handleRefresh,
     handleCopySnippet,
@@ -105,13 +106,17 @@ export default function SearchScreen() {
           maxContentWidth !== undefined && { maxWidth: maxContentWidth, alignSelf: 'center', width: '100%' },
         ]}
       >
-        {/* プロファイルチップセレクター（複数プロファイルがある場合のみ表示）。
-            定型文・ショートカットとも、選んだプロファイルで一時的に検索範囲を切り替える（§8.7） */}
-        {profiles.length > 1 && filteredProfiles.length > 0 && (
+        {/* プロファイルチップセレクター。先頭の「すべて」が既定で、有効な全プロファイルを横断して検索する。
+            チップを選ぶとその環境の結果だけに絞り込む。プロファイルが1件だけのときも出し、
+            どの環境を見ているかを常に示す（Webの SearchProfileBar と同じ条件・§8.7）。
+            一致が1件も無いときも「すべて」は残す。行ごと消すと検索中に画面の並びが変わるためである */}
+        {validProfiles.length > 0 && (
           <ProfileChipSelector
             profiles={filteredProfiles}
             selectedProfileId={selectedProfileId}
             onSelectProfile={setSelectedProfileId}
+            allLabel={t('profile.search_all')}
+            allCount={allResultCount}
             showCount={hasSearchQuery}
             getCount={getProfileResultCount}
             containerPadding={responsiveSpacing.containerPadding}
@@ -128,6 +133,8 @@ export default function SearchScreen() {
               onEdit={handleEditShortcut}
               onDelete={handleDeleteShortcut}
               onRefresh={handleRefresh}
+              /* 検索画面には追加ボタンが無いため、0件のときの「＋ボタンから追加」の案内は出さない */
+              showEmptyHint={false}
             />
           ) : (
             <SnippetList
@@ -138,7 +145,6 @@ export default function SearchScreen() {
               onPressTitle={handleCopySnippetTitle}
               onRefresh={handleRefresh}
               disableCopy={false}
-              overrideProfileId={selectedProfileId}
               categories={categories}
             />
           )}
