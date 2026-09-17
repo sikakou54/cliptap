@@ -37,6 +37,14 @@ const FOCUS_DELAY_MS = 100;
  * useShortcutValueEditScreenの引数の型
  */
 interface UseShortcutValueEditScreenParams {
+  /**
+   * 編集対象の画面内キー（空文字は新規追加）
+   *
+   * @remarks
+   * 1件のショートカットは値を複数持つため、どの値を編集しているかを呼び出し元へ返す必要がある。
+   * 値そのものは識別子にできない（同じ文字列の値を2件持てる）ため、呼び出し元が振ったキーを預かる。
+   */
+  valueKey: string;
   /** 初期値（呼び出し元が保持している編集中の値） */
   initialValue: string;
 }
@@ -67,13 +75,13 @@ export interface UseShortcutValueEditScreenReturn {
 /**
  * ショートカットの値入力モーダルのビジネスロジックフック
  *
- * @param params - 初期値
+ * @param params - 編集対象のキーと初期値
  * @returns 画面に必要な状態とハンドラ
  */
 export function useShortcutValueEditScreen(
   params: UseShortcutValueEditScreenParams
 ): UseShortcutValueEditScreenReturn {
-  const { initialValue } = params;
+  const { valueKey, initialValue } = params;
 
   const router = useRouter();
 
@@ -177,9 +185,9 @@ export function useShortcutValueEditScreen(
    * （値編集モーダルが親画面へ返すときと同じ作り）。
    */
   const handleSave = useCallback(() => {
-    global.shortcutValueCallback?.(value);
+    global.shortcutValueCallbackData = { key: valueKey, value };
     router.back();
-  }, [value, router]);
+  }, [valueKey, value, router]);
 
   return {
     value,

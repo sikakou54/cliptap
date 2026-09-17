@@ -1,13 +1,15 @@
 /**
  * 定型文・ショートカットの登録上限ガードフック
  *
- * 無料プランの登録上限（定型文50件・ショートカット50件）に
+ * 無料プランの登録上限（定型文50件・ショートカット50件・ショートカット1件あたりの値5件）に
  * 達しているかを判定し、達していればProプランへの案内ダイアログを出す。
  *
  * @remarks
  * 定型文とショートカットの件数は呼んだ時点でDBから数える。ホームやショートカットの一覧はアクティブな
  * プロファイルで絞り込まれており、その件数では他のプロファイルの分を取りこぼして上限をすり抜けるためである。
  * DB操作は同期のため、保存ボタンを二度押ししても2回目は増えた後の件数で判定される。
+ * 値の件数は呼出側から受け取る。値は作成・編集画面の保存時にまとめてDBへ反映するため、判定の時点では
+ * 画面上の下書きにしか存在しない。
  *
  * このフックは常にその時点の権利状態（未確定はFree）で判定する。起動直後の権利確認中に
  * 判定を保留するかは呼出側が決める（追加ボタンだけが保留し、保存時は保留しない）。
@@ -20,6 +22,7 @@
 
 import { useCallback } from 'react';
 import {
+  FREE_SHORTCUT_VALUES_LIMIT,
   FREE_SHORTCUTS_LIMIT,
   FREE_SNIPPETS_LIMIT,
   Logger,
@@ -56,6 +59,12 @@ export interface UseItemLimitGuardReturn {
   ensureCanAddSnippet: () => boolean;
   /** ショートカットを1件追加できるか判定し、できなければ案内を出してfalseを返す */
   ensureCanAddShortcut: () => boolean;
+  /**
+   * ショートカットに値を1件追加できるか判定し、できなければ案内を出してfalseを返す
+   *
+   * @param currentCount - 追加前の値の件数（作成・編集画面の下書き）
+   */
+  ensureCanAddShortcutValue: (currentCount: number) => boolean;
 }
 
 /**
@@ -66,7 +75,7 @@ export interface UseItemLimitGuardReturn {
 export function useItemLimitGuard(): UseItemLimitGuardReturn {
   const { t } = useTranslation();
   const confirmUpgrade = useUpgradePrompt();
-  const { canAddSnippet, canAddShortcut } = useSharedSubscription();
+  const { canAddSnippet, canAddShortcut, canAddShortcutValue } = useSharedSubscription();
 
   const ensureCanAddSnippet = useCallback((): boolean => {
     const count = countSavedItems(() => SnippetService.count());
@@ -86,5 +95,13 @@ export function useItemLimitGuard(): UseItemLimitGuardReturn {
     return false;
   }, [canAddShortcut, confirmUpgrade, t]);
 
-  return { ensureCanAddSnippet, ensureCanAddShortcut };
+  const ensureCanAddShortcutValue = useCallback((currentCount: number): boolean => {
+    if (canAddShortcutValue(currentCount)) {
+      return true;
+    }
+    confirmUpgrade(t('shortcut.value_limit_message', { limit: FREE_SHORTCUT_VALUES_LIMIT }));
+    return false;
+  }, [canAddShortcutValue, confirmUpgrade, t]);
+
+  return { ensureCanAddSnippet, ensureCanAddShortcut, ensureCanAddShortcutValue };
 }

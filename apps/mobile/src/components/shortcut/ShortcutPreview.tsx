@@ -1,17 +1,22 @@
 /**
- * ショートカットの値のプレビュー
+ * ショートカット値のプレビュー
  *
- * ショートカット作成・編集画面の最下部に置き、編集中の値の変数トークンを
- * 選んだプロファイルで展開した結果を表示する。タップするとその値をクリップボードへコピーする。
+ * ショートカット作成・編集画面の最下部に置き、編集中の値それぞれの変数トークンを
+ * 選んだプロファイルで展開した結果を表示する。行をタップするとその値だけをクリップボードへコピーする。
  * プレビューからのコピーは使用回数を加算せず、DBにも触れない（docs/機能仕様書.md §8.10）。
  *
  * 【同期展開にする理由】
  * ホーム・検索の一覧と同じ useVariableExpansion（expandTextSync）で展開し、一覧に見えている文字列と一致させる。
  * コピー経路（非同期のリゾルバ）との一致は packages/shared/tests/variables/expandTextSyncParity.test.ts が固定している。
+ * 値ごとに非同期で展開すると、値を取り除いた直後に古い行が残るなど、値一覧との食い違いが起きる。
+ *
+ * 【伏せている値もここで隠す理由】
+ * 画面に出る場所は同じ規則で揃える。確かめたいときは値一覧の目のボタンで伏せるのをやめれば、
+ * この行にも展開結果が出る。コピーは伏せていても展開後の実際の値を入れる。
  *
  * 【accessibilityLabel を付けない理由】
  * ラベルを明示すると子のテキストが読み上げとアクセシビリティツリーから隠れ、展開後の値を確かめられなくなる。
- * 役割（button）だけを持たせ、アイコンと展開後の値をそのまま読ませる。
+ * 行には役割（button）だけを持たせ、アイコン・展開後の値をそのまま読ませる。
  *
  * 【候補と選択の規則】
  * 候補は有効なプロファイルのうち所属プロファイルに含まれるもの（未指定なら有効なプロファイル全件）。
@@ -19,7 +24,8 @@
  * ただし選択の追従は効果での状態同期ではなく、描画時の算出で行う（下記 selectedProfileId）。
  *
  * @see apps/mobile/src/components/snippet/VariablePreview.tsx - 定型文のプレビュー（見た目と候補の規則を揃えている）
- * @see apps/mobile/src/components/shortcut/ShortcutCard.tsx - 一覧の値のブロック（組み方を揃えている）
+ * @see apps/mobile/src/components/shortcut/ShortcutValueRow.tsx - 一覧の値の行（行の組み方を揃えている）
+ * @see packages/shared/src/shortcuts/display.ts - マスク表示に使う文字列
  * @see apps/mobile/app/shortcut/edit.tsx - 使用元
  */
 
@@ -28,6 +34,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { Ionicons } from '@expo/vector-icons';
 import {
   Logger,
+  MASKED_VALUE_TEXT,
   useProfiles,
   useTranslation,
   useVariableExpansion,
@@ -39,28 +46,40 @@ import { copyToClipboard } from '@utils/clipboard';
 import { UI_CONSTANTS } from '@constants/ui';
 
 /**
- * 値のブロックの上下の余白（pt）
+ * 値の行の上下の余白（pt）
  *
  * 値の行高（スマートフォンで21pt）にこの余白の2倍を足して、
- * 最小タップ領域の44ptを下回らないこと（一覧の ShortcutCard と同じ計算で12×2+21=45pt）。
+ * 最小タップ領域の44ptを下回らないこと（一覧の ShortcutValueRow と同じ計算で12×2+21=45pt）。
  */
-const VALUE_VERTICAL_PADDING = UI_CONSTANTS.SPACING.BASE;
+const ROW_VERTICAL_PADDING = UI_CONSTANTS.SPACING.BASE;
 
 /* ========================================
    Props定義
    ======================================== */
 
 /**
+ * プレビューする値1件
+ * @property key - 画面内で値を識別するキー（コピー完了を表示する行を決める）
+ * @property value - 保存する文字列（変数トークンは未展開）
+ * @property isMasked - 表示を伏せるか（コピーは伏せていても展開後の実際の値を入れる）
+ */
+interface ShortcutPreviewItem {
+  key: string;
+  value: string;
+  isMasked: boolean;
+}
+
+/**
  * ShortcutPreviewのProps
- * @property value - 編集中の値（変数トークンは未展開の保存文字列）
+ * @property values - 編集中の値一覧（表示順）
  * @property selectedProfileIds - 選択中の所属プロファイルID（空配列は全プロファイル向け）
  */
 interface ShortcutPreviewProps {
-  value: string;
+  values: ShortcutPreviewItem[];
   selectedProfileIds: string[];
 }
 
-export function ShortcutPreview({ value, selectedProfileIds }: ShortcutPreviewProps) {
+export function ShortcutPreview({ values, selectedProfileIds }: ShortcutPreviewProps) {
   const { t, language } = useTranslation();
   /* プレビュー候補は有効なプロファイルだけとする（定型文のプレビューと同一の扱い） */
   const { validProfiles, profileVariables, defaultProfile } = useProfiles();
@@ -75,8 +94,8 @@ export function ShortcutPreview({ value, selectedProfileIds }: ShortcutPreviewPr
 
   /** チップで選んだプロファイルID（未選択はnull） */
   const [requestedProfileId, setRequestedProfileId] = useState<string | null>(null);
-  /** コピー完了アイコンを出しているか */
-  const [isCopied, setIsCopied] = useState(false);
+  /** コピー完了を表示中の値のキー（無ければnull） */
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   /**
    * プロファイルの候補
@@ -112,31 +131,38 @@ export function ShortcutPreview({ value, selectedProfileIds }: ShortcutPreviewPr
   }, [filteredProfiles, requestedProfileId]);
 
   /**
-   * 値の展開結果
+   * 値ごとの展開結果
    *
    * @remarks
-   * value から同じレンダリングの中で作るため、入力を書き換えるとプレビューも同時に変わる。
+   * values から同じレンダリングの中で作るため、値一覧から値を取り除くとプレビューの行も同時に消える。
    * フォールバック元の標準プロファイルは、有効かどうかを問わない（§8.6）。
    */
-  const expandedValue = useMemo(
-    () => expandVariables(value, selectedProfileId, defaultProfile?.id ?? null),
-    [value, expandVariables, selectedProfileId, defaultProfile]
-  );
+  const previewRows = useMemo(() => {
+    const defaultProfileId = defaultProfile?.id ?? null;
+    return values.map((entry) => ({
+      key: entry.key,
+      isMasked: entry.isMasked,
+      expandedValue: expandVariables(entry.value, selectedProfileId, defaultProfileId),
+    }));
+  }, [values, expandVariables, selectedProfileId, defaultProfile]);
 
   /**
-   * 展開した値をクリップボードにコピーする
+   * 展開した値1件をクリップボードにコピーする
+   *
+   * @param key - コピーした値のキー（コピー完了の表示に使う）
+   * @param text - 展開済みの値
    */
-  const handleCopy = useCallback(async () => {
+  const handleCopy = useCallback(async (key: string, text: string) => {
     /* コピー対象が無いときはクリップボードAPIを呼ばない（定型文のプレビューと同じ） */
-    if (expandedValue.trim() === '') return;
+    if (text.trim() === '') return;
 
     try {
-      await copyToClipboard(expandedValue);
-      setIsCopied(true);
+      await copyToClipboard(text);
+      setCopiedKey(key);
     } catch (error) {
       Logger.error('Failed to copy shortcut value preview:', error);
     }
-  }, [expandedValue]);
+  }, []);
 
   /**
    * コピー完了アイコンの自動リセット
@@ -146,16 +172,16 @@ export function ShortcutPreview({ value, selectedProfileIds }: ShortcutPreviewPr
    * 前回のタイマーが発火して表示を戻してしまわないようにするため。
    */
   useEffect(() => {
-    if (!isCopied) return;
+    if (copiedKey === null) return;
 
     const timeoutId = setTimeout(() => {
-      setIsCopied(false);
+      setCopiedKey(null);
     }, UI_CONSTANTS.COPY_SUCCESS_DURATION_MS);
 
     return () => clearTimeout(timeoutId);
-  }, [isCopied]);
+  }, [copiedKey]);
 
-  /* ショートカットの値のプレビューボックス */
+  /* ショートカット値のプレビューボックス */
   return (
     <View style={[styles.previewBox, { backgroundColor: colors.card, borderColor: colors.primary }]}>
       {/* ヘッダー（ラベルとプロファイル選択） */}
@@ -209,42 +235,66 @@ export function ShortcutPreview({ value, selectedProfileIds }: ShortcutPreviewPr
         )}
       </View>
 
-      {/* 値の展開結果（タップでコピーする。展開結果が空のときは操作できない） */}
-      <TouchableOpacity
-        style={styles.valueRow}
-        onPress={handleCopy}
-        disabled={expandedValue.trim() === ''}
-        activeOpacity={0.7}
-        accessibilityRole="button"
-      >
-        {/* 変数を展開した値。長い値も全体を確かめてからコピーできるよう行数を制限しない
-            （展開結果が空の場合は空状態メッセージ）。
-            コピーアイコンは値の文字の末尾へ続けて置くため、同じText内に入れる（一覧の ShortcutCard と同じ） */}
+      {/* 値ごとの展開結果（値が1件も無いときは空状態メッセージ） */}
+      {previewRows.length === 0 ? (
         <Text
           style={[
-            styles.valueText,
-            {
-              color: expandedValue.trim() === '' ? colors.textTertiary : colors.text,
-              fontSize: responsiveFontSizes.sm,
-              lineHeight: responsiveLineHeights.sm,
-            },
+            styles.emptyText,
+            { color: colors.text, fontSize: responsiveFontSizes.base, lineHeight: responsiveLineHeights.base },
           ]}
         >
-          {expandedValue.trim() === '' ? t('common.preview_empty') : expandedValue}
-          {/* 展開結果が空のときはコピーできないためアイコンを出さない。
-              文字とアイコンの間隔は空白で作る。Textの中に置いたアイコンには余白の指定が効かない */}
-          {expandedValue.trim() !== '' && (
-            <>
-              {' '}
-              <Ionicons
-                name={isCopied ? 'checkmark' : 'copy-outline'}
-                size={isTablet ? 18 : 14}
-                color={isCopied ? colors.success : colors.textSecondary}
-              />
-            </>
-          )}
+          {t('common.preview_empty')}
         </Text>
-      </TouchableOpacity>
+      ) : (
+        previewRows.map((row) => {
+          const isEmpty = row.expandedValue.trim() === '';
+          const isCopied = copiedKey === row.key;
+          /* 値の行（タップでその値だけをコピーする。展開結果が空の行は操作できない） */
+          return (
+            <TouchableOpacity
+              key={row.key}
+              style={styles.row}
+              onPress={() => handleCopy(row.key, row.expandedValue)}
+              disabled={isEmpty}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+            >
+              {/* 変数を展開した値。長い値も全体を確かめてからコピーできるよう行数を制限しない
+                  （展開結果が空の場合は空状態メッセージ）。伏せている値は記号に置き換える。
+                  コピーアイコンは値の文字の末尾へ続けて置くため、同じText内に入れる
+                  （別のViewに出すと折り返した最終行から離れてしまう）。
+                  展開結果が空の行はコピーできないためアイコンを出さない */}
+              <Text
+                style={[
+                  styles.valueText,
+                  {
+                    color: isEmpty ? colors.textTertiary : colors.text,
+                    fontSize: responsiveFontSizes.sm,
+                    lineHeight: responsiveLineHeights.sm,
+                  },
+                ]}
+              >
+                {isEmpty
+                  ? t('common.preview_empty')
+                  : row.isMasked
+                    ? MASKED_VALUE_TEXT
+                    : row.expandedValue}
+                {!isEmpty && (
+                  <>
+                    {/* 文字とアイコンの間隔は空白で作る。Textの中に置いたアイコンには余白の指定が効かない */}
+                    {' '}
+                    <Ionicons
+                      name={isCopied ? 'checkmark' : 'copy-outline'}
+                      size={isTablet ? 18 : 14}
+                      color={isCopied ? colors.success : colors.textSecondary}
+                    />
+                  </>
+                )}
+              </Text>
+            </TouchableOpacity>
+          );
+        })
+      )}
     </View>
   );
 }
@@ -288,9 +338,12 @@ const styles = StyleSheet.create({
   profileChipText: {
     fontWeight: UI_CONSTANTS.FONT_WEIGHT.SEMIBOLD,
   },
-  /* 値のブロック全体をタップ対象にする。高さは上下の余白で確保する */
-  valueRow: {
-    paddingVertical: VALUE_VERTICAL_PADDING,
+  emptyText: {
+    fontWeight: UI_CONSTANTS.FONT_WEIGHT.MEDIUM,
+  },
+  /* 行全体をタップ対象にする。高さは上下の余白で確保する */
+  row: {
+    paddingVertical: ROW_VERTICAL_PADDING,
   },
   valueText: {
     fontFamily: 'monospace',

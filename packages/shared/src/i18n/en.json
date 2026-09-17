@@ -212,7 +212,8 @@
     "apple_sign_in_failed": "Failed to sign in with Apple",
     "sign_out_failed": "Failed to sign out",
     "newer_version": "This version is not supported on your current device. Please update the app to the latest version and try again.",
-    "duplicate_shortcut_name": "A shortcut with this name already exists"
+    "duplicate_shortcut_name": "A shortcut with this name already exists",
+    "shortcut_value_required": "Add at least one value"
   },
   "tabs": {
     "home": "Home",
@@ -239,7 +240,7 @@
     "feature_no_ads": "No Ads",
     "feature_no_ads_desc": "Enjoy ad-free experience",
     "feature_unlimited_items": "Snippets & Shortcuts",
-    "feature_unlimited_items_desc": "Register unlimited snippets and shortcuts",
+    "feature_unlimited_items_desc": "Register unlimited snippets, shortcuts and values",
     "feature_unlimited_profiles": "Profile Management",
     "feature_unlimited_profiles_desc": "Create and manage unlimited profiles",
     "feature_custom_variables": "Custom Variables",
@@ -333,12 +334,19 @@
     "select_profile": "Select Profile (All Profiles)",
     "select_profiles_description": "Select profiles to use this shortcut (multiple selection allowed)",
     "category": "Category",
+    "values": "Values",
+    "value_create": "Add Value",
+    "value_edit": "Edit Value",
+    "mask_value": "Hide value",
+    "unmask_value": "Show value",
     "value_value": "Value",
     "value_value_placeholder": "e.g. 080-0000-0000",
-    "delete_confirm": "Delete shortcut \"{{name}}\"?",
+    "delete_confirm": "Delete shortcut \"{{name}}\"?\n\nAll values registered in this shortcut will also be deleted.",
+    "delete_value_confirm": "Delete this value?",
     "show_shortcuts": "Show shortcuts",
     "show_snippets": "Show snippets",
     "search_placeholder": "Search shortcuts...",
-    "limit_message": "Free plan allows up to {{limit}} shortcuts. Upgrade to Pro for unlimited shortcuts."
+    "limit_message": "Free plan allows up to {{limit}} shortcuts. Upgrade to Pro for unlimited shortcuts.",
+    "value_limit_message": "Free plan allows up to {{limit}} values per shortcut. Upgrade to Pro for unlimited values."
   }
 }

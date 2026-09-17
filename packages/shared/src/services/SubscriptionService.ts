@@ -47,6 +47,14 @@ export const FREE_SNIPPETS_LIMIT = 50;
  * @remarks 超過分を無効化せず新規登録だけを止める点は FREE_SNIPPETS_LIMIT と同じ。
  */
 export const FREE_SHORTCUTS_LIMIT = 50;
+/**
+ * 無料プランで1つのショートカットに登録できる値の数
+ *
+ * @remarks
+ * 超過分を無効化せず新規登録だけを止める点は FREE_SNIPPETS_LIMIT と同じ。
+ * 上限を超える値を既に持つショートカットも、値を増やさない限り編集して保存できる。
+ */
+export const FREE_SHORTCUT_VALUES_LIMIT = 5;
 
 /**
  * 上限なしを表す番兵値。
@@ -250,6 +258,17 @@ export class SubscriptionService {
    */
   static canAddShortcut(currentCount: number): boolean {
     return this.isSubscribed() || currentCount < FREE_SHORTCUTS_LIMIT;
+  }
+
+  /**
+   * ショートカットに値を追加可能か判定
+   *
+   * @param currentCount - 追加前の値の件数（1つのショートカット内）
+   * @returns 追加可能な場合true
+   * @remarks Pro版は無制限、無料版は上限まで。既存の値を無効化しない点は canAddSnippet と同じ。
+   */
+  static canAddShortcutValue(currentCount: number): boolean {
+    return this.isSubscribed() || currentCount < FREE_SHORTCUT_VALUES_LIMIT;
   }
 
 

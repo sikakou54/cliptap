@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  FREE_SHORTCUT_VALUES_LIMIT,
   INPUT_LIMITS,
   translateError,
+  useSharedSubscription,
   useTranslation,
   type Category,
   type Profile,
   type ProfileVariable,
   type Shortcut,
+  type ShortcutValueInput,
   type Variable,
 } from '@cliptap/shared';
 import { ProfileMultiSelect } from '@components/profile/ProfileMultiSelect';
@@ -16,13 +19,13 @@ import { QuickCategoryCreateButton } from '@components/category/QuickCategoryCre
 import { useBodyScrollLock } from '@hooks/useBodyScrollLock';
 import { useEscapeClose } from '@hooks/useEscapeClose';
 import { useUnsavedChangesWarning } from '@hooks/useUnsavedChangesWarning';
-import { showErrorAlert } from '@utils/alerts';
+import { showConfirmMessage, showErrorAlert } from '@utils/alerts';
 
 export interface ShortcutFormValues {
   name: string;
   categoryId: string | null;
   profileIds: string[];
-  value: string;
+  values: ShortcutValueInput[];
 }
 
 interface ShortcutEditModalProps {
@@ -38,6 +41,16 @@ interface ShortcutEditModalProps {
   onClose: () => void;
 }
 
+interface DraftValue extends ShortcutValueInput {
+  key: string;
+}
+
+const createDraftValue = (): DraftValue => ({
+  key: crypto.randomUUID(),
+  value: '',
+  isMasked: false,
+});
+
 export function ShortcutEditModal({
   isOpen,
   shortcut,
@@ -51,13 +64,14 @@ export function ShortcutEditModal({
   onClose,
 }: ShortcutEditModalProps) {
   const { t } = useTranslation();
+  const { canAddShortcutValue } = useSharedSubscription();
   const [name, setName] = useState('');
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [profileIds, setProfileIds] = useState<string[]>([]);
-  const [value, setValue] = useState('');
+  const [values, setValues] = useState<DraftValue[]>([createDraftValue()]);
   const [initialSnapshot, setInitialSnapshot] = useState('');
-  /* 変数バッジからトークンを差し込む位置（テキストエリアのカーソル位置） */
-  const selectionStart = useRef(0);
+  const [focusedValueKey, setFocusedValueKey] = useState<string | null>(null);
+  const selectionByKey = useRef(new Map<string, number>());
 
   useEffect(() => {
     if (!isOpen) return;
@@ -65,18 +79,26 @@ export function ShortcutEditModal({
     const nextName = shortcut?.name ?? '';
     const nextCategoryId = shortcut?.categoryId ?? null;
     const nextProfileIds = shortcut?.profileIds ?? (activeProfileId ? [activeProfileId] : []);
-    const nextValue = shortcut?.value ?? '';
+    const nextValues = shortcut
+      ? shortcut.values.map((value) => ({
+          key: value.id,
+          id: value.id,
+          value: value.value,
+          isMasked: value.isMasked,
+        }))
+      : [createDraftValue()];
 
     setName(nextName);
     setCategoryId(nextCategoryId);
     setProfileIds(nextProfileIds);
-    setValue(nextValue);
-    selectionStart.current = nextValue.length;
+    setValues(nextValues);
+    setFocusedValueKey(nextValues[0]?.key ?? null);
+    selectionByKey.current.clear();
     setInitialSnapshot(JSON.stringify({
       name: nextName,
       categoryId: nextCategoryId,
       profileIds: nextProfileIds,
-      value: nextValue,
+      values: nextValues.map(({ id, value, isMasked }) => ({ id, value, isMasked })),
     }));
   }, [isOpen, shortcut, activeProfileId]);
 
@@ -84,8 +106,8 @@ export function ShortcutEditModal({
     name,
     categoryId,
     profileIds,
-    value,
-  }), [name, categoryId, profileIds, value]);
+    values: values.map(({ id, value, isMasked }) => ({ id, value, isMasked })),
+  }), [name, categoryId, profileIds, values]);
 
   const hasChanges = isOpen && initialSnapshot !== '' && currentSnapshot !== initialSnapshot;
   const { confirmClose } = useUnsavedChangesWarning({ hasChanges, isActive: isOpen });
@@ -93,21 +115,56 @@ export function ShortcutEditModal({
   useBodyScrollLock(isOpen);
   useEscapeClose(isOpen, handleClose);
 
-  /* 変数バッジのトークンを、テキストエリアのカーソル位置へ差し込む */
-  const handleInsertVariable = (variableName: string) => {
-    const token = `{{${variableName}}}`;
-    const cursor = Math.min(selectionStart.current, value.length);
-    setValue(`${value.slice(0, cursor)}${token}${value.slice(cursor)}`);
-    selectionStart.current = cursor + token.length;
+  const updateValue = (key: string, patch: Partial<Pick<DraftValue, 'value' | 'isMasked'>>) => {
+    setValues((current) => current.map((value) => value.key === key ? { ...value, ...patch } : value));
   };
 
-  /* 値は空文字も保存できるため、名前だけを必須とする（モバイルと同じ） */
-  const canSave = name.trim() !== '';
+  const handleAddValue = () => {
+    if (!canAddShortcutValue(values.length)) {
+      showErrorAlert(t('shortcut.value_limit_message', { limit: FREE_SHORTCUT_VALUES_LIMIT }));
+      return;
+    }
+    const next = createDraftValue();
+    setValues((current) => [...current, next]);
+    setFocusedValueKey(next.key);
+  };
+
+  const handleDeleteValue = (value: DraftValue) => {
+    showConfirmMessage(t('shortcut.delete_value_confirm'), () => {
+      setValues((current) => current.filter((entry) => entry.key !== value.key));
+    });
+  };
+
+  const handleInsertVariable = (variableName: string) => {
+    const targetKey = focusedValueKey ?? values[0]?.key;
+    if (!targetKey) return;
+    const token = `{{${variableName}}}`;
+    const target = values.find((value) => value.key === targetKey);
+    if (!target) return;
+    const cursor = selectionByKey.current.get(targetKey) ?? target.value.length;
+    updateValue(targetKey, {
+      value: `${target.value.slice(0, cursor)}${token}${target.value.slice(cursor)}`,
+    });
+    selectionByKey.current.set(targetKey, cursor + token.length);
+  };
+
+  /* 値そのものは空文字でも保存できるため、名前と件数だけを必須とする（モバイルと同じ） */
+  const canSave = name.trim() !== '' && values.length > 0;
 
   const handleSave = () => {
     if (!canSave) return;
+    const savedValueCount = shortcut?.values.length ?? 0;
+    if (values.length > savedValueCount && !canAddShortcutValue(values.length - 1)) {
+      showErrorAlert(t('shortcut.value_limit_message', { limit: FREE_SHORTCUT_VALUES_LIMIT }));
+      return;
+    }
     try {
-      onSave({ name, categoryId, profileIds, value });
+      onSave({
+        name,
+        categoryId,
+        profileIds,
+        values: values.map(({ id, value, isMasked }) => ({ id, value, isMasked })),
+      });
     } catch (error) {
       showErrorAlert(translateError(error));
     }
@@ -163,22 +220,54 @@ export function ShortcutEditModal({
             />
 
             <div>
-              <h3 className="mb-3 font-semibold text-gray-900 dark:text-white">{t('shortcut.value_value')}</h3>
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="font-semibold text-gray-900 dark:text-white">{t('shortcut.values')} *</h3>
+                <button type="button" onClick={handleAddValue} className="rounded-lg px-3 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30">＋ {t('shortcut.value_create')}</button>
+              </div>
 
-              {/* 挿入する値。保存する文字列のまま編集し、変数トークンは右列のプレビューで展開結果を確かめる */}
-              <textarea
-                value={value}
-                onChange={(event) => setValue(event.target.value)}
-                onFocus={(event) => {
-                  selectionStart.current = event.currentTarget.selectionStart;
-                }}
-                onSelect={(event) => {
-                  selectionStart.current = event.currentTarget.selectionStart;
-                }}
-                rows={6}
-                className="w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-2 font-mono text-gray-900 dark:border-[#333333] dark:bg-[#242424] dark:text-white"
-                placeholder={t('shortcut.value_value_placeholder')}
-              />
+              <div className="space-y-4">
+                {values.map((entry) => (
+                  <div key={entry.key} className="rounded-xl border border-gray-200 p-4 dark:border-[#2A2A2A]">
+                    <div className="mb-3 flex items-center justify-end gap-1">
+                      {/* 表示を伏せるかの切り替え。ここで決めた状態は一覧・プレビュー・拡張キーボードにも効く */}
+                      <button
+                        type="button"
+                        onClick={() => updateValue(entry.key, { isMasked: !entry.isMasked })}
+                        className={`min-h-10 min-w-10 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2A2A2A] ${entry.isMasked ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-[#A0A0A0]'}`}
+                        aria-label={entry.isMasked ? t('shortcut.unmask_value') : t('shortcut.mask_value')}
+                        title={entry.isMasked ? t('shortcut.unmask_value') : t('shortcut.mask_value')}
+                      >
+                        {entry.isMasked ? (
+                          <svg className="mx-auto h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                          </svg>
+                        ) : (
+                          <svg className="mx-auto h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        )}
+                      </button>
+                      <button type="button" onClick={() => handleDeleteValue(entry)} className="min-h-10 min-w-10 rounded-lg text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20" aria-label={t('common.delete')}>×</button>
+                    </div>
+                    {/* 伏せる指定にしても入力欄は実際の値のまま出す。書き換えるには中身が見えている必要があるため。
+                        隠れるのは一覧・プレビュー・拡張キーボードの表示だけ */}
+                    <textarea
+                      value={entry.value}
+                      onChange={(event) => updateValue(entry.key, { value: event.target.value })}
+                      onFocus={(event) => {
+                        setFocusedValueKey(entry.key);
+                        selectionByKey.current.set(entry.key, event.currentTarget.selectionStart);
+                      }}
+                      onSelect={(event) => selectionByKey.current.set(entry.key, event.currentTarget.selectionStart)}
+                      rows={3}
+                      className="w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-[#333333] dark:bg-[#242424] dark:text-white"
+                      placeholder={t('shortcut.value_value_placeholder')}
+                    />
+                  </div>
+                ))}
+                {values.length === 0 && <p className="rounded-xl border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 dark:border-[#333333] dark:text-[#A0A0A0]">{t('error.shortcut_value_required')}</p>}
+              </div>
             </div>
           </div>
 
@@ -188,7 +277,7 @@ export function ShortcutEditModal({
             <div className="h-px bg-gray-200 dark:bg-[#2A2A2A]" />
 
             <ShortcutPreview
-              value={value}
+              values={values}
               selectedProfileIds={profileIds}
               profiles={profiles}
               variables={variables}

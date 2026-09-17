@@ -42,6 +42,7 @@ import {
   Logger,
   type Category,
   type Shortcut,
+  type ShortcutValue,
   type ShortcutWithDisplay,
   type SnippetSortBy,
 } from '@cliptap/shared';
@@ -90,7 +91,7 @@ export interface UseHomeShortcutsReturn {
   /** 並べ替え基準を変更する */
   handleSortChange: (sortBy: SnippetSortBy) => void;
   /** 値をクリップボードへコピーする */
-  handleCopyShortcut: (shortcut: Shortcut) => Promise<void>;
+  handleCopyShortcutValue: (value: ShortcutValue) => Promise<void>;
   /** 一覧を再読み込みする */
   handleRefreshShortcuts: () => void;
   /** 新規作成画面を開く */
@@ -112,7 +113,7 @@ export function useHomeShortcuts(params: UseHomeShortcutsParams): UseHomeShortcu
 
   const { t } = useTranslation();
   const router = useRouter();
-  const { shortcuts: allShortcuts, activeProfileId, refresh, deleteShortcut, copyShortcut } = useShortcuts();
+  const { shortcuts: allShortcuts, activeProfileId, refresh, deleteShortcut, copyShortcutValue } = useShortcuts();
   const { categories } = useCategories();
   const { profileVariables, defaultProfile } = useProfiles();
   const { variables } = useVariables();
@@ -198,24 +199,24 @@ export function useHomeShortcuts(params: UseHomeShortcutsParams): UseHomeShortcu
   }, []);
 
   /**
-   * ショートカットの値をクリップボードへコピーする
+   * ショートカット値をクリップボードへコピーする
    *
    * コピーと使用回数の加算はProviderが行う（定型文のコピーと同じ作り）。
    * 変数はProviderがコピーする時点で、アクティブなプロファイルを基準に展開する。
    * 振動フィードバックはクリップボードアダプター側で行う。
    */
-  const handleCopyShortcut = useCallback(
-    async (shortcut: Shortcut) => {
+  const handleCopyShortcutValue = useCallback(
+    async (value: ShortcutValue) => {
       try {
-        await copyShortcut(shortcut);
+        await copyShortcutValue(value);
       } catch (error) {
         Logger.error('[HomeShortcuts] Failed to copy the shortcut value:', error);
         showErrorAlert(t('error.generic'));
-        /* カード側でコピー完了表示を出さないよう再スローする */
+        /* 行側でコピー完了表示を出さないよう再スローする */
         throw error;
       }
     },
-    [copyShortcut, t]
+    [copyShortcutValue, t]
   );
 
   const handleCreateShortcut = useCallback(() => {
@@ -261,7 +262,7 @@ export function useHomeShortcuts(params: UseHomeShortcutsParams): UseHomeShortcu
     filteredCategories,
     currentSort,
     handleSortChange,
-    handleCopyShortcut,
+    handleCopyShortcutValue,
     handleRefreshShortcuts: refresh,
     handleCreateShortcut,
     handleEditShortcut,

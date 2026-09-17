@@ -137,23 +137,27 @@ describe('ProfileService.deleteWithAutoSwitch', () => {
    * ショートカットを値1件付きで入れ、指定したプロファイルへ紐づける
    *
    * @remarks
-   * 紐づけを渡さなければ0件（全プロファイル向け）。
+   * 値のIDは `sv-` にショートカットIDを続けた形にする。紐づけを渡さなければ0件（全プロファイル向け）。
    */
   const insertShortcut = (id: string, profileIds: readonly string[]): void => {
-    db?.run("INSERT INTO shortcuts VALUES (?, NULL, ?, '080', 0, 0, ?, ?)", [
-      id,
-      id,
-      'created',
-      'updated',
-    ]);
+    db?.run('INSERT INTO shortcuts VALUES (?, NULL, ?, 0, ?, ?)', [id, id, 'created', 'updated']);
     for (const profileId of profileIds) {
       db?.run('INSERT INTO shortcut_profiles VALUES (?, ?)', [id, profileId]);
     }
+    db?.run(
+      "INSERT INTO shortcut_values VALUES (?, ?, '080', 0, 0, 0, 'created', 'updated')",
+      [`sv-${id}`, id]
+    );
   };
 
   /** 残っているショートカットIDをID順で取得する */
   const shortcutIds = (): string[] =>
     db?.all<{ id: string }>('SELECT id FROM shortcuts ORDER BY id').map((row) => row.id) ?? [];
+
+  /** 残っているショートカット値IDをID順で取得する */
+  const shortcutValueIds = (): string[] =>
+    db?.all<{ id: string }>('SELECT id FROM shortcut_values ORDER BY id').map((row) => row.id) ??
+    [];
 
   /** 指定ショートカットの紐づけプロファイルIDをID順で取得する */
   const linkedProfileIds = (shortcutId: string): string[] =>
@@ -165,13 +169,13 @@ describe('ProfileService.deleteWithAutoSwitch', () => {
       .map((row) => row.profileId) ?? [];
 
   /**
-   * 削除したプロファイルだけに紐づくショートカットは物理削除する。
+   * 削除したプロファイルだけに紐づくショートカットは値ごと物理削除する。
    *
    * 紐づけだけを外すと0件になり、全プロファイル向けとして他のプロファイルにも出てしまう。
    * 実行時に外部キーを強制していないので、宣言したCASCADEでは消えない。
    * 他のプロファイルのショートカットを巻き込まないことも同時に固定する。
    */
-  it('removes the shortcuts linked only to the deleted profile', () => {
+  it('removes the shortcuts and their values linked only to the deleted profile', () => {
     insertProfile('a', 0, { isDefault: true, isActive: true });
     insertProfile('b', 1);
     insertShortcut('sc-a', ['a']);
@@ -180,12 +184,13 @@ describe('ProfileService.deleteWithAutoSwitch', () => {
     deleteThroughProvider('b');
 
     expect(shortcutIds()).toEqual(['sc-a']);
+    expect(shortcutValueIds()).toEqual(['sv-sc-a']);
     expect(db?.all('SELECT * FROM shortcut_profiles')).toEqual([{ shortcutId: 'sc-a', profileId: 'a' }]);
   });
 
   /**
    * 他のプロファイルにも紐づくショートカットは、削除したプロファイルとの紐づけだけを外す。
-   * 本体ごと消すと、残るプロファイルで使っていたショートカットまで失われる。
+   * 本体ごと消すと、残るプロファイルで使っていたショートカットと値まで失われる。
    */
   it('unlinks shortcuts that are also linked to another profile and keeps them', () => {
     insertProfile('a', 0, { isDefault: true, isActive: true });
@@ -195,6 +200,7 @@ describe('ProfileService.deleteWithAutoSwitch', () => {
     deleteThroughProvider('b');
 
     expect(shortcutIds()).toEqual(['sc-shared']);
+    expect(shortcutValueIds()).toEqual(['sv-sc-shared']);
     expect(linkedProfileIds('sc-shared')).toEqual(['a']);
   });
 
@@ -207,11 +213,12 @@ describe('ProfileService.deleteWithAutoSwitch', () => {
     deleteThroughProvider('b');
 
     expect(shortcutIds()).toEqual(['sc-all']);
+    expect(shortcutValueIds()).toEqual(['sv-sc-all']);
     expect(linkedProfileIds('sc-all')).toEqual([]);
   });
 
   /**
-   * 他の紐づけが実在しないプロファイルを指すだけなら、削除したプロファイル専用として消す。
+   * 他の紐づけが実在しないプロファイルを指すだけなら、削除したプロファイル専用として値ごと消す。
    * 実在しない紐づけを「他にも紐づく」と数えると、どのプロファイルの一覧にも出ない行が残り続ける。
    */
   it('removes shortcuts whose other links point only to missing profiles', () => {
@@ -222,6 +229,7 @@ describe('ProfileService.deleteWithAutoSwitch', () => {
     deleteThroughProvider('b');
 
     expect(shortcutIds()).toEqual([]);
+    expect(shortcutValueIds()).toEqual([]);
   });
 
   /**

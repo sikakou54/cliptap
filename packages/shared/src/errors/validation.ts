@@ -184,6 +184,19 @@ export class VariableNameReservedError extends ValidationError {
 }
 
 /**
+ * ショートカット値必須エラー
+ *
+ * ショートカットに値が1件も残らない状態で保存しようとした場合にスローされます。
+ * 値を持たないショートカットは拡張キーボードから何も挿入できないため許可しません。
+ */
+export class ShortcutValueRequiredError extends ValidationError {
+  constructor(message: string = 'A shortcut requires at least one value') {
+    super(message, 'error.shortcut_value_required');
+    this.name = 'ShortcutValueRequiredError';
+  }
+}
+
+/**
  * 無効なRGB値エラー
  *
  * カテゴリの色のRGB値が0-255の範囲外の場合にスローされます。

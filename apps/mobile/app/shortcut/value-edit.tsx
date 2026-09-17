@@ -38,6 +38,7 @@ export default function ShortcutValueEditModal() {
   const { colors, responsiveFontSizes, responsiveLineHeights } = useTheme();
   const params = useLocalSearchParams();
 
+  const valueKey = (params.valueKey as string) ?? '';
   const initialValue = (params.value as string) || '';
 
   const {
@@ -49,6 +50,7 @@ export default function ShortcutValueEditModal() {
     handleInsertVariable,
     handleSave,
   } = useShortcutValueEditScreen({
+    valueKey,
     initialValue,
   });
 
@@ -63,7 +65,8 @@ export default function ShortcutValueEditModal() {
   /* ショートカットの値入力モーダル */
   return (
     <ScreenContainer
-      title={t('shortcut.value_value')}
+      /* 追加と編集で同じ画面を使うため、見出しだけを開いた目的に合わせて出し分ける */
+      title={valueKey === '' ? t('shortcut.value_create') : t('shortcut.value_edit')}
       isModal={true}
       rightAction={
         <TouchableOpacity onPress={handleSave} style={styles.saveButton}>

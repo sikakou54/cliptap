@@ -57,7 +57,7 @@ export default function SearchScreen() {
     handleCopySnippetTitle,
     handleEditSnippet,
     handleDeleteSnippet,
-    handleCopyShortcut,
+    handleCopyShortcutValue,
     handleEditShortcut,
     handleDeleteShortcut,
     handleClose,
@@ -124,7 +124,7 @@ export default function SearchScreen() {
             <ShortcutList
               shortcuts={displayShortcuts}
               categories={categories}
-              onCopy={handleCopyShortcut}
+              onCopyValue={handleCopyShortcutValue}
               onEdit={handleEditShortcut}
               onDelete={handleDeleteShortcut}
               onRefresh={handleRefresh}

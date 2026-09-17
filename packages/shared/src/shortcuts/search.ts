@@ -12,13 +12,21 @@
  */
 
 /**
+ * 検索対象になるショートカット値
+ */
+export interface SearchableShortcutValue {
+  /** 一覧に表示する文字列（表示中のプロファイルで変数トークンを展開したもの） */
+  readonly displayValue: string;
+}
+
+/**
  * 検索対象になるショートカット
  */
 export interface SearchableShortcut {
   /** ショートカット名 */
   readonly name: string;
-  /** 一覧に表示する文字列（表示中のプロファイルで変数トークンを展開したもの） */
-  readonly displayValue: string;
+  /** ショートカットが持つ値 */
+  readonly values: readonly SearchableShortcutValue[];
 }
 
 /**
@@ -43,7 +51,7 @@ function normalize(term: string): string {
  * @returns 検索語に一致したショートカット（元の並び順を保つ）
  *
  * @remarks
- * ショートカット名または値に検索語が含まれれば一致とする。
+ * ショートカット名または値のいずれかに検索語が含まれれば一致とする。
  * 値まで対象にするのは、「090」のように挿入される値そのものを手掛かりに
  * 探す場面があるため。
  *
@@ -60,9 +68,10 @@ export function searchShortcuts<T extends SearchableShortcut>(
   const normalizedQuery = normalize(query);
   if (!normalizedQuery) return [...shortcuts];
 
-  return shortcuts.filter(
-    (shortcut) =>
-      normalize(shortcut.name).includes(normalizedQuery) ||
-      normalize(shortcut.displayValue).includes(normalizedQuery)
-  );
+  return shortcuts.filter((shortcut) => {
+    if (normalize(shortcut.name).includes(normalizedQuery)) return true;
+    return shortcut.values.some((value) =>
+      normalize(value.displayValue).includes(normalizedQuery)
+    );
+  });
 }

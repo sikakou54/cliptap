@@ -10,31 +10,52 @@
  * - 保存可否の判定と保存処理（新規作成/更新）
  *
  * 値は変数トークンを展開していない保存文字列のまま扱う。展開結果は画面下部のプレビュー
- * （ShortcutValuePreview）がプロファイルを切り替えて表示するため、このフックでは展開しない。
+ * （ShortcutPreview）がプロファイルを切り替えて表示するため、このフックでは展開しない。
  *
  * @see app/shortcut/edit.tsx - UIコンポーネント
  * @see src/components/shortcut/ShortcutPreview.tsx - 値のプレビュー
- * @see app/shortcut/value-edit.tsx - 値編集モーダル
+ * @see app/shortcut/value-edit.tsx - 値の入力モーダル
  * @see app/profile/select.tsx - プロファイル選択画面（定型文フォームと共有）
  * @see packages/shared/src/providers/ShortcutProvider.tsx - ショートカットCRUD操作（useShortcuts）
  */
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import {
   Logger,
   translateError,
   useCategories,
   useProfiles,
+  useSharedSubscription,
   useShortcuts,
   type Category,
+  type ShortcutValueInput,
 } from '@cliptap/shared';
-import { showErrorAlert } from '@utils/alerts';
+import { showConfirm, showErrorAlert } from '@utils/alerts';
+import { useTranslation } from '@cliptap/shared';
 import { useItemLimitGuard } from '@hooks/useItemLimitGuard';
 
 /* ======================================== */
 /* 型定義 */
 /* ======================================== */
+
+/**
+ * 編集中の値1件
+ *
+ * @remarks
+ * 新規追加した値はまだDBのIDを持たないため、画面内での識別子として`key`を別に持つ。
+ * 保存済みの値は`key`と`id`が同じ値になり、保存時に`id`があるものだけが既存行の更新になる。
+ */
+export interface ShortcutValueDraft {
+  /** 画面内で値を一意に識別するキー */
+  key: string;
+  /** 保存済みの値のID（新規追加した値はundefined） */
+  id?: string;
+  /** 保存する文字列（変数トークンは展開せずそのまま持つ） */
+  value: string;
+  /** 表示を伏せるか（コピー・挿入は伏せていても実際の値を使う） */
+  isMasked: boolean;
+}
 
 /**
  * useShortcutEditScreenの引数の型
@@ -60,7 +81,7 @@ export interface UseShortcutEditScreenReturn {
   /** 選択中のカテゴリ（未分類ならnull） */
   selectedCategory: Category | null;
   /** 編集中の値一覧（表示順。変数トークンを展開していない保存文字列のまま） */
-  value: string;
+  values: ShortcutValueDraft[];
   /** 保存処理中フラグ */
   saving: boolean;
 
@@ -76,8 +97,13 @@ export interface UseShortcutEditScreenReturn {
   /** カテゴリ選択画面を開く */
   handleCategoryPress: () => void;
   /** 値の追加画面を開く */
-  handleValuePress: () => void;
+  handleAddValue: () => void;
   /** 値の編集画面を開く */
+  handleEditValue: (draft: ShortcutValueDraft) => void;
+  /** 値の表示を伏せるかどうかを切り替える */
+  handleToggleValueMask: (draft: ShortcutValueDraft) => void;
+  /** 確認のうえ値を一覧から取り除く */
+  handleDeleteValue: (draft: ShortcutValueDraft) => void;
   /** ショートカットを保存する */
   handleSave: () => void;
 }
@@ -85,6 +111,24 @@ export interface UseShortcutEditScreenReturn {
 /* ======================================== */
 /* ヘルパー */
 /* ======================================== */
+
+/**
+ * 新規追加した値の画面内キーを作る
+ *
+ * @param existing - 既に一覧にある値
+ * @returns 既存のどのキーとも重ならないキー
+ *
+ * @remarks
+ * 乱数や時刻を使わず、既存キーとの衝突だけを避ける連番にする。
+ * 追加・削除を繰り返しても既存の行のキーは変わらないため、
+ * 値編集モーダルから戻ったときに対象を取り違えない。
+ */
+function createDraftKey(existing: ShortcutValueDraft[]): string {
+  const used = new Set(existing.map((draft) => draft.key));
+  let index = existing.length;
+  while (used.has(`draft-${index}`)) index += 1;
+  return `draft-${index}`;
+}
 
 /* ======================================== */
 /* フック実装 */
@@ -101,13 +145,15 @@ export function useShortcutEditScreen(
 ): UseShortcutEditScreenReturn {
   const { shortcutId } = params;
 
+  const { t } = useTranslation();
   const router = useRouter();
   const { activeProfileId, createShortcut, updateShortcut, getById } = useShortcuts();
   /* 既定のチェックは選択画面に出る有効なプロファイル（validProfiles）だけから選ぶ。
      選択済みの名前は無効なプロファイルへの保存済みの紐づけも含めて出すため、profilesから引く */
   const { profiles, validProfiles } = useProfiles();
   const { categories } = useCategories();
-  const { ensureCanAddShortcut } = useItemLimitGuard();
+  const { isLoading: isSubscriptionLoading } = useSharedSubscription();
+  const { ensureCanAddShortcut, ensureCanAddShortcutValue } = useItemLimitGuard();
 
   /* ======================================== */
   /* 状態管理 */
@@ -117,7 +163,7 @@ export function useShortcutEditScreen(
   const [profileIds, setProfileIds] = useState<string[]>([]);
   /* カテゴリは任意のため、未選択（未分類）をnullで表す */
   const [categoryId, setCategoryId] = useState<string | null>(null);
-  const [value, setValue] = useState('');
+  const [values, setValues] = useState<ShortcutValueDraft[]>([]);
   const [saving, setSaving] = useState(false);
 
   /* ======================================== */
@@ -139,10 +185,13 @@ export function useShortcutEditScreen(
    *
    * @remarks
    * 値が1件も無いショートカットは拡張キーボードから何も挿入できないため保存させない
-   * （docs/機能仕様書.md §8.24）。値名の必須判定は値編集モーダル側で行うため、ここでは件数だけを見る。
+   * （docs/機能仕様書.md §8.24）。値そのものは空文字でも保存できるため、ここでは件数だけを見る。
    * 所属プロファイルは0件（全プロファイル向け）でも保存できるため、条件に含めない。
    */
-  const canSave = useMemo(() => name.trim() !== '', [name]);
+  const canSave = useMemo(
+    () => name.trim() !== '' && values.length > 0,
+    [name, values]
+  );
 
   /**
    * 選択中の所属プロファイル名
@@ -202,27 +251,133 @@ export function useShortcutEditScreen(
     setName(editingShortcut.name);
     setProfileIds(editingShortcut.profileIds);
     setCategoryId(editingShortcut.categoryId);
-    setValue(editingShortcut.value);
+    setValues(
+      editingShortcut.values.map((value) => ({
+        key: value.id,
+        id: value.id,
+        value: value.value,
+        isMasked: value.isMasked,
+      }))
+    );
   }, [editingShortcut]);
+
+  /* ======================================== */
+  /* 画面フォーカス時の処理（コールバックデータ処理） */
+  /* ======================================== */
+  /* 値編集モーダル（shortcut/value-edit）からの戻り値をグローバル変数経由で受け取る。
+     expo-router のモーダルは戻り値を返せないため、モーダル側が router.back() の直前に
+     global.shortcutValueCallbackData へ書き込み、こちらはフォーカス復帰時に読み取って即座に破棄する。
+     依存配列が空なのは setter のみを閉じ込めており再購読が不要なため。 */
+  useFocusEffect(
+    useCallback(() => {
+      const callbackData = global.shortcutValueCallbackData;
+      if (!callbackData) return;
+
+      global.shortcutValueCallbackData = undefined;
+
+      setValues((prev) => {
+        const index = prev.findIndex((draft) => draft.key === callbackData.key);
+
+        /* 既存の値の編集: 同じ位置で内容だけ差し替える（並び順とマスク指定は変えない） */
+        if (index >= 0) {
+          const next = [...prev];
+          next[index] = {
+            ...next[index],
+            value: callbackData.value,
+          };
+          return next;
+        }
+
+        /* 新規追加: 末尾へ足す。マスクは既定で外しておき、伏せたい値だけ切り替えてもらう */
+        return [
+          ...prev,
+          {
+            key: createDraftKey(prev),
+            value: callbackData.value,
+            isMasked: false,
+          },
+        ];
+      });
+    }, [])
+  );
 
   /* ======================================== */
   /* イベントハンドラ */
   /* ======================================== */
 
   /**
-   * 値の入力画面を開く
+   * 値の追加画面を開く
    *
    * @remarks
-   * 戻り値はグローバルのコールバックで受け取る。expo-router のモーダルは戻り値を返せないため、
-   * プロファイル選択・カテゴリ選択と同じ形に揃えている。
+   * keyを空文字で渡すことで、モーダル側の戻り値を「新規追加」として扱わせる。
+   * 無料プランの値の上限はここで先に判定する。権利確認中は判定を保留し、保存時に必ず判定する
+   * （保留する理由はホームの追加ボタンと同じ）。
    */
-  const handleValuePress = useCallback(() => {
-    global.shortcutValueCallback = (next: string) => setValue(next);
+  const handleAddValue = useCallback(() => {
+    if (!isSubscriptionLoading && !ensureCanAddShortcutValue(values.length)) {
+      return;
+    }
     router.push({
       pathname: '/shortcut/value-edit',
-      params: { value },
+      params: {
+        valueKey: '',
+        value: '',
+      },
     });
-  }, [router, value]);
+  }, [isSubscriptionLoading, ensureCanAddShortcutValue, values.length, router]);
+
+  /**
+   * 値の編集画面を開く
+   */
+  const handleEditValue = useCallback(
+    (draft: ShortcutValueDraft) => {
+      router.push({
+        pathname: '/shortcut/value-edit',
+        params: {
+          valueKey: draft.key,
+          value: draft.value,
+        },
+      });
+    },
+    [router]
+  );
+
+  /**
+   * 値の表示を伏せるかどうかを切り替える
+   *
+   * @remarks
+   * 切り替えるのは画面上の下書きだけで、DBへは保存時にまとめて反映する。
+   * 伏せても保存される文字列は変わらない。一覧・プレビュー・拡張キーボードでの
+   * 表示だけが記号に置き換わり、コピーと挿入は実際の値を使う（§8.24）。
+   */
+  const handleToggleValueMask = useCallback((draft: ShortcutValueDraft) => {
+    setValues((prev) =>
+      prev.map((entry) =>
+        entry.key === draft.key ? { ...entry, isMasked: !entry.isMasked } : entry
+      )
+    );
+  }, []);
+
+  /**
+   * 値を一覧から取り除く
+   *
+   * @remarks
+   * 取り除くのは画面上の下書きだけで、DBへは保存時にまとめて反映する。
+   * 最後の1件も取り除ける。その状態では canSave が false になり保存できない（§8.24）。
+   */
+  const handleDeleteValue = useCallback(
+    (draft: ShortcutValueDraft) => {
+      showConfirm(
+        t('shortcut.delete_value_confirm'),
+        () => {
+          setValues((prev) => prev.filter((entry) => entry.key !== draft.key));
+        },
+        undefined,
+        'danger'
+      );
+    },
+    [t]
+  );
 
   /**
    * 選択中のカテゴリ
@@ -281,8 +436,22 @@ export function useShortcutEditScreen(
        editingShortcutが見つからない場合は作成へ進むため、条件は下の作成・更新の分岐と揃える */
     if (!(isEdit && editingShortcut) && !ensureCanAddShortcut()) return;
 
+    /* 値の件数も保存時に保留せず判定する（値の追加ボタンを経由しない追加への保険）。
+       ただし保存済みの件数を超えない保存は許可する。上限を超える値を既に持つショートカット
+       （Pro加入中に登録したもの等）を、値を増やさずに編集して保存できるようにするため。
+       判定には最後の1件を追加する前の件数を渡す */
+    const savedValueCount = isEdit && editingShortcut ? editingShortcut.values.length : 0;
+    if (values.length > savedValueCount && !ensureCanAddShortcutValue(values.length - 1)) return;
+
     setSaving(true);
     try {
+      /* 新規追加の値はidを持たないため、そのままMapperの差し替え判定に渡せる */
+      const inputs: ShortcutValueInput[] = values.map((draft) => ({
+        id: draft.id,
+        value: draft.value,
+        isMasked: draft.isMasked,
+      }));
+
       /* profileIdsは常に明示して渡す。更新で省略すると紐づけを変えない扱いになり、
          選択画面で変えた所属が保存されない */
       if (isEdit && editingShortcut) {
@@ -291,10 +460,10 @@ export function useShortcutEditScreen(
           profileIds,
           categoryId,
           name,
-          value,
+          values: inputs,
         });
       } else {
-        createShortcut({ profileIds, categoryId, name, value });
+        createShortcut({ profileIds, categoryId, name, values: inputs });
       }
 
       router.back();
@@ -307,10 +476,11 @@ export function useShortcutEditScreen(
   }, [
     canSave,
     saving,
-    value,
+    values,
     isEdit,
     editingShortcut,
     ensureCanAddShortcut,
+    ensureCanAddShortcutValue,
     updateShortcut,
     createShortcut,
     name,
@@ -329,13 +499,16 @@ export function useShortcutEditScreen(
     profileIds,
     selectedProfileNames,
     selectedCategory,
-    value,
+    values,
     saving,
     isEdit,
     canSave,
     handleProfilePress,
     handleCategoryPress,
-    handleValuePress,
+    handleAddValue,
+    handleEditValue,
+    handleToggleValueMask,
+    handleDeleteValue,
     handleSave,
   };
 }

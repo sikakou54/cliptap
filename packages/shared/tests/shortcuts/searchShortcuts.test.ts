@@ -3,15 +3,27 @@ import { searchShortcuts } from '../../src/shortcuts/search';
 
 /**
  * ショートカット検索は、ショートカット名と値の2つを対象にする。
- * どちらかを落とすと「見えているのに探せない」状態になるため、対象をここで固定する。
+ * どれか1つでも落とすと「見えているのに探せない」状態になるため、対象をここで固定する。
  * 値は一覧に表示される展開後の文字列（displayValue）で照合する。
  */
 describe('searchShortcuts', () => {
   /** 検索対象を1件ずつ持たせたテストデータ（displayValue は表示中のプロファイルで展開した値） */
   const shortcuts = [
-    { name: '電話番号', displayValue: '03-9876-5432' },
-    { name: 'メールアドレス', displayValue: 'taro@example.com' },
-    { name: 'Address', displayValue: 'Tokyo' },
+    {
+      name: '電話番号',
+      values: [
+        { displayValue: '090-1234-5678' },
+        { displayValue: '03-9876-5432' },
+      ],
+    },
+    {
+      name: 'メールアドレス',
+      values: [{ displayValue: 'taro@example.com' }],
+    },
+    {
+      name: 'Address',
+      values: [{ displayValue: 'Tokyo' }],
+    },
   ];
 
   /** 一致したショートカット名だけを取り出す */

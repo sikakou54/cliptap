@@ -2,6 +2,7 @@ package com.sikakou.cliptap.mappers
 
 import android.content.Context
 import com.sikakou.cliptap.models.Shortcut
+import com.sikakou.cliptap.models.ShortcutValue
 import android.util.Log
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -66,12 +67,24 @@ class ShortcutMapper private constructor(context: Context) : BaseMapper(context)
     }
 
     /**
-     * 指定プロファイル・カテゴリのショートカットを取得
+     * 指定プロファイル・カテゴリのショートカットを値付きで取得
      *
      * 【何をするか】
-     * shortcutsを表示条件（選択中のプロファイルに紐づくもの＋全プロファイル向け）とカテゴリで絞り、
-     * sortOrder昇順で取得する。挿入する値は同じ行のvalueが持つため、1回のクエリで一覧に必要なものが揃う
-     * （値は保存された文字列のまま。変数の展開は表示と挿入の時点で行う）。
+     * 1. shortcut_valuesを親の表示条件（選択中のプロファイルに紐づくもの＋全プロファイル向け）とカテゴリで絞り、
+     *    1回のクエリでまとめて取得（値は保存された文字列のまま。変数の展開は表示と挿入の時点で行う）
+     * 2. shortcutsを同じ条件で絞り、sortOrder昇順で取得
+     * 3. shortcutIdごとに値を振り分けて組み立てる
+     *
+     * 【値をショートカットごとに引かない理由】
+     * ショートカットの件数だけクエリを発行すると、行の描画前にSQLiteへ何度も往復することになる。
+     * 拡張キーボードは表示までの速さが体験に直結するため、2回のクエリに固定する。
+     *
+     * 【値の絞り込みを親との結合で行う理由】
+     * shortcut_valuesは紐づくプロファイルもカテゴリも持たない。紐づけはshortcut_profiles、
+     * カテゴリは親のshortcutsにしかない。
+     * 表示しないショートカットの値まで読み込むと、同じidのショートカットが無いまま捨てられる無駄が出るうえ、
+     * 将来の実装変更で他プロファイルの値が紛れ込む余地を残すため、SQLの時点で親と突き合わせる。
+     * カテゴリの絞り込みも同じ理由で、値と親の両方へ同じ条件を掛ける。
      *
      * 【紐づけを表示条件で絞る理由】
      * 1件のショートカットは0件以上のプロファイルに紐づく（0件は全プロファイル向け）。
@@ -89,28 +102,61 @@ class ShortcutMapper private constructor(context: Context) : BaseMapper(context)
      *
      * @param profileId 対象プロファイルのID
      * @param categoryId 対象カテゴリのID（nullは「すべて」＝カテゴリで絞らない）
-     * @return ショートカット一覧（sortOrder順）
+     * @return ショートカット一覧（sortOrder順、値もsortOrder順）
      */
     fun getAll(profileId: String, categoryId: String?): List<Shortcut> {
-        /* WHERE句の?は表示条件の1個（profileId）→カテゴリ（categoryId）の順 */
+        /* 2つのクエリへ同じ条件を掛けるため、条件と引数はここで1度だけ組み立てる。
+           WHERE句の?は表示条件の1個（profileId）→カテゴリ（categoryId）の順で、両クエリで揃っている。
+           片方だけ絞ると、一覧に出ないショートカットの値まで読み込むことになる */
         val categoryCondition = if (categoryId != null) "AND s.categoryId = ?" else ""
         val queryArgs = if (categoryId != null) arrayOf(profileId, categoryId) else arrayOf(profileId)
 
-        /* 挿入する中身は shortcuts の value が1つの文字列として持つ。
+        /* 挿入する中身は shortcut_values の value が1つの文字列として持つ。
            変数トークン（{{name}}）は展開せず、保存された文字列のまま返す。
            展開は表示と挿入の時点で、選択中のプロファイルと日時で行う
-           （ShortcutAdapter の表示、ShortcutService.insertShortcut。定型文と同じ VariableReplacer を使う） */
+           （ShortcutAdapter の値の行の表示、ShortcutService.insertValue。定型文と同じ VariableReplacer を使う） */
+
+        /* 値を先に読み、shortcutIdごとにまとめておく */
+        val valuesByShortcut = mutableMapOf<String, MutableList<ShortcutValue>>()
+
+        /* SELECTの列の並びは下の getString(添字) と1対1で対応する */
+        val valueQuery = """
+            SELECT v.id, v.shortcutId, v.value, v.isMasked,
+                   v.useCount, v.sortOrder, v.createdAt, v.updatedAt
+            FROM shortcut_values v
+            INNER JOIN shortcuts s ON s.id = v.shortcutId
+            WHERE $VISIBLE_IN_PROFILE_CONDITION $categoryCondition
+            ORDER BY v.shortcutId ASC, v.sortOrder ASC
+        """
+
+        val valueCursor = executeQuery(valueQuery, queryArgs)
+        valueCursor.use {
+            while (it.moveToNext()) {
+                val value = ShortcutValue(
+                    id = it.getString(0),
+                    shortcutId = it.getString(1),
+                    value = it.getString(2),
+                    /* SQLiteはBoolean型を持たず0/1で入るため、0以外を「伏せる」として読む */
+                    isMasked = it.getInt(3) != 0,
+                    useCount = it.getInt(4),
+                    sortOrder = it.getInt(5),
+                    createdAt = it.getString(6),
+                    updatedAt = it.getString(7)
+                )
+                valuesByShortcut.getOrPut(value.shortcutId) { mutableListOf() }.add(value)
+            }
+        }
 
         val shortcuts = mutableListOf<Shortcut>()
 
         /* SELECTの列順は iOS版 ShortcutMapper.swift の shortcutQuery と一致させている。
            3実装の並びを揃えておくと、以降の改修は2ファイルの見比べで済む。
-           添字は下の読み出しと1対1で対応する（0:id, 1:name, 2:value, 3:useCount, 4:sortOrder,
-           5:createdAt, 6:updatedAt, 7:categoryId）。列を足し引きすると以降の添字がすべてずれ、
+           添字は下の読み出しと1対1で対応する（0:id, 1:name, 2:sortOrder, 3:createdAt,
+           4:updatedAt, 5:categoryId）。列を足し引きすると以降の添字がすべてずれ、
            ずれてもコンパイルは通り名前の欄に別の値が出るだけで例外にならない。
            SELECTの列順はテーブル定義の列順と一致している必要はない */
         val query = """
-            SELECT s.id, s.name, s.value, s.useCount, s.sortOrder, s.createdAt, s.updatedAt, s.categoryId
+            SELECT s.id, s.name, s.sortOrder, s.createdAt, s.updatedAt, s.categoryId
             FROM shortcuts s
             WHERE $VISIBLE_IN_PROFILE_CONDITION $categoryCondition
             ORDER BY s.sortOrder ASC
@@ -119,16 +165,17 @@ class ShortcutMapper private constructor(context: Context) : BaseMapper(context)
         val cursor = executeQuery(query, queryArgs)
         cursor.use {
             while (it.moveToNext()) {
+                val id = it.getString(0)
                 shortcuts.add(
                     Shortcut(
-                        id = it.getString(0),
-                        categoryId = it.getStringOrNull(7),
+                        id = id,
+                        categoryId = it.getStringOrNull(5),
                         name = it.getString(1),
-                        value = it.getString(2),
-                        useCount = it.getInt(3),
-                        sortOrder = it.getInt(4),
-                        createdAt = it.getString(5),
-                        updatedAt = it.getString(6)
+                        /* 値を持たないショートカットでも一覧の取得は落とさない */
+                        values = valuesByShortcut[id] ?: emptyList(),
+                        sortOrder = it.getInt(2),
+                        createdAt = it.getString(3),
+                        updatedAt = it.getString(4)
                     )
                 )
             }
@@ -139,28 +186,35 @@ class ShortcutMapper private constructor(context: Context) : BaseMapper(context)
     }
 
     /**
-     * ショートカットの使用回数を1加算し、あわせて更新日時を進める
+     * ショートカット値の使用回数を1加算し、親ショートカットの更新日時を進める
      *
      * 【目的】
-     * 拡張キーボードから値を挿入したことを記録し、使用頻度順の一覧へ反映します。
+     * 拡張キーボードから値を挿入したことを記録し、値一覧の並び（useCount降順）へ反映します。
      *
-     * 【更新日時も進める理由】
+     * 【親の更新日時も進める理由】
      * メインアプリの一覧は更新日時で並べ替えられるため、使われたショートカットが
      * 古いままにならないようにする。TypeScript版 ShortcutMapper.incrementUseCount() と同じ動作。
-     * 使用回数と更新日時が同じ行にあるため、1文のUPDATEで足りる。
      *
-     * @param shortcutId 挿入したショートカットのID
+     * @param valueId 挿入したショートカット値のID
+     * @param shortcutId 所属するショートカットのID
      */
-    fun incrementUseCount(shortcutId: String) {
+    fun incrementUseCount(valueId: String, shortcutId: String) {
         val incrementQuery = """
-            UPDATE shortcuts
-            SET useCount = useCount + 1, updatedAt = ?
+            UPDATE shortcut_values
+            SET useCount = useCount + 1
             WHERE id = ?
         """
 
-        executeUpdate(incrementQuery, arrayOf(currentTimestamp(), shortcutId))
+        val touchQuery = """
+            UPDATE shortcuts
+            SET updatedAt = ?
+            WHERE id = ?
+        """
 
-        if (com.sikakou.cliptap.BuildConfig.DEBUG) Log.d(TAG, "✅ Incremented useCount for shortcut: $shortcutId")
+        executeUpdate(incrementQuery, arrayOf(valueId))
+        executeUpdate(touchQuery, arrayOf(currentTimestamp(), shortcutId))
+
+        if (com.sikakou.cliptap.BuildConfig.DEBUG) Log.d(TAG, "✅ Incremented useCount for shortcut value: $valueId")
     }
 
     /**

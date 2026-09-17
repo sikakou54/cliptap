@@ -19,6 +19,7 @@ export {
   FREE_VARIABLES_LIMIT,
   FREE_SNIPPETS_LIMIT,
   FREE_SHORTCUTS_LIMIT,
+  FREE_SHORTCUT_VALUES_LIMIT,
   type ValidFlagsUpdater,
 } from './SubscriptionService';
 export { createValidFlagsUpdater } from './validFlagsUpdater';

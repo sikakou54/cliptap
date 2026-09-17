@@ -91,10 +91,13 @@ const ProfileQueries = {
   `,
   /* プロファイル削除時、関連するスニペット・プロファイル紐付けを削除 */
   DELETE_SNIPPET_PROFILES: 'DELETE FROM snippet_profiles WHERE profileId = ?',
+  /* プロファイル削除時、そのプロファイルだけに紐づくショートカットの値を削除（バインドは [id, id]） */
+  DELETE_SHORTCUT_VALUES: `DELETE FROM shortcut_values
+    WHERE shortcutId IN (${SHORTCUT_IDS_ONLY_IN_PROFILE})`,
   /* プロファイル削除時、そのプロファイルだけに紐づくショートカット本体を削除（バインドは [id, id]） */
   DELETE_SHORTCUTS: `DELETE FROM shortcuts
     WHERE id IN (${SHORTCUT_IDS_ONLY_IN_PROFILE})`,
-  /* プロファイル削除時、ショートカットとの紐づけを削除（本体の削除より後に行う） */
+  /* プロファイル削除時、ショートカットとの紐づけを削除（値・本体の削除より後に行う） */
   DELETE_SHORTCUT_PROFILES: 'DELETE FROM shortcut_profiles WHERE profileId = ?',
 };
 
@@ -353,14 +356,15 @@ export class ProfileMapper {
 
     /* カスケード削除: 関連データを全て削除（参照整合性維持）。
        実行時に外部キーを強制していないため、宣言したON DELETE CASCADEは働かない。
-       ショートカットは、このプロファイルだけに紐づくものを消す。紐づけだけを外すと
+       ショートカットは、このプロファイルだけに紐づくものを値ごと消す。紐づけだけを外すと
        紐づけが0件になり、全プロファイル向けとして他のプロファイルへ静かに広がってしまうため。
        他のプロファイルにも紐づくものは紐づけだけを外し、はじめから0件（全プロファイル向け）のものは触らない
        （定型文・変数は本体が残る） */
     db.run(ProfileVariableQueries.DELETE_BY_PROFILE, [id]); /* プロファイル変数を削除 */
     db.run(ProfileQueries.DELETE_SNIPPET_PROFILES, [id]); /* スニペット関連を削除 */
-    /* 本体→紐づけの順に消す。本体は「このプロファイルだけに紐づくか」を紐づけから判定するため、
+    /* 値→本体→紐づけの順に消す。値と本体は「このプロファイルだけに紐づくか」を紐づけから判定するため、
        先に紐づけを消すと判定できなくなる（専用のものが0件になって全プロファイル向けに残る） */
+    db.run(ProfileQueries.DELETE_SHORTCUT_VALUES, [id, id]); /* 専用ショートカットの値を削除 */
     db.run(ProfileQueries.DELETE_SHORTCUTS, [id, id]); /* 専用ショートカット本体を削除 */
     db.run(ProfileQueries.DELETE_SHORTCUT_PROFILES, [id]); /* このプロファイルへの紐づけを削除 */
     db.run(ProfileQueries.DELETE, [id]); /* プロファイルを削除 */

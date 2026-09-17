@@ -28,6 +28,7 @@ const BUSINESS_TABLE_QUERIES = {
   systemVariableFormats: 'SELECT * FROM system_variable_formats ORDER BY variableKey',
   shortcuts: 'SELECT * FROM shortcuts ORDER BY id',
   shortcutProfiles: 'SELECT * FROM shortcut_profiles ORDER BY shortcutId, profileId',
+  shortcutValues: 'SELECT * FROM shortcut_values ORDER BY id',
 } as const;
 
 /** 業務テーブルの全行をテーブルごとに読む */
@@ -52,10 +53,11 @@ const seedAllTables = (db: DbAdapter): void => {
   );
   db.run("INSERT INTO snippet_profiles VALUES ('s1', 'p1')");
   db.run("INSERT INTO system_variable_formats VALUES ('today', 'yyyy-MM-dd', 'format-updated')");
-  db.run(
-    "INSERT INTO shortcuts VALUES ('sc1', 'c1', 'phone', '080-0000-0000', 12, 3, 'sc-created', 'sc-updated')"
-  );
+  db.run("INSERT INTO shortcuts VALUES ('sc1', 'c1', 'phone', 3, 'sc-created', 'sc-updated')");
   db.run("INSERT INTO shortcut_profiles VALUES ('sc1', 'p2')");
+  db.run(
+    "INSERT INTO shortcut_values VALUES ('sv1', 'sc1', '080-0000-0000', 1, 12, 1, 'sv-created', 'sv-updated')"
+  );
 };
 
 /** 保存したファイル名と内容 */

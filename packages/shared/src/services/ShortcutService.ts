@@ -12,8 +12,17 @@
 import { ShortcutMapper } from '../mappers/ShortcutMapper';
 import { replaceVariables, type VariableResolver } from '../variables/parser';
 import { SystemVariableFormatRegistry } from './SystemVariableFormatRegistry';
-import type { CreateShortcutInput, Shortcut, UpdateShortcutInput } from '../schema';
-import { DuplicateNameError, EmptyContentError } from '../errors';
+import type {
+  CreateShortcutInput,
+  Shortcut,
+  ShortcutValueInput,
+  UpdateShortcutInput,
+} from '../schema';
+import {
+  DuplicateNameError,
+  EmptyContentError,
+  ShortcutValueRequiredError,
+} from '../errors';
 
 /**
  * ショートカットサービス
@@ -55,6 +64,7 @@ export class ShortcutService {
    * @returns 作成されたショートカット
    * @throws {EmptyContentError} ショートカット名が空の場合
    * @throws {DuplicateNameError} 紐づけるいずれかのプロファイルで同名のショートカットが見える場合
+   * @throws {ShortcutValueRequiredError} 値が1件も無い場合
    *
    * @remarks
    * profileIdsは0件以上。省略または空配列は全プロファイル向けになる（定型文と同じ）。
@@ -76,12 +86,14 @@ export class ShortcutService {
        紐づけの重ならないプロファイルの同名は許す */
     this.assertNameAvailable(trimmedName, profileIds);
 
+    const values = this.normalizeValues(input.values);
+
     /* 検証はService、SQLはMapperに集約する規約のため、検証済みデータをそのままMapperへ渡す。
        カテゴリは任意のため、未指定は未分類（null）として扱う */
     return ShortcutMapper.create(
       profileIds,
       trimmedName,
-      input.value.trim(),
+      values,
       input.categoryId ?? null
     );
   }
@@ -93,6 +105,7 @@ export class ShortcutService {
    * @returns 更新されたショートカット
    * @throws {EmptyContentError} ショートカット名が空の場合
    * @throws {DuplicateNameError} 保存後に紐づくいずれかのプロファイルで同名のショートカットが見える場合（自分以外）
+   * @throws {ShortcutValueRequiredError} 値をすべて削除しようとした場合
    *
    * @remarks
    * profileIdsを指定すると紐づけをその一覧へ置き換える（空配列で全プロファイル向け）。
@@ -125,12 +138,15 @@ export class ShortcutService {
     const nameToCheck = trimmedName ?? current.name;
     this.assertNameAvailable(nameToCheck, profileIds ?? current.profileIds, input.id);
 
+    const values =
+      input.values !== undefined ? this.normalizeValues(input.values) : undefined;
+
     /* 検証はService、SQLはMapperに集約する規約のため、検証済みデータをそのままMapperへ渡す。
-       value・profileIds・categoryIdは未指定なら現在の値を変えないため、undefinedのまま渡す */
+       values・profileIds・categoryIdは未指定なら現在の値を変えないため、undefinedのまま渡す */
     return ShortcutMapper.update(
       input.id,
       trimmedName,
-      input.value !== undefined ? input.value.trim() : undefined,
+      values,
       profileIds,
       input.categoryId
     );
@@ -142,7 +158,7 @@ export class ShortcutService {
    * @param id - 削除するショートカットのID
    *
    * @remarks
-   * 紐づけの行もあわせて削除される。
+   * ショートカットが持つ値と紐づけの行もあわせて削除される。
    */
   static delete(id: string): void {
     ShortcutMapper.delete(id);
@@ -158,18 +174,19 @@ export class ShortcutService {
   }
 
   /**
-   * ショートカットの使用回数を1加算する
+   * ショートカット値の使用回数を1加算する
    *
-   * @param shortcutId - ショートカットID
+   * @param valueId - ショートカット値のID
+   * @param shortcutId - 所属するショートカットのID
    *
    * @remarks
-   * 使用頻度順（§8.9）の根拠になる。
+   * 使用頻度順（§8.9）の根拠になる。ショートカットの使用回数は、持っている値の合計で数える。
    * 加算するのはモバイル・Webで値をコピーしたときと、拡張キーボードから値を挿入したときの2か所（§8.12）。
-   * 使用回数は本体の行が持つため、どのプロファイルで使ってもまとめて数える。
+   * 使用回数は値の行が持つため、どのプロファイルで使ってもまとめて数える。
    * 振る舞いの正本としてここに置き、TypeScript側からはテストが呼んで固定している。
    */
-  static recordUse(shortcutId: string): void {
-    ShortcutMapper.incrementUseCount(shortcutId);
+  static recordUse(valueId: string, shortcutId: string): void {
+    ShortcutMapper.incrementUseCount(valueId, shortcutId);
   }
 
   /**
@@ -260,5 +277,32 @@ export class ShortcutService {
    */
   private static normalizeProfileIds(profileIds: readonly string[]): string[] {
     return [...new Set(profileIds.filter((profileId) => profileId !== ''))];
+  }
+
+  /**
+   * 値一覧を保存できる形へ正規化する
+   *
+   * @param inputs - 画面から渡された値一覧
+   * @returns 前後空白を除去した値一覧
+   * @throws {ShortcutValueRequiredError} 値が1件も無い場合
+   *
+   * @remarks
+   * 値に名前は無いため、検証するのは件数だけとする。
+   * 挿入する値そのものは空文字を許容する（空文字の挿入を選ぶ利用者の意図を壊さない）。
+   * 変数トークン（{{name}}）は展開せず、入力された文字列のまま保存する。
+   */
+  private static normalizeValues(inputs: ShortcutValueInput[]): ShortcutValueInput[] {
+    const normalized = inputs.map((input) => ({
+      id: input.id,
+      value: input.value.trim(),
+      isMasked: input.isMasked,
+    }));
+
+    /* 値が1件も無いショートカットは拡張キーボードから何も挿入できないため拒否する */
+    if (normalized.length === 0) {
+      throw new ShortcutValueRequiredError();
+    }
+
+    return normalized;
   }
 }

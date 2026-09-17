@@ -11,7 +11,7 @@
  * - V4 → V5: variables, profilesテーブルにsortOrderカラム追加
  * - V5 → V6: snippetsテーブルにcopyCountカラム追加（使用頻度ソート用）
  * - V6 → V7: システム変数書式設定テーブル追加
- * - V7 → V8: ショートカット・ショートカットプロファイルテーブル追加（値は shortcuts.value に1つ）
+ * - V7 → V8: ショートカット・ショートカットプロファイル・ショートカット値テーブル追加
  */
 
 import type { DbAdapter } from '../adapters/DbAdapter';
@@ -665,7 +665,7 @@ export async function migrateV6ToV7(db: DbAdapter): Promise<void> {
 /* ======================================== */
 
 /**
- * ショートカットと、その紐づけを保持するテーブルを追加します。
+ * ショートカットと、その値を保持するテーブルを追加します。
  *
  * @param db - データベースアダプター
  *
@@ -679,8 +679,8 @@ export async function migrateV6ToV7(db: DbAdapter): Promise<void> {
  * 名前は紐づくプロファイル内で一意ですが、紐づけが別テーブルにあるためDB制約では表せず、
  * 判定もShortcutServiceが行います。
  *
- * 挿入する値は`shortcuts.value`に文字列で1つだけ持ち、変数トークン（`{{name}}`）は未展開のまま保存します。
- * 使用回数は`shortcuts.useCount`に持ちます。
+ * 値は`shortcut_values`に1件以上持ち、変数トークン（`{{name}}`）は未展開のまま保存します。
+ * 値に名前は持たせず、登録順に並べるだけとします。
  * V8はまだリリースしていないため（`release/prod`はV5）、新しい段を作らずこの段の定義を更新しています。
  * 同じ理由で、配布中の`apps/web/public/starter_v8_*.cliptap`はファイル名が変わりません。
  * 版据置でDDLを変えたときは404で検知できないため、必ず再生成すること。
@@ -691,6 +691,7 @@ export async function migrateV7ToV8(db: DbAdapter): Promise<void> {
   try {
     await db.exec(CREATE_TABLES.shortcuts);
     await db.exec(CREATE_TABLES.shortcutProfiles);
+    await db.exec(CREATE_TABLES.shortcutValues);
     Logger.success('[Migration V7→V8] Migration completed successfully');
   } catch (error) {
     Logger.error('[Migration V7→V8] Failed to migrate:', error);
@@ -716,6 +717,7 @@ export async function createTablesWithDb(db: DbAdapter): Promise<void> {
     await db.exec(CREATE_TABLES.systemVariableFormats);
     await db.exec(CREATE_TABLES.shortcuts);
     await db.exec(CREATE_TABLES.shortcutProfiles);
+    await db.exec(CREATE_TABLES.shortcutValues);
     Logger.info('[Migration] Tables created successfully');
   } catch (error) {
     Logger.error('[Migration] Failed to create tables:', error);

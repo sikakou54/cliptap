@@ -16,6 +16,7 @@ import type {
   ProfileVariable,
   ShortcutProfile,
   ShortcutRow,
+  ShortcutValue,
   Snippet,
   SnippetProfile,
   Variable,
@@ -32,6 +33,7 @@ export interface FullRestoreData {
   systemVariableFormats: SystemVariableFormatRow[];
   shortcuts: ShortcutRow[];
   shortcutProfiles: ShortcutProfile[];
+  shortcutValues: ShortcutValue[];
 }
 
 /**
@@ -55,11 +57,12 @@ export class ImportMapper {
   getFullRestoreData(): FullRestoreData {
     const hasFormats = tableExists(this.adapter, 'system_variable_formats');
     /* 一時DBはprepareImportDatabaseでmigrateImportTempDbの移行と必須テーブル検証を
-       通過済みのため、通常は下の2テーブルとも存在する。
+       通過済みのため、通常は下の3テーブルとも存在する。
        有無の確認は、その経路を通さず直接呼ばれた場合の保険として残している */
     const hasShortcuts = tableExists(this.adapter, 'shortcuts');
     const hasShortcutProfiles = tableExists(this.adapter, 'shortcut_profiles');
-    /* 本体と紐づけは、両テーブルがそろっているときだけ読む（理由は下の読み込み箇所） */
+    const hasShortcutValues = tableExists(this.adapter, 'shortcut_values');
+    /* 本体・紐づけ・値は、本体と紐づけの両テーブルがそろっているときだけ読む（理由は下の読み込み箇所） */
     const canRestoreShortcuts = hasShortcuts && hasShortcutProfiles;
 
     return {
@@ -73,15 +76,19 @@ export class ImportMapper {
         ? this.adapter.all<SystemVariableFormatRow>('SELECT * FROM system_variable_formats')
         : [],
       /* 本体と紐づけは別々の行として逐語で読む（定型文のsnippets / snippet_profilesと同じ分け方）。
-         保険のガードに掛かって本体か紐づけのテーブルが無い場合は、どちらも読まない。
+         保険のガードに掛かって本体か紐づけのテーブルが無い場合は、本体・紐づけ・値のいずれも読まない。
          紐づけテーブルが無いと限定の区別が失われ、本体だけ戻すと全件が全プロファイル向けに広がるため。
-         本体が無いのに紐づけだけ戻しても、参照先の無い行になるだけなので同じ条件で揃える */
+         本体が無いのに紐づけや値だけ戻しても、参照先の無い行になるだけなので同じ条件で揃える */
       shortcuts: canRestoreShortcuts
         ? this.adapter.all<ShortcutRow>('SELECT * FROM shortcuts')
         : [],
       shortcutProfiles: canRestoreShortcuts
         ? this.adapter.all<ShortcutProfile>('SELECT * FROM shortcut_profiles')
         : [],
+      shortcutValues:
+        canRestoreShortcuts && hasShortcutValues
+          ? this.adapter.all<ShortcutValue>('SELECT * FROM shortcut_values')
+          : [],
     };
   }
 }

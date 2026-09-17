@@ -83,7 +83,7 @@ describe('プロファイルを跨ぐショートカット検索', () => {
     ShortcutService.create({
       profileIds: [],
       name: '差出人',
-      value: '{{company}} 御中',
+      values: [{ value: '{{company}} 御中', isMasked: false }],
     });
 
   it('全プロファイル向けはどのプロファイルでも一致し、紐づけたものはそのプロファイルだけで一致する', async () => {
@@ -91,17 +91,17 @@ describe('プロファイルを跨ぐショートカット検索', () => {
     ShortcutService.create({
       profileIds: [],
       name: '電話番号（共通）',
-      value: '03-0000-0000',
+      values: [{ value: '03-0000-0000', isMasked: false }],
     });
     ShortcutService.create({
       profileIds: [MAIN],
       name: '電話番号（Main）',
-      value: '090-0000-0000',
+      values: [{ value: '090-0000-0000', isMasked: false }],
     });
     ShortcutService.create({
       profileIds: [OTHER],
       name: '電話番号（Other）',
-      value: '080-0000-0000',
+      values: [{ value: '080-0000-0000', isMasked: false }],
     });
 
     expect(matchedNames(MAIN, '電話番号')).toEqual(['電話番号（共通）', '電話番号（Main）']);
@@ -115,7 +115,7 @@ describe('プロファイルを跨ぐショートカット検索', () => {
     ShortcutService.create({
       profileIds: [OTHER],
       name: '取引先コード',
-      value: 'CUST-001',
+      values: [{ value: 'CUST-001', isMasked: false }],
     });
 
     expect(matchedNames(MAIN, 'CUST')).toEqual([]);

@@ -58,7 +58,7 @@ describe('runMigrations', () => {
     expect(getSchemaVersionFromDb(systemDb)).toBe(SCHEMA_VERSION);
     expect(tableExists(mainDb, 'system_variable_formats')).toBe(true);
     expect(tableExists(mainDb, 'shortcuts')).toBe(true);
-    expect(tableExists(mainDb, 'shortcut_profiles')).toBe(true);
+    expect(tableExists(mainDb, 'shortcut_values')).toBe(true);
     expect(
       mainDb
         .all<{ name: string }>("SELECT name FROM pragma_table_info('snippets')")

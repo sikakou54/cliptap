@@ -6,24 +6,27 @@ import { sortShortcuts } from '../../src/shortcuts/sort';
  * 同順位の決着まで合わせているため、基準ごとの並びと同点時の扱いをここで固定する。
  */
 describe('sortShortcuts', () => {
+  /** 使用回数だけを持つ値を組み立てる */
+  const value = (useCount: number) => ({ useCount });
+
   const shortcuts = [
     {
       name: 'B電話',
       createdAt: '2026-01-02T00:00:00.000Z',
       updatedAt: '2026-03-01T00:00:00.000Z',
-      useCount: 3,
+      values: [value(1), value(2)],
     },
     {
       name: 'A住所',
       createdAt: '2026-01-03T00:00:00.000Z',
       updatedAt: '2026-02-01T00:00:00.000Z',
-      useCount: 10,
+      values: [value(10)],
     },
     {
       name: 'Cメール',
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-04-01T00:00:00.000Z',
-      useCount: 0,
+      values: [],
     },
   ];
 
@@ -43,27 +46,28 @@ describe('sortShortcuts', () => {
     expect(namesOf('title')).toEqual(['A住所', 'B電話', 'Cメール']);
   });
 
-  it('使用頻度順は使用回数が多いものが先頭に来る', () => {
+  /** 使用回数は値ごとに持つため、ショートカット単位では合計で比べる */
+  it('使用頻度順は値の使用回数の合計が多いものが先頭に来る', () => {
     expect(namesOf('usage')).toEqual(['A住所', 'B電話', 'Cメール']);
   });
 
-  /** 一度も使っていないショートカットも取りこぼさない */
-  it('使用回数が0でも並びから欠落しない', () => {
+  /** 値を持たないショートカットも合計0として扱い、取りこぼさない */
+  it('値が0件でも並びから欠落しない', () => {
     expect(sortShortcuts(shortcuts, 'usage')).toHaveLength(shortcuts.length);
   });
 
   it('同じ作成日時なら名前順で決着する', () => {
     const sameCreated = [
-      { name: 'Z', createdAt: 'same', updatedAt: 'x', useCount: 0 },
-      { name: 'A', createdAt: 'same', updatedAt: 'x', useCount: 0 },
+      { name: 'Z', createdAt: 'same', updatedAt: 'x', values: [] },
+      { name: 'A', createdAt: 'same', updatedAt: 'x', values: [] },
     ];
     expect(sortShortcuts(sameCreated, 'created').map((s) => s.name)).toEqual(['A', 'Z']);
   });
 
   it('使用頻度が同数なら作成日時の新しい順で決着する', () => {
     const sameUsage = [
-      { name: '古い', createdAt: '2026-01-01', updatedAt: 'x', useCount: 3 },
-      { name: '新しい', createdAt: '2026-01-02', updatedAt: 'x', useCount: 3 },
+      { name: '古い', createdAt: '2026-01-01', updatedAt: 'x', values: [value(3)] },
+      { name: '新しい', createdAt: '2026-01-02', updatedAt: 'x', values: [value(3)] },
     ];
     expect(sortShortcuts(sameUsage, 'usage').map((s) => s.name)).toEqual(['新しい', '古い']);
   });
@@ -75,8 +79,8 @@ describe('sortShortcuts', () => {
    */
   it('名前順は大文字を小文字より先に並べる（コード順）', () => {
     const mixedCase = [
-      { name: 'apple', createdAt: 'x', updatedAt: 'x', useCount: 0 },
-      { name: 'Banana', createdAt: 'x', updatedAt: 'x', useCount: 0 },
+      { name: 'apple', createdAt: 'x', updatedAt: 'x', values: [] },
+      { name: 'Banana', createdAt: 'x', updatedAt: 'x', values: [] },
     ];
     expect(sortShortcuts(mixedCase, 'title').map((s) => s.name)).toEqual(['Banana', 'apple']);
   });

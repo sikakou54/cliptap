@@ -212,7 +212,8 @@
     "apple_sign_in_failed": "Appleでのサインインに失敗しました",
     "sign_out_failed": "サインアウトに失敗しました",
     "newer_version": "現在の端末では対応していないバージョンです。アプリを最新バージョンに更新してから再度お試しください。",
-    "duplicate_shortcut_name": "同じ名前のショートカットが既に存在します"
+    "duplicate_shortcut_name": "同じ名前のショートカットが既に存在します",
+    "shortcut_value_required": "値を1件以上登録してください"
   },
   "tabs": {
     "home": "ホーム",
@@ -239,7 +240,7 @@
     "feature_no_ads": "広告なし",
     "feature_no_ads_desc": "広告を非表示にしてスムーズに利用",
     "feature_unlimited_items": "定型文・ショートカット",
-    "feature_unlimited_items_desc": "定型文とショートカットを無制限に登録",
+    "feature_unlimited_items_desc": "定型文とショートカット（値を含む）を無制限に登録",
     "feature_unlimited_profiles": "プロファイル",
     "feature_unlimited_profiles_desc": "プロファイルを無制限に作成・管理",
     "feature_custom_variables": "カスタム変数",
@@ -333,12 +334,19 @@
     "select_profile": "プロファイルを選択（全てのプロファイル）",
     "select_profiles_description": "このショートカットを使用するプロファイルを選択してください（複数選択可）",
     "category": "カテゴリ",
+    "values": "値",
+    "value_create": "値を追加",
+    "value_edit": "値を編集",
+    "mask_value": "値を隠す",
+    "unmask_value": "値を表示",
     "value_value": "値",
     "value_value_placeholder": "例: 080-0000-0000",
-    "delete_confirm": "ショートカット「{{name}}」を削除しますか？",
+    "delete_confirm": "ショートカット「{{name}}」を削除しますか？\n\nこのショートカットに登録されているすべての値も削除されます。",
+    "delete_value_confirm": "この値を削除しますか？",
     "show_shortcuts": "ショートカットを表示",
     "show_snippets": "定型文を表示",
     "search_placeholder": "ショートカットを検索...",
-    "limit_message": "無料版では{{limit}}件までショートカットを登録できます。無制限に登録するにはProプランにアップグレードしてください。"
+    "limit_message": "無料版では{{limit}}件までショートカットを登録できます。無制限に登録するにはProプランにアップグレードしてください。",
+    "value_limit_message": "無料版では1つのショートカットに{{limit}}件まで値を登録できます。無制限に登録するにはProプランにアップグレードしてください。"
   }
 }

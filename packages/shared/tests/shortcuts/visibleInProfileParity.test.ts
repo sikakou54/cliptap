@@ -45,20 +45,14 @@ describe('ショートカットの表示条件（3実装の一致）', () => {
       expect(countOccurrences(readSource(path), VISIBLE_IN_PROFILE_CONDITION)).toBe(1);
     });
 
-    /* 本体のクエリが定数を参照して条件を掛けていること。
-       直書きに戻すと、上の「ちょうど1回」では検出できない */
-    it('iOS版は表示条件の定数を本体のクエリで参照する', () => {
-      expect(countOccurrences(readSource(SOURCES.swift), '\\(visibleInProfileCondition)')).toBe(1);
+    /* 本体と値の2本のクエリが、定数を参照して同じ条件を掛けていること。
+       片方だけ直書きに戻すと、上の「ちょうど1回」では検出できない */
+    it('iOS版は表示条件の定数を本体と値のクエリで1回ずつ参照する', () => {
+      expect(countOccurrences(readSource(SOURCES.swift), '\\(visibleInProfileCondition)')).toBe(2);
     });
 
-    it('Android版は表示条件の定数を本体のクエリで参照する', () => {
-      expect(countOccurrences(readSource(SOURCES.kotlin), '$VISIBLE_IN_PROFILE_CONDITION')).toBe(1);
-    });
-
-    /* 値を別テーブルへ分ける旧構造（1ショートカットにN値）へ戻すと、
-       一覧の行と挿入の経路が3実装で食い違う。機械的に禁じる */
-    it.each(Object.entries(SOURCES))('%s は shortcut_values を参照しない', (_name, path) => {
-      expect(readSource(path)).not.toContain('shortcut_values');
+    it('Android版は表示条件の定数を本体と値のクエリで1回ずつ参照する', () => {
+      expect(countOccurrences(readSource(SOURCES.kotlin), '$VISIBLE_IN_PROFILE_CONDITION')).toBe(2);
     });
 
     /* 紐づけテーブルとの結合は、0件のものを落とし、複数件のものを重複させる */
@@ -90,9 +84,17 @@ describe('ショートカットの表示条件（3実装の一致）', () => {
     /** 絞り込むカテゴリ */
     const CATEGORY = 'c1';
 
-    /** ネイティブと同じ形の本体クエリ（値も同じ行から取る） */
+    /** ネイティブと同じ形の本体クエリ */
     const shortcutQuery = (condition: string, categoryCondition: string): string =>
-      `SELECT s.id, s.value FROM shortcuts s WHERE ${condition} ${categoryCondition} ORDER BY s.sortOrder ASC`;
+      `SELECT s.id FROM shortcuts s WHERE ${condition} ${categoryCondition} ORDER BY s.sortOrder ASC`;
+
+    /** ネイティブと同じ形の値クエリ（本体とだけ結合し、表示条件とカテゴリで絞る） */
+    const valueQuery = (condition: string, categoryCondition: string): string =>
+      `SELECT v.shortcutId, v.value
+       FROM shortcut_values v
+       INNER JOIN shortcuts s ON s.id = v.shortcutId
+       WHERE ${condition} ${categoryCondition}
+       ORDER BY v.shortcutId ASC, v.sortOrder ASC`;
 
     /**
      * 表示条件の違いが結果に出るデータを用意する
@@ -125,16 +127,14 @@ describe('ショートカットの表示条件（3実装の一致）', () => {
         ['sc6', 'c1', [MAIN]],
       ];
       shortcuts.forEach(([id, categoryId, profileIds], index) => {
-        adapter.run("INSERT INTO shortcuts VALUES (?, ?, ?, ?, 0, ?, 'now', 'now')", [
-          id,
-          categoryId,
-          id,
-          `stored-${id}`,
-          index,
-        ]);
+        adapter.run("INSERT INTO shortcuts VALUES (?, ?, ?, ?, 'now', 'now')", [id, categoryId, id, index]);
         for (const profileId of profileIds) {
           adapter.run('INSERT INTO shortcut_profiles VALUES (?, ?)', [id, profileId]);
         }
+        adapter.run(
+          "INSERT INTO shortcut_values VALUES (?, ?, ?, 0, 0, 0, 'now', 'now')",
+          [`sv-${id}`, id, `stored-${id}`]
+        );
       });
       return adapter;
     };
@@ -194,25 +194,29 @@ describe('ショートカットの表示条件（3実装の一致）', () => {
     });
 
     /**
-     * ネイティブの本体クエリは、表示条件とカテゴリだけを束縛し、値も同じ行から取る。
+     * ネイティブの値のクエリは、本体と同じく表示条件とカテゴリだけを束縛する。
      * 値は保存されている文字列のまま返し、変数トークンの展開は取得後にネイティブ側で行う。
      * `?` の数と束縛する配列の長さが一致しないと、SQLiteは足りない分をNULLとして黙って実行する。
      */
     it.each([
       ['カテゴリなし', null, [['sc1', 'stored-sc1'], ['sc2', 'stored-sc2'], ['sc3', 'stored-sc3'], ['sc4', 'stored-sc4'], ['sc5', 'stored-sc5']]],
       ['カテゴリあり', CATEGORY, [['sc1', 'stored-sc1'], ['sc2', 'stored-sc2']]],
-    ] as const)('本体のクエリ（%s）は `?` の数と束縛の長さが一致し、保存値をそのまま返す', (_name, categoryId, expected) => {
+    ] as const)('値のクエリ（%s）は `?` の数と束縛の長さが一致し、本体と同じ絞り込みで保存値を返す', (_name, categoryId, expected) => {
       const adapter = setup();
       const categoryCondition = categoryId !== null ? 'AND s.categoryId = ?' : '';
       const parameters = categoryId !== null ? [OTHER, categoryId] : [OTHER];
-      const sql = shortcutQuery(VISIBLE_IN_PROFILE_CONDITION, categoryCondition);
+      const sql = valueQuery(VISIBLE_IN_PROFILE_CONDITION, categoryCondition);
+      const valueParameters = [...parameters];
 
-      expect(countPlaceholders(sql)).toBe(parameters.length);
+      expect(countPlaceholders(sql)).toBe(valueParameters.length);
+      expect(countPlaceholders(shortcutQuery(VISIBLE_IN_PROFILE_CONDITION, categoryCondition))).toBe(
+        parameters.length
+      );
 
-      const rows = adapter.all<{ id: string; value: string }>(sql, parameters);
-      expect(rows.map((row) => [row.id, row.value])).toEqual(expected);
-      /* 複数のプロファイルに紐づくものも1件だけ返る */
-      expect(rows.map((row) => row.id)).toEqual(
+      const rows = adapter.all<{ shortcutId: string; value: string }>(sql, valueParameters);
+      expect(rows.map((row) => [row.shortcutId, row.value])).toEqual(expected);
+      /* 値は本体と同じ絞り込みになり、複数に紐づくものも1件だけ返る */
+      expect(rows.map((row) => row.shortcutId)).toEqual(
         selectShortcutIds(adapter, VISIBLE_IN_PROFILE_CONDITION, categoryId)
       );
     });

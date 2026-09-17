@@ -2,41 +2,43 @@
  * ショートカットカード
  *
  * 1件のショートカットを表すカード。定型文カード（SnippetCard）と同じ見た目・操作に揃える。
- * 値のブロックはタップでその値だけをクリップボードへコピーする。
+ * 値の行はタップでその値だけをクリップボードへコピーする。
  *
- * 【値のブロックだけをタップ対象にする理由】
- * カードの中に「タップでコピー」する値があるため、カード全体もタップ対象にすると
+ * 【開閉式にする理由】
+ * 値の件数は利用者のデータ次第で増える。全件を常に出すと1件のショートカットが
+ * 画面を埋めてしまい、一覧として見渡せなくなる。
+ * 定型文カードが本文を2行で畳むのと同じ考え方で、既定では数件だけを見せる。
+ *
+ * 【1件でも同じ行の形にする理由】
+ * 値が1件のときだけ別の見せ方にすると、同じカードでも件数で操作が変わる。
+ * 件数によらず「行をタップするとその値がコピーされる」1つの規則で通す。
+ *
+ * 【行全体ではなく「・・・」メニューから編集へ進む理由】
+ * カードの中に「タップでコピー」する値の行があるため、カード全体もタップ対象にすると
  * どちらが起きるのか押す前に分からない。編集と削除は右上の「・・・」メニューに寄せる。
- *
- * 【コピーアイコンを値の文字の末尾に置く理由】
- * 定型文カードのタイトルと同じ形に揃える。値の右端へ寄せると、短い値のときに
- * アイコンだけが離れて浮き、どの文字に対する操作なのか読み取りにくくなる。
- *
- * 【コピー完了の表示をカードが持つ理由】
- * 1ショートカットにつき値は1つのため、押された行を識別子で見分ける必要がない。
- * 完了表示（2秒）と処理中フラグはこのカードが1組だけ持つ。
  *
  * @see apps/mobile/src/components/snippet/SnippetCard.tsx - 定型文側の同じ役割のコンポーネント
  * @see apps/mobile/src/components/shortcut/ShortcutList.tsx - 使用元
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from '@cliptap/shared';
 import { useTheme } from '@lib/themeSystem';
-import { type Category, type Shortcut, type ShortcutWithDisplay } from '@cliptap/shared';
+import { type Category, type Shortcut, type ShortcutValue, type ShortcutWithDisplay } from '@cliptap/shared';
 import { CategoryBadge } from '@components/category/CategoryBadge';
 import { ItemActionMenu } from '@components/common/ItemActionMenu';
+import { ShortcutValueRow } from '@components/shortcut/ShortcutValueRow';
 import { UI_CONSTANTS } from '@constants/ui';
 
 /**
- * 値のブロックの上下の余白（pt）
+ * 畳んでいるときに見せる値の件数
  *
- * タップ対象としての高さをここで確保する。値の行高（スマートフォンで21pt）に
- * この余白の2倍を足して、最小タップ領域の44ptを下回らないこと（12×2+21=45pt）。
+ * @remarks
+ * 定型文カードが本文を2行で畳むのに合わせ、同じだけの高さに収まる件数にする。
  */
-const VALUE_VERTICAL_PADDING = UI_CONSTANTS.SPACING.BASE;
+const COLLAPSED_VALUE_COUNT = 2;
 
 /* ========================================
    Props定義
@@ -44,9 +46,9 @@ const VALUE_VERTICAL_PADDING = UI_CONSTANTS.SPACING.BASE;
 
 /**
  * ShortcutCardのProps
- * @property shortcut - 表示するショートカット（値は表示中のプロファイルで展開した文字列を持つ）
+ * @property shortcut - 表示するショートカット（値は表示中のプロファイルで展開した表示用の文字列を持つ）
  * @property category - 所属カテゴリ（未分類ならnull）
- * @property onCopy - 値がタップされたときのコールバック（クリップボードへコピー）
+ * @property onCopyValue - 値がタップされたときのコールバック（クリップボードへコピー）
  * @property onEdit - メニューで「編集」が選ばれたときのコールバック
  * @property onDelete - メニューで「削除」が選ばれたときのコールバック（確認ダイアログは呼び出し側が出す）
  * @property isLast - 一覧の最後の項目か（区切り線を引くかの判定に使う）
@@ -54,7 +56,7 @@ const VALUE_VERTICAL_PADDING = UI_CONSTANTS.SPACING.BASE;
 interface ShortcutCardProps {
   shortcut: ShortcutWithDisplay;
   category: Category | null;
-  onCopy: (shortcut: Shortcut) => Promise<void>;
+  onCopyValue: (value: ShortcutValue) => Promise<void>;
   onEdit: (shortcut: Shortcut) => void;
   onDelete: (shortcut: Shortcut) => void;
   isLast: boolean;
@@ -63,48 +65,25 @@ interface ShortcutCardProps {
 function ShortcutCardComponent({
   shortcut,
   category,
-  onCopy,
+  onCopyValue,
   onEdit,
   onDelete,
   isLast,
 }: ShortcutCardProps) {
   const { t } = useTranslation();
-  const { colors, isTablet, responsive, responsiveFontSizes, responsiveLineHeights } = useTheme();
+  const { colors, isTablet, responsive, responsiveFontSizes } = useTheme();
 
-  /** コピー完了アイコンを出しているか */
-  const [isCopied, setIsCopied] = useState(false);
-  /** コピー処理中か（連打で二重にコピーしないため） */
-  const [isCopying, setIsCopying] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  /**
-   * コピー完了アイコンの自動リセット
-   *
-   * クリーンアップでタイマーを解除するのは、アンマウント後や次のコピーでフラグが
-   * 立ち直した後に、前回のタイマーが発火して表示を戻してしまわないようにするため。
-   */
-  useEffect(() => {
-    if (!isCopied) return;
+  const toggleExpanded = useCallback(() => {
+    setIsExpanded((prev) => !prev);
+  }, []);
 
-    const timeoutId = setTimeout(() => {
-      setIsCopied(false);
-    }, UI_CONSTANTS.COPY_SUCCESS_DURATION_MS);
-
-    return () => clearTimeout(timeoutId);
-  }, [isCopied]);
-
-  const handleCopyPress = useCallback(async () => {
-    if (isCopying) return;
-    setIsCopying(true);
-
-    try {
-      await onCopy(shortcut);
-      setIsCopied(true);
-    } catch {
-      setIsCopied(false);
-    } finally {
-      setIsCopying(false);
-    }
-  }, [isCopying, onCopy, shortcut]);
+  /* 畳んでいるときに隠れている値があるか（無ければ開閉ボタンを出さない） */
+  const hasHiddenValues = shortcut.values.length > COLLAPSED_VALUE_COUNT;
+  const visibleValues = isExpanded
+    ? shortcut.values
+    : shortcut.values.slice(0, COLLAPSED_VALUE_COUNT);
 
   return (
     <View
@@ -115,7 +94,14 @@ function ShortcutCardComponent({
         !isLast && { borderBottomWidth: UI_CONSTANTS.BORDER_WIDTH.THIN, borderBottomColor: colors.border },
       ]}
     >
-      <View style={[styles.mainContent, { padding: responsive.card.padding }]}>
+      {/* メインコンテンツエリア。下端の開閉ボタンを出すときだけ、その領域を空ける */}
+      <View
+        style={[
+          styles.mainContent,
+          { padding: responsive.card.padding },
+          hasHiddenValues && { paddingBottom: 60 },
+        ]}
+      >
         {/* 名前の行。ショートカット名と、右端の「・・・」メニュー */}
         <View style={styles.nameRow}>
           {/* ショートカット名 */}
@@ -148,39 +134,34 @@ function ShortcutCardComponent({
           </View>
         )}
 
-        {/* 登録されている値（タップでコピーする） */}
+        {/* 登録されている値（タップでその値だけをコピーする） */}
+        <View>
+          {visibleValues.map((value) => (
+            <ShortcutValueRow key={value.id} value={value} onCopy={onCopyValue} />
+          ))}
+        </View>
+      </View>
+
+      {/* 展開ボタン。畳んでも全件見えているときは出さない */}
+      {hasHiddenValues && (
         <TouchableOpacity
-          style={styles.valueRow}
-          onPress={handleCopyPress}
+          style={[
+            styles.roundButton,
+            styles.expandButton,
+            { borderColor: colors.border },
+          ]}
+          onPress={toggleExpanded}
           activeOpacity={0.7}
           accessibilityRole="button"
-          accessibilityLabel={`${shortcut.name} ${t('common.copy')}`}
+          accessibilityLabel={isExpanded ? t('common.collapse') : t('common.expand')}
         >
-          {/* 挿入・コピーされる値。変数トークンは表示中のプロファイルで展開して見せる。
-              住所のような長い値でも全体を確かめてからコピーできるよう、行数を制限せず折り返す。
-              コピーアイコンは値の文字の末尾へ続けて置くため、同じText内に入れる
-              （別のViewに出すと折り返した最終行から離れてしまう） */}
-          <Text
-            style={[
-              styles.valueText,
-              {
-                color: colors.textSecondary,
-                fontSize: responsiveFontSizes.sm,
-                lineHeight: responsiveLineHeights.sm,
-              },
-            ]}
-          >
-            {shortcut.displayValue}
-            {/* 文字とアイコンの間隔は空白で作る。Textの中に置いたアイコンには余白の指定が効かない */}
-            {' '}
-            <Ionicons
-              name={isCopied ? 'checkmark' : 'copy-outline'}
-              size={isTablet ? 18 : 14}
-              color={isCopied ? colors.success : colors.textSecondary}
-            />
-          </Text>
+          <Ionicons
+            name={isExpanded ? 'chevron-up' : 'chevron-down'}
+            size={isTablet ? 22 : 18}
+            color={colors.textSecondary}
+          />
         </TouchableOpacity>
-      </View>
+      )}
     </View>
   );
 }
@@ -197,8 +178,7 @@ export const ShortcutCard = React.memo(ShortcutCardComponent, (prevProps, nextPr
     prevProps.shortcut.updatedAt === nextProps.shortcut.updatedAt &&
     prevProps.shortcut.name === nextProps.shortcut.name &&
     prevProps.shortcut.categoryId === nextProps.shortcut.categoryId &&
-    /* 展開結果はプロファイルの切替や日付の変化で変わる。ここを見ないと古い表示が残る */
-    prevProps.shortcut.displayValue === nextProps.shortcut.displayValue &&
+    prevProps.shortcut.values === nextProps.shortcut.values &&
     prevProps.category?.id === nextProps.category?.id
   );
 });
@@ -225,11 +205,18 @@ const styles = StyleSheet.create({
   categoryBadgeContainer: {
     marginTop: UI_CONSTANTS.GAP.XS,
   },
-  /* 値のブロック全体をタップ対象にする。高さは上下の余白で確保する */
-  valueRow: {
-    paddingVertical: VALUE_VERTICAL_PADDING,
+  expandButton: {
+    position: 'absolute',
+    left: UI_CONSTANTS.GAP.MD,
+    bottom: UI_CONSTANTS.GAP.MD,
   },
-  valueText: {
-    fontFamily: 'monospace',
+  /* 定型文カードの操作ボタン（SnippetCard.roundButton）と同じ寸法に揃える */
+  roundButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: UI_CONSTANTS.BORDER_WIDTH.THIN,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

@@ -50,13 +50,19 @@ describe('ImportService full restore', () => {
       "INSERT INTO system_variable_formats VALUES ('today', 'yyyy-MM-dd', 'format-updated')"
     );
     main.run(
-      "INSERT INTO shortcuts VALUES ('old-sc', NULL, 'old', 'old', 0, 0, 'old-time', 'old-time')"
+      "INSERT INTO shortcuts VALUES ('old-sc', NULL, 'old', 0, 'old-time', 'old-time')"
     );
     main.run("INSERT INTO shortcut_profiles VALUES ('old-sc', 'old-p')");
+    main.run(
+      "INSERT INTO shortcut_values VALUES ('old-sv', 'old-sc', 'old', 0, 0, 0, 'old-time', 'old-time')"
+    );
     backup.run(
-      "INSERT INTO shortcuts VALUES ('sc1', 'c1', 'phone', '{{token}} 080-0000-0000', 12, 3, 'sc-created', 'sc-updated')"
+      "INSERT INTO shortcuts VALUES ('sc1', 'c1', 'phone', 3, 'sc-created', 'sc-updated')"
     );
     backup.run("INSERT INTO shortcut_profiles VALUES ('sc1', 'p1')");
+    backup.run(
+      "INSERT INTO shortcut_values VALUES ('sv1', 'sc1', '{{token}} 080-0000-0000', 1, 12, 1, 'sv-created', 'sv-updated')"
+    );
 
     await ImportService.importDatabaseFromTempDb('memory');
 
@@ -103,24 +109,34 @@ describe('ImportService full restore', () => {
       /* カテゴリも逐語復元される（カテゴリはショートカットより先に復元されるため参照先が揃う） */
       categoryId: 'c1',
       name: 'phone',
-      /* 保存した文字列は変数トークンを展開せず逐語で戻る */
-      value: '{{token}} 080-0000-0000',
-      useCount: 12,
       sortOrder: 3,
       createdAt: 'sc-created',
       updatedAt: 'sc-updated',
     });
+    expect(main.get('SELECT * FROM shortcut_values WHERE id = ?', ['sv1'])).toEqual({
+      id: 'sv1',
+      shortcutId: 'sc1',
+      /* 保存した文字列は変数トークンを展開せず逐語で戻る */
+      value: '{{token}} 080-0000-0000',
+      /* マスク指定も逐語で戻る（バックアップ側が1のため1のまま） */
+      isMasked: 1,
+      useCount: 12,
+      sortOrder: 1,
+      createdAt: 'sv-created',
+      updatedAt: 'sv-updated',
+    });
     expect(main.get('SELECT id FROM categories WHERE id = ?', ['old'])).toBeNull();
-    /* 全復元は既存のショートカットも入れ替える（紐づけだけが取り残されない） */
+    /* 全復元は既存のショートカットも入れ替える（値だけが取り残されない） */
     /* 紐づけプロファイルは中間テーブルへ復元される */
     expect(main.all('SELECT * FROM shortcut_profiles')).toEqual([
       { shortcutId: 'sc1', profileId: 'p1' },
     ]);
     expect(main.get('SELECT id FROM shortcuts WHERE id = ?', ['old-sc'])).toBeNull();
+    expect(main.get('SELECT id FROM shortcut_values WHERE id = ?', ['old-sv'])).toBeNull();
   });
 
   /**
-   * 紐づけ0件（全プロファイル向け）のショートカットも本体が戻り、紐づけは元の行だけになる。
+   * 紐づけ0件（全プロファイル向け）のショートカットも本体と値が戻り、紐づけは元の行だけになる。
    *
    * 紐づけの無い本体を「迷子」として読み飛ばすと、全プロファイル向けのショートカットが復元で消える。
    * 逆に復元時に紐づけを補うと、全プロファイル向けだったものが特定のプロファイル専用に狭まる。
@@ -138,12 +154,18 @@ describe('ImportService full restore', () => {
       "INSERT INTO profiles VALUES ('p2', 'other', 0, 0, 1, 1, 'p-created', 'p-updated')"
     );
     backup.run(
-      "INSERT INTO shortcuts VALUES ('sc-linked', NULL, 'linked', 'linked-value', 0, 0, 'sc-created', 'sc-updated')"
+      "INSERT INTO shortcuts VALUES ('sc-linked', NULL, 'linked', 0, 'sc-created', 'sc-updated')"
     );
     backup.run("INSERT INTO shortcut_profiles VALUES ('sc-linked', 'p1')");
     backup.run("INSERT INTO shortcut_profiles VALUES ('sc-linked', 'p2')");
     backup.run(
-      "INSERT INTO shortcuts VALUES ('sc-all', NULL, 'all', 'shared-value', 5, 1, 'sc0-created', 'sc0-updated')"
+      "INSERT INTO shortcut_values VALUES ('sv-linked', 'sc-linked', 'linked-value', 0, 0, 0, 'sv-created', 'sv-updated')"
+    );
+    backup.run(
+      "INSERT INTO shortcuts VALUES ('sc-all', NULL, 'all', 1, 'sc0-created', 'sc0-updated')"
+    );
+    backup.run(
+      "INSERT INTO shortcut_values VALUES ('sv-all', 'sc-all', 'shared-value', 0, 5, 0, 'sv0-created', 'sv0-updated')"
     );
 
     await ImportService.importDatabaseFromTempDb('memory');
@@ -152,11 +174,14 @@ describe('ImportService full restore', () => {
       id: 'sc-all',
       categoryId: null,
       name: 'all',
-      value: 'shared-value',
-      useCount: 5,
       sortOrder: 1,
       createdAt: 'sc0-created',
       updatedAt: 'sc0-updated',
+    });
+    expect(main.get('SELECT * FROM shortcut_values WHERE id = ?', ['sv-all'])).toMatchObject({
+      shortcutId: 'sc-all',
+      value: 'shared-value',
+      useCount: 5,
     });
     expect(main.all('SELECT id FROM shortcuts ORDER BY id')).toEqual([
       { id: 'sc-all' },

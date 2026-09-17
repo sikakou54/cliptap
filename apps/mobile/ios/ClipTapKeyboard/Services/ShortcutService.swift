@@ -131,34 +131,60 @@ class ShortcutService {
         return sorted.map { $0.element }
     }
 
+    /// ショートカット値の一覧を表示順に並べ替える
+    ///
+    /// - Parameter values: 保存順（sortOrder順）の値一覧
+    /// - Returns: 表示順に並べ替えた値の配列
+    ///
+    /// 【登録順で固定する理由】
+    /// 使用回数の多い順にすると、1つ挿入するたびに行が入れ替わる。
+    /// IDとパスワードのように続けて挿入する使い方では、次に押す行が押した直後に動いてしまう。
+    /// 登録順なら、開いている間も挿入の前後でも並びが変わらない。
+    ///
+    /// 【一覧で選んだ並べ替えを効かせない理由】
+    /// 値が持つのは使用回数だけで、作成日時順・更新日時順・名前順にあたる基準がありません。
+    /// 4種のうち一部しか効かない並べ替えを値にも掛けると、
+    /// 同じ設定なのに行によって効いたり効かなかったりして読み取れなくなります。
+    func sortedValues(_ values: [ShortcutValue]) -> [ShortcutValue] {
+        /* ショートカット一覧と同じ理由で、添字を持ったまま並べ替える */
+        let sorted = values.enumerated().sorted { left, right in
+            if left.element.sortOrder != right.element.sortOrder {
+                return left.element.sortOrder < right.element.sortOrder
+            }
+            return left.offset < right.offset
+        }
+
+        return sorted.map { $0.element }
+    }
+
     // MARK: - Insert Operations（挿入操作）
 
-    /// ショートカットの値をキーボードから挿入（振動フィードバック＋使用回数の記録）
+    /// ショートカット値をキーボードから挿入（振動フィードバック＋使用回数の記録）
     ///
     /// - Parameters:
-    ///   - shortcut: 挿入するショートカット（変数トークンは未展開）
+    ///   - value: 挿入するショートカット値（変数トークンは未展開）
     ///   - textDocumentProxy: iOSのテキスト入力API（カスタムキーボードが提供）
     ///   - profileId: 変数の展開に使う、キーボード内で選択中のプロファイルID（未確定ならnil）
     ///
     /// 【処理の流れ】
     /// 1. 値の変数トークンを、選択中のプロファイルと現在の日時で展開
-    /// 2. 展開した文字列をカーソル位置へ挿入（ショートカット名は挿入しない）
+    /// 2. 展開した文字列をカーソル位置へ挿入（値名は挿入しない）
     /// 3. 振動フィードバック（定型文の挿入と同じ軽い振動）
-    /// 4. 使用回数の記録が有効なときだけ、使用回数と更新日時を更新
+    /// 4. 使用回数の記録が有効なときだけ、使用回数と親の更新日時を更新
     ///
     /// 【変数マップを挿入のたびに読み直す理由】
     /// キーボードを開いたままメインアプリで変数の値を変えても、挿入する文字列を最新の値にするため
     /// （定型文の挿入 SnippetService.insertSnippet と同じ）。
     /// プロファイルが未確定のときはカスタム変数を展開せず、システム変数だけを展開する。
     /// 展開できないトークンは元の形のまま挿入する（仕様書 §8.6）。
-    func insertShortcut(_ shortcut: Shortcut, into textDocumentProxy: UITextDocumentProxy, profileId: String?) {
+    func insertValue(_ value: ShortcutValue, into textDocumentProxy: UITextDocumentProxy, profileId: String?) {
         var variablesMap: [String: String] = [:]
         if let profileId = profileId {
             variablesMap = variableService.getVariablesMap(for: profileId)
         }
 
         let resolvedText = variableReplacer.replace(
-            in: shortcut.value,
+            in: value.value,
             variablesMap: variablesMap,
             formats: SystemVariableFormatMapper.shared.getAll()
         )
@@ -173,8 +199,8 @@ class ShortcutService {
 
         /* 使用頻度追跡が有効な場合のみ、useCountをインクリメント */
         if isUsageTrackingEnabled {
-            shortcutMapper.incrementUseCount(shortcutId: shortcut.id)
-            KeyboardLog.debug("📊 [ShortcutService] Incremented use count for shortcut: %@", shortcut.id)
+            shortcutMapper.incrementUseCount(valueId: value.id, shortcutId: value.shortcutId)
+            KeyboardLog.debug("📊 [ShortcutService] Incremented use count for value: %@", value.id)
         } else {
             KeyboardLog.debug("📊 [ShortcutService] Skipped use count increment (usage tracking disabled)")
         }
@@ -207,9 +233,11 @@ class ShortcutService {
             return byName != .orderedSame ? byName : compareDescending(left.createdAt, right.createdAt)
 
         case "usage":
-            /* 使用回数が多い順 → 作成日時の新しい順 */
-            if left.useCount != right.useCount {
-                return left.useCount > right.useCount ? .orderedAscending : .orderedDescending
+            /* 使用回数の合計が多い順 → 作成日時の新しい順 */
+            let leftUseCount = totalUseCount(left)
+            let rightUseCount = totalUseCount(right)
+            if leftUseCount != rightUseCount {
+                return leftUseCount > rightUseCount ? .orderedAscending : .orderedDescending
             }
             return compareDescending(left.createdAt, right.createdAt)
 
@@ -219,6 +247,19 @@ class ShortcutService {
             let byCreated = compareDescending(left.createdAt, right.createdAt)
             return byCreated != .orderedSame ? byCreated : compareAscending(left.name, right.name)
         }
+    }
+
+    /// ショートカットの使用回数
+    ///
+    /// - Parameter shortcut: 対象のショートカット
+    /// - Returns: 値ごとの使用回数の合計
+    ///
+    /// 【最大値ではなく合計にする理由】
+    /// 使用回数は値ごとに持つため、ショートカット単位の使用頻度は合計で表します。
+    /// 「よく使う値が1つあるショートカット」と「満遍なく使うショートカット」の
+    /// どちらも上位に来るようにするためです（正本 sort.ts と同じ）。
+    private static func totalUseCount(_ shortcut: Shortcut) -> Int {
+        return shortcut.values.reduce(0) { $0 + $1.useCount }
     }
 
     /// 昇順の比較結果を求める

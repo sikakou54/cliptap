@@ -18,6 +18,7 @@
  *     │   ├── VariableNameRequiredError
  *     │   ├── VariableNameInvalidError
  *     │   ├── VariableNameReservedError
+ *     │   ├── ShortcutValueRequiredError
  *     │   └── InvalidRgbValueError
  *     ├── NotFoundError (リソース未検出。validation.ts にあるが ValidationError の配下ではない)
  *     ├── ImportExportError (インポート/エクスポート関連)
@@ -58,6 +59,7 @@ export {
   VariableNameRequiredError,
   VariableNameInvalidError,
   VariableNameReservedError,
+  ShortcutValueRequiredError,
   InvalidRgbValueError,
 } from './validation';
 

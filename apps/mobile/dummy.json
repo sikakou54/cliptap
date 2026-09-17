@@ -264,7 +264,12 @@
         "Main"
       ],
       "category": "仕事",
-      "value": "EMP-xxxxxx"
+      "values": [
+        {
+          "value": "EMP-xxxxxx",
+          "isMasked": false
+        }
+      ]
     },
     {
       "name": "振込口座",
@@ -272,7 +277,24 @@
         "Main"
       ],
       "category": "連絡先",
-      "value": "サンプル銀行 サンプル支店\n普通 xxxxxxx\nカ）サンプル"
+      "values": [
+        {
+          "value": "サンプル銀行",
+          "isMasked": false
+        },
+        {
+          "value": "サンプル支店",
+          "isMasked": false
+        },
+        {
+          "value": "普通 xxxxxxx",
+          "isMasked": false
+        },
+        {
+          "value": "カ）サンプル",
+          "isMasked": false
+        }
+      ]
     },
     {
       "name": "会社メール",
@@ -280,7 +302,12 @@
         "Main"
       ],
       "category": "仕事",
-      "value": "yaxxxx@example.co.jp"
+      "values": [
+        {
+          "value": "yaxxxx@example.co.jp",
+          "isMasked": false
+        }
+      ]
     },
     {
       "name": "内線番号",
@@ -288,7 +315,16 @@
         "Main"
       ],
       "category": "連絡先",
-      "value": "内線 xxxx（直通 03-xxxx-xxxx）"
+      "values": [
+        {
+          "value": "内線 xxxx",
+          "isMasked": false
+        },
+        {
+          "value": "03-xxxx-xxxx",
+          "isMasked": false
+        }
+      ]
     },
     {
       "name": "請求先",
@@ -296,7 +332,16 @@
         "B社用"
       ],
       "category": "仕事",
-      "value": "株式会社B商事 経理部\n〒060-xxxx 北海道札幌市中央区北一条西x-x"
+      "values": [
+        {
+          "value": "株式会社B商事 経理部",
+          "isMasked": false
+        },
+        {
+          "value": "〒060-xxxx 北海道札幌市中央区北一条西x-x",
+          "isMasked": false
+        }
+      ]
     },
     {
       "name": "B社 窓口",
@@ -304,7 +349,20 @@
         "B社用"
       ],
       "category": "連絡先",
-      "value": "株式会社B商事 営業推進部\n鈴木様\nsuxxxx@b-shoji.example.jp"
+      "values": [
+        {
+          "value": "株式会社B商事 営業推進部",
+          "isMasked": false
+        },
+        {
+          "value": "鈴木様",
+          "isMasked": false
+        },
+        {
+          "value": "suxxxx@b-shoji.example.jp",
+          "isMasked": false
+        }
+      ]
     },
     {
       "name": "請求先",
@@ -312,7 +370,16 @@
         "A社用"
       ],
       "category": "仕事",
-      "value": "株式会社A商事 経理部\n〒101-xxxx 東京都千代田区外神田x-x-x"
+      "values": [
+        {
+          "value": "株式会社A商事 経理部",
+          "isMasked": false
+        },
+        {
+          "value": "〒101-xxxx 東京都千代田区外神田x-x-x",
+          "isMasked": false
+        }
+      ]
     },
     {
       "name": "A社 窓口",
@@ -320,7 +387,20 @@
         "A社用"
       ],
       "category": "連絡先",
-      "value": "株式会社A商事 第一営業部\n田中様\ntaxxxx@a-shoji.example.jp"
+      "values": [
+        {
+          "value": "株式会社A商事 第一営業部",
+          "isMasked": false
+        },
+        {
+          "value": "田中様",
+          "isMasked": false
+        },
+        {
+          "value": "taxxxx@a-shoji.example.jp",
+          "isMasked": false
+        }
+      ]
     },
     {
       "name": "Xアカウント",
@@ -328,7 +408,12 @@
         "A社用"
       ],
       "category": "SNS",
-      "value": "@sample_a_xxxx"
+      "values": [
+        {
+          "value": "@sample_a_xxxx",
+          "isMasked": false
+        }
+      ]
     },
     {
       "name": "確認中の連絡",
@@ -337,7 +422,12 @@
         "B社用"
       ],
       "category": "仕事",
-      "value": "{{client_name}}\n{{today}} 時点で確認中です。改めてご連絡いたします。"
+      "values": [
+        {
+          "value": "{{client_name}}\n{{today}} 時点で確認中です。改めてご連絡いたします。",
+          "isMasked": false
+        }
+      ]
     },
     {
       "name": "打ち合わせURL",
@@ -346,43 +436,93 @@
         "B社用"
       ],
       "category": "仕事",
-      "value": "https://meet.example.com/xxxx-xxxx"
+      "values": [
+        {
+          "value": "https://meet.example.com/xxxx-xxxx",
+          "isMasked": false
+        }
+      ]
     },
     {
       "name": "請求書番号",
       "profiles": [],
       "category": "仕事",
-      "value": "INV-{{year}}{{month}}-xxxx"
+      "values": [
+        {
+          "value": "INV-{{year}}{{month}}-xxxx",
+          "isMasked": false
+        }
+      ]
     },
     {
       "name": "よく使う返信",
       "profiles": [],
       "category": "仕事",
-      "value": "承知いたしました。確認のうえ、改めてご連絡いたします。"
+      "values": [
+        {
+          "value": "承知いたしました。確認のうえ、改めてご連絡いたします。",
+          "isMasked": false
+        }
+      ]
     },
     {
       "name": "GitHubアカウント",
       "profiles": [],
       "category": "コード",
-      "value": "@sample-xxxx"
+      "values": [
+        {
+          "value": "@sample-xxxx",
+          "isMasked": false
+        }
+      ]
     },
     {
       "name": "自宅の住所",
       "profiles": [],
       "category": "日常",
-      "value": "〒150-xxxx 東京都渋谷区神宮前x-x-x サンプルマンションxxx"
+      "values": [
+        {
+          "value": "〒150-xxxx 東京都渋谷区神宮前x-x-x サンプルマンションxxx",
+          "isMasked": false
+        }
+      ]
     },
     {
       "name": "Instagram",
       "profiles": [],
       "category": "SNS",
-      "value": "@sample_xxxx"
+      "values": [
+        {
+          "value": "@sample_xxxx",
+          "isMasked": false
+        }
+      ]
     },
     {
       "name": "携帯番号",
       "profiles": [],
       "category": "連絡先",
-      "value": "090-xxxx-xxxx"
+      "values": [
+        {
+          "value": "090-xxxx-xxxx",
+          "isMasked": false
+        }
+      ]
+    },
+    {
+      "name": "社内システム",
+      "profiles": [],
+      "category": "コード",
+      "values": [
+        {
+          "value": "sample.taro",
+          "isMasked": false
+        },
+        {
+          "value": "Pxxxxxxxxxxx",
+          "isMasked": true
+        }
+      ]
     }
   ]
 }

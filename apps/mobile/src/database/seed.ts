@@ -121,13 +121,14 @@ interface DummySnippet {
  * @remarks
  * - profiles: 所属させるプロファイル名（0件以上。空配列は全プロファイル向け）
  * - category: カテゴリ名（nullは未分類）
- * - value: 挿入する値（保存する文字列。変数トークン {{name}} をそのまま書ける）
+ * - values: 挿入する値（1件以上。保存する文字列で、変数トークン {{name}} をそのまま書ける）
+ * - values[].isMasked: 表示を伏せるか（コピー・挿入は伏せていても実際の値を使う）
  */
 interface DummyShortcut {
   name: string;
   profiles: string[];
   category: string | null;
-  value: string;
+  values: { value: string; isMasked: boolean }[];
 }
 
 /**
@@ -480,7 +481,7 @@ async function seedShortcuts(
           ? categoryMap.get(shortcutData.category) ?? null
           : null,
         name: shortcutData.name,                                     /* ショートカット名 */
-        value: shortcutData.value,                                   /* 挿入する値（変数トークンは未展開のまま） */
+        values: shortcutData.values,                                 /* 挿入する値（変数トークンは未展開のまま） */
       });
 
       Logger.info(

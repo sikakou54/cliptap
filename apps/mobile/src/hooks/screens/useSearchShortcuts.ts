@@ -46,6 +46,7 @@ import {
   ShortcutService,
   type Profile,
   type Shortcut,
+  type ShortcutValue,
   type ShortcutWithDisplay,
 } from '@cliptap/shared';
 import { showConfirm, showErrorAlert } from '@utils/alerts';
@@ -78,7 +79,7 @@ export interface UseSearchShortcutsReturn {
   /** 一覧を読み直す */
   handleRefreshShortcuts: () => void;
   /** 値をクリップボードへコピーする */
-  handleCopyShortcut: (shortcut: Shortcut) => Promise<void>;
+  handleCopyShortcutValue: (value: ShortcutValue) => Promise<void>;
   /** 編集画面を開く */
   handleEditShortcut: (shortcut: Shortcut) => void;
   /** 確認のうえ削除する */
@@ -120,7 +121,7 @@ export function useSearchShortcuts(params: UseSearchShortcutsParams): UseSearchS
   const router = useRouter();
   const { validProfiles, profileVariables, defaultProfile } = useProfiles();
   const { variables } = useVariables();
-  const { deleteShortcut, copyShortcut } = useShortcuts();
+  const { deleteShortcut, copyShortcutValue } = useShortcuts();
   const { expandVariables } = useVariableExpansion({
     variables,
     profileVariables,
@@ -199,10 +200,10 @@ export function useSearchShortcuts(params: UseSearchShortcutsParams): UseSearchS
    * ホームの一覧と同じ経路を使う（値だけをコピーし、値名は含めない）。
    * 表示中の値は選択中のプロファイルで展開しているため、同じプロファイルを基準に展開してコピーする。
    */
-  const handleCopyShortcut = useCallback(
-    async (shortcut: Shortcut) => {
+  const handleCopyShortcutValue = useCallback(
+    async (value: ShortcutValue) => {
       try {
-        await copyShortcut(shortcut, selectedProfileId ?? undefined);
+        await copyShortcutValue(value, selectedProfileId ?? undefined);
       } catch (error) {
         Logger.error('[SearchShortcuts] Failed to copy the shortcut value:', error);
         showErrorAlert(t('error.generic'));
@@ -210,7 +211,7 @@ export function useSearchShortcuts(params: UseSearchShortcutsParams): UseSearchS
         throw error;
       }
     },
-    [copyShortcut, selectedProfileId, t]
+    [copyShortcutValue, selectedProfileId, t]
   );
 
   /**
@@ -257,7 +258,7 @@ export function useSearchShortcuts(params: UseSearchShortcutsParams): UseSearchS
     displayShortcuts,
     getProfileShortcutCount,
     handleRefreshShortcuts: reloadShortcuts,
-    handleCopyShortcut,
+    handleCopyShortcutValue,
     handleEditShortcut,
     handleDeleteShortcut,
   };

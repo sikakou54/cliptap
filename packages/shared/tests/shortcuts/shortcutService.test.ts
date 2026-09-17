@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { setMainDbAdapter } from '../../src/adapters/DbAdapter';
 import { CREATE_INDEXES, CREATE_TABLES } from '../../src/database/schema';
-import { DuplicateNameError, EmptyContentError } from '../../src/errors';
+import {
+  DuplicateNameError,
+  EmptyContentError,
+  ShortcutValueRequiredError,
+} from '../../src/errors';
 import { ShortcutService } from '../../src/services/ShortcutService';
 import {
   createMemoryDbAdapter,
@@ -42,19 +46,25 @@ describe('ShortcutService', () => {
   };
 
   describe('create', () => {
-    it('登録した値をそのまま保存する', async () => {
+    it('登録した値を入力順のまま保存する', async () => {
       await useDatabase();
 
       const shortcut = ShortcutService.create({
         profileIds: [PROFILE_ID],
         name: '電話番号',
-        value: '080-0000-0000',
+        values: [
+          { value: '080-0000-0000', isMasked: false },
+          { value: '090-0000-0000', isMasked: false },
+        ],
       });
 
       expect(shortcut.name).toBe('電話番号');
-      expect(shortcut.value).toBe('080-0000-0000');
-      /* 使用回数は挿入・コピー時にだけ増える。作成直後は必ず0 */
-      expect(shortcut.useCount).toBe(0);
+      expect(shortcut.values.map((value) => [value.value, value.isMasked, value.sortOrder])).toEqual([
+        ['080-0000-0000', false, 0],
+        ['090-0000-0000', false, 1],
+      ]);
+      /* 使用回数は挿入時にだけ増える。作成直後は必ず0 */
+      expect(shortcut.values.every((value) => value.useCount === 0)).toBe(true);
     });
 
     it('名前と値の前後空白を除去して保存する', async () => {
@@ -63,37 +73,20 @@ describe('ShortcutService', () => {
       const shortcut = ShortcutService.create({
         profileIds: [PROFILE_ID],
         name: '  メールアドレス  ',
-        value: '  sample@example.com  ',
+        values: [{ value: '  sample@example.com  ', isMasked: false }],
       });
 
-      expect(shortcut).toMatchObject({
-        name: 'メールアドレス',
+      expect(shortcut.name).toBe('メールアドレス');
+      expect(shortcut.values[0]).toMatchObject({
         value: 'sample@example.com',
       });
-    });
-
-    /**
-     * 1値構造で必須なのは名前だけとする。
-     * 空文字を挿入する選択も利用者の意図として扱い、保存を拒否しない。
-     */
-    it('値が空文字でも保存できる', async () => {
-      await useDatabase();
-
-      const shortcut = ShortcutService.create({
-        profileIds: [PROFILE_ID],
-        name: '空欄',
-        value: '   ',
-      });
-
-      expect(shortcut.value).toBe('');
-      expect(ShortcutService.countByProfile(PROFILE_ID)).toBe(1);
     });
 
     it('新規ショートカットを末尾へ追加する', async () => {
       await useDatabase();
 
-      ShortcutService.create({ profileIds: [PROFILE_ID], name: '電話番号', value: '080' });
-      ShortcutService.create({ profileIds: [PROFILE_ID], name: '住所', value: '東京' });
+      ShortcutService.create({ profileIds: [PROFILE_ID], name: '電話番号', values: [{ value: '080', isMasked: false }] });
+      ShortcutService.create({ profileIds: [PROFILE_ID], name: '住所', values: [{ value: '東京', isMasked: false }] });
 
       expect(ShortcutService.getByProfileId(PROFILE_ID).map((shortcut) => [shortcut.name, shortcut.sortOrder]))
         .toEqual([
@@ -102,83 +95,129 @@ describe('ShortcutService', () => {
         ]);
     });
 
+    it('値が1件も無い場合は保存できない', async () => {
+      await useDatabase();
+
+      expect(() => ShortcutService.create({ profileIds: [PROFILE_ID], name: '電話番号', values: [] })).toThrow(
+        ShortcutValueRequiredError
+      );
+      expect(ShortcutService.countByProfile(PROFILE_ID)).toBe(0);
+    });
+
     it('ショートカット名が空白だけの場合は保存できない', async () => {
       await useDatabase();
 
       expect(() =>
-        ShortcutService.create({ profileIds: [PROFILE_ID], name: '   ', value: '080' })
+        ShortcutService.create({ profileIds: [PROFILE_ID], name: '   ', values: [{ value: '080', isMasked: false }] })
       ).toThrow(EmptyContentError);
     });
 
     it('同名のショートカットは登録できない', async () => {
       await useDatabase();
-      ShortcutService.create({ profileIds: [PROFILE_ID], name: '電話番号', value: '080' });
+      ShortcutService.create({ profileIds: [PROFILE_ID], name: '電話番号', values: [{ value: '080', isMasked: false }] });
 
       expect(() =>
-        ShortcutService.create({ profileIds: [PROFILE_ID], name: '電話番号', value: '090' })
+        ShortcutService.create({ profileIds: [PROFILE_ID], name: '電話番号', values: [{ value: '090', isMasked: false }] })
       ).toThrow(DuplicateNameError);
     });
 
-    it('紐づけの挿入に失敗した場合はショートカット本体も残さない', async () => {
+    it('値の挿入に失敗した場合はショートカット本体も残さない', async () => {
       const db = await useDatabase();
-      /* 本体と紐づけを同一トランザクションに入れているため、紐づけ側だけを失敗させる */
-      await db.exec('DROP TABLE shortcut_profiles');
+      /* 値にNULLを渡せないため、テーブルごと落として値の挿入だけを失敗させる */
+      await db.exec('DROP TABLE shortcut_values');
 
       expect(() =>
-        ShortcutService.create({ profileIds: [PROFILE_ID], name: '電話番号', value: '080' })
+        ShortcutService.create({ profileIds: [PROFILE_ID], name: '電話番号', values: [{ value: '080', isMasked: false }] })
       ).toThrow();
       expect(db.all('SELECT * FROM shortcuts')).toEqual([]);
     });
   });
 
   describe('update', () => {
-    it('値を残したまま名前を変更する', async () => {
+    it('既存の値を残したまま名前を変更する', async () => {
       await useDatabase();
       const created = ShortcutService.create({
         profileIds: [PROFILE_ID],
         name: '電話番号',
-        value: '080',
+        values: [{ value: '080', isMasked: false }],
       });
 
       const updated = ShortcutService.update({ id: created.id, name: '電話' });
 
       expect(updated.name).toBe('電話');
-      expect(updated.value).toBe('080');
+      expect(updated.values.map((value) => value.id)).toEqual(
+        created.values.map((value) => value.id)
+      );
     });
 
-    it('値を書き換えても使用回数は保持する', async () => {
+    it('値を追加・更新・削除して並び順を入力どおりにする', async () => {
       await useDatabase();
       const created = ShortcutService.create({
         profileIds: [PROFILE_ID],
         name: '電話番号',
-        value: '080',
+        values: [
+          { value: '080', isMasked: false },
+          { value: '090', isMasked: false },
+        ],
       });
-      ShortcutService.recordUse(created.id);
-      ShortcutService.recordUse(created.id);
+      const [mother, father] = created.values;
 
-      const updated = ShortcutService.update({ id: created.id, value: '080-2222-2222' });
+      const updated = ShortcutService.update({
+        id: created.id,
+        values: [
+          { id: father.id, value: '090-1111-1111', isMasked: false },
+          { value: '070', isMasked: false },
+        ],
+      });
 
-      expect(updated).toMatchObject({ value: '080-2222-2222', useCount: 2 });
+      expect(updated.values.map((value) => [value.value, value.isMasked, value.sortOrder])).toEqual([
+        ['090-1111-1111', false, 0],
+        ['070', false, 1],
+      ]);
+      /* 入力に現れなかった値は削除される */
+      expect(updated.values.some((value) => value.id === mother.id)).toBe(false);
     });
 
-    it('値を省略した更新は現在の値を変えない', async () => {
+    it('値を更新しても使用回数は保持する', async () => {
       await useDatabase();
       const created = ShortcutService.create({
         profileIds: [PROFILE_ID],
         name: '電話番号',
-        value: '080',
+        values: [{ value: '080', isMasked: false }],
+      });
+      const target = created.values[0];
+      ShortcutService.recordUse(target.id, created.id);
+      ShortcutService.recordUse(target.id, created.id);
+
+      const updated = ShortcutService.update({
+        id: created.id,
+        values: [{ id: target.id, value: '080-2222-2222', isMasked: false }],
       });
 
-      expect(ShortcutService.update({ id: created.id, name: '電話' }).value).toBe('080');
+      expect(updated.values[0]).toMatchObject({ value: '080-2222-2222', useCount: 2 });
+    });
+
+    it('値をすべて削除する更新は拒否する', async () => {
+      await useDatabase();
+      const created = ShortcutService.create({
+        profileIds: [PROFILE_ID],
+        name: '電話番号',
+        values: [{ value: '080', isMasked: false }],
+      });
+
+      expect(() => ShortcutService.update({ id: created.id, values: [] })).toThrow(
+        ShortcutValueRequiredError
+      );
+      expect(ShortcutService.getById(created.id)?.values).toHaveLength(1);
     });
 
     it('自分以外の同名ショートカットがある場合は拒否する', async () => {
       await useDatabase();
-      ShortcutService.create({ profileIds: [PROFILE_ID], name: '電話番号', value: '080' });
+      ShortcutService.create({ profileIds: [PROFILE_ID], name: '電話番号', values: [{ value: '080', isMasked: false }] });
       const address = ShortcutService.create({
         profileIds: [PROFILE_ID],
         name: '住所',
-        value: '東京',
+        values: [{ value: '東京', isMasked: false }],
       });
 
       expect(() => ShortcutService.update({ id: address.id, name: '電話番号' })).toThrow(
@@ -191,7 +230,7 @@ describe('ShortcutService', () => {
       const created = ShortcutService.create({
         profileIds: [PROFILE_ID],
         name: '電話番号',
-        value: '080',
+        values: [{ value: '080', isMasked: false }],
       });
 
       expect(() => ShortcutService.update({ id: created.id, name: '電話番号' })).not.toThrow();
@@ -199,47 +238,46 @@ describe('ShortcutService', () => {
   });
 
   describe('delete', () => {
-    it('ショートカットと紐づけをまとめて削除し、他のショートカットに影響しない', async () => {
+    it('ショートカットと値をまとめて削除し、他のショートカットに影響しない', async () => {
       const db = await useDatabase();
       const phone = ShortcutService.create({
         profileIds: [PROFILE_ID],
         name: '電話番号',
-        value: '080',
+        values: [{ value: '080', isMasked: false }],
       });
       const mail = ShortcutService.create({
         profileIds: [PROFILE_ID],
         name: 'メールアドレス',
-        value: 'sample@example.com',
+        values: [{ value: 'sample@example.com', isMasked: false }],
       });
 
       ShortcutService.delete(phone.id);
 
       expect(ShortcutService.getById(phone.id)).toBeNull();
       expect(
-        db.all('SELECT shortcutId FROM shortcut_profiles WHERE shortcutId = ?', [phone.id])
+        db.all('SELECT id FROM shortcut_values WHERE shortcutId = ?', [phone.id])
       ).toEqual([]);
-      expect(ShortcutService.getById(mail.id)?.value).toBe('sample@example.com');
+      expect(ShortcutService.getById(mail.id)?.values).toHaveLength(1);
     });
   });
 
   describe('recordUse', () => {
     it('使用回数を1加算する', async () => {
       await useDatabase();
-      const phone = ShortcutService.create({
+      const created = ShortcutService.create({
         profileIds: [PROFILE_ID],
         name: '電話番号',
-        value: '080',
-      });
-      const mail = ShortcutService.create({
-        profileIds: [PROFILE_ID],
-        name: 'メールアドレス',
-        value: 'sample@example.com',
+        values: [
+          { value: '080', isMasked: false },
+          { value: '090', isMasked: false },
+        ],
       });
 
-      ShortcutService.recordUse(mail.id);
+      ShortcutService.recordUse(created.values[1].id, created.id);
 
-      expect(ShortcutService.getById(phone.id)?.useCount).toBe(0);
-      expect(ShortcutService.getById(mail.id)?.useCount).toBe(1);
+      expect(ShortcutService.getById(created.id)?.values.map((value) => value.useCount)).toEqual([
+        0, 1,
+      ]);
     });
   });
 
@@ -249,12 +287,12 @@ describe('ShortcutService', () => {
       const phone = ShortcutService.create({
         profileIds: [PROFILE_ID],
         name: '電話番号',
-        value: '080',
+        values: [{ value: '080', isMasked: false }],
       });
       const mail = ShortcutService.create({
         profileIds: [PROFILE_ID],
         name: 'メールアドレス',
-        value: 'sample@example.com',
+        values: [{ value: 'sample@example.com', isMasked: false }],
       });
 
       ShortcutService.reorder([mail.id, phone.id]);
@@ -272,14 +310,14 @@ describe('ShortcutService', () => {
       ShortcutService.create({
         profileIds: [PROFILE_ID],
         name: '電話番号',
-        value: '080',
+        values: [{ value: '080', isMasked: false }],
       });
 
       expect(() =>
         ShortcutService.create({
           profileIds: [OTHER_PROFILE_ID],
           name: '電話番号',
-          value: '090',
+          values: [{ value: '090', isMasked: false }],
         })
       ).not.toThrow();
     });
@@ -289,12 +327,12 @@ describe('ShortcutService', () => {
       ShortcutService.create({
         profileIds: [PROFILE_ID],
         name: '電話番号',
-        value: '080',
+        values: [{ value: '080', isMasked: false }],
       });
       ShortcutService.create({
         profileIds: [OTHER_PROFILE_ID],
         name: '住所',
-        value: '東京',
+        values: [{ value: '東京', isMasked: false }],
       });
 
       expect(
@@ -315,12 +353,12 @@ describe('ShortcutService', () => {
       ShortcutService.create({
         profileIds: [PROFILE_ID],
         name: '電話番号',
-        value: '080',
+        values: [{ value: '080', isMasked: false }],
       });
       const other = ShortcutService.create({
         profileIds: [OTHER_PROFILE_ID],
         name: '住所',
-        value: '東京',
+        values: [{ value: '東京', isMasked: false }],
       });
 
       expect(other.sortOrder).toBe(1);
@@ -331,13 +369,13 @@ describe('ShortcutService', () => {
       const created = ShortcutService.create({
         profileIds: [PROFILE_ID],
         name: '電話番号',
-        value: '080',
+        values: [{ value: '080', isMasked: false }],
       });
-      ShortcutService.recordUse(created.id);
+      ShortcutService.recordUse(created.values[0].id, created.id);
       ShortcutService.create({
         profileIds: [OTHER_PROFILE_ID],
         name: '住所',
-        value: '東京',
+        values: [{ value: '東京', isMasked: false }],
       });
 
       const moved = ShortcutService.update({
@@ -348,7 +386,9 @@ describe('ShortcutService', () => {
       expect(moved.profileIds).toEqual([OTHER_PROFILE_ID]);
       /* 並び順はプロファイル横断の通し番号のため、紐づけを変えても採り直さない */
       expect(moved.sortOrder).toBe(created.sortOrder);
-      expect(moved).toMatchObject({ value: '080', useCount: 1 });
+      expect(moved.values.map((value) => [value.id, value.useCount])).toEqual([
+        [created.values[0].id, 1],
+      ]);
       expect(ShortcutService.getByProfileId(PROFILE_ID)).toEqual([]);
     });
 
@@ -357,12 +397,12 @@ describe('ShortcutService', () => {
       const created = ShortcutService.create({
         profileIds: [PROFILE_ID],
         name: '電話番号',
-        value: '080',
+        values: [{ value: '080', isMasked: false }],
       });
       ShortcutService.create({
         profileIds: [OTHER_PROFILE_ID],
         name: '電話番号',
-        value: '090',
+        values: [{ value: '090', isMasked: false }],
       });
 
       /* 名前を変えなくても、置き換え先の同名と衝突する */
@@ -373,28 +413,30 @@ describe('ShortcutService', () => {
   });
 
   describe('getByProfileId', () => {
-    it('値と紐づけを本体の行から返す', async () => {
+    it('値をショートカットごとに正しく振り分ける', async () => {
       await useDatabase();
       ShortcutService.create({
         profileIds: [PROFILE_ID],
         name: '電話番号',
-        value: '080',
+        values: [
+          { value: '080', isMasked: false },
+          { value: '090', isMasked: false },
+        ],
       });
       ShortcutService.create({
         profileIds: [PROFILE_ID],
         name: 'メールアドレス',
-        value: 'sample@example.com',
+        values: [{ value: 'sample@example.com', isMasked: false }],
       });
 
       expect(
         ShortcutService.getByProfileId(PROFILE_ID).map((shortcut) => [
           shortcut.name,
-          shortcut.value,
-          shortcut.profileIds,
+          shortcut.values.map((value) => value.value),
         ])
       ).toEqual([
-        ['電話番号', '080', [PROFILE_ID]],
-        ['メールアドレス', 'sample@example.com', [PROFILE_ID]],
+        ['電話番号', ['080', '090']],
+        ['メールアドレス', ['sample@example.com']],
       ]);
     });
   });

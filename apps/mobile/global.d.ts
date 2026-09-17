@@ -48,10 +48,17 @@ declare global {
   var profileSelectCallback: ((selectedIds: string[]) => void) | undefined;
 
   /**
-   * ショートカットの「挿入する値」のコールバック
-   * 値入力モーダルから親画面（ショートカット作成・編集）へ編集後の値を返す
+   * ショートカットの「挿入する値」の編集データ
+   *
+   * 値入力モーダルから親画面（ショートカット作成・編集）へ編集後の値を返す。
+   * keyは編集対象を指す画面内のキーで、空文字は新規追加を表す。
    */
-  var shortcutValueCallback: ((value: string) => void) | undefined;
+  var shortcutValueCallbackData: {
+    /** 編集対象の画面内キー（空文字は新規追加） */
+    key: string;
+    /** 編集後の値（変数トークンは未展開） */
+    value: string;
+  } | undefined;
 
   /**
    * 変数値編集のデータ

@@ -17,13 +17,13 @@
     android:visibility="gone">
 
     <!-- 一覧とEmptyビューのコンテナ
-         見出しの行と戻るボタンは置かず、一覧をこの領域いっぱいに表示する。
-         行をタップするとその値を挿入し、一覧はそのまま読み直す -->
+         値一覧にも見出しの行と戻るボタンは置かず、一覧と値一覧のどちらもこの領域いっぱいに表示する。
+         ショートカット一覧へは、値を挿入するか、トグルで定型文へ切り替えてから戻すと開き直す -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <!-- ショートカット一覧（名前と、選択中のプロファイルで展開した値の2行） -->
+        <!-- ショートカット一覧／値一覧（アダプターを差し替えて共用する） -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/shortcutRecyclerView"
             android:layout_width="match_parent"

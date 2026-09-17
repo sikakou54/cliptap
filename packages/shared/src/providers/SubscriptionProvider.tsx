@@ -57,6 +57,7 @@ export interface SubscriptionContextValue {
   /** ショートカットを追加可能か判定（権利確認中の扱いは canAddSnippet と同じ） */
   canAddShortcut: (currentCount: number) => boolean;
   /** ショートカットに値を追加可能か判定（引数は追加前の値の件数。権利確認中の扱いは canAddSnippet と同じ） */
+  canAddShortcutValue: (currentCount: number) => boolean;
   /** サブスク状態を最新化 */
   refresh: () => Promise<void>;
   /** 開発者オーバーライドを設定（DEVのみ） */
@@ -193,6 +194,7 @@ export function SubscriptionProvider({
     canAddProfile: (count) => SubscriptionService.canAddProfile(count),
     canAddSnippet: (count) => SubscriptionService.canAddSnippet(count),
     canAddShortcut: (count) => SubscriptionService.canAddShortcut(count),
+    canAddShortcutValue: (count) => SubscriptionService.canAddShortcutValue(count),
     refresh,
     setDevSubscriptionOverride,
   }), [isSubscribed, isLoading, verificationFailed, refresh, setDevSubscriptionOverride]);
