@@ -13,6 +13,7 @@
 
 import { useCallback } from 'react';
 import { Alert } from 'react-native';
+import { router } from 'expo-router';
 import { Logger, useSharedSubscription } from '@cliptap/shared';
 import { database } from '@database/database';
 import { showConfirm, showAlert, showErrorAlert } from '@utils/alerts';
@@ -27,6 +28,8 @@ export interface UseDevMenuReturn {
   handleDevAdsToggle: () => void;
   /** データベースリセット */
   handleResetDatabase: () => Promise<void>;
+  /** 撮影用ホストを開く */
+  handleOpenCaptureHost: () => void;
 }
 
 /**
@@ -129,9 +132,15 @@ export function useDevMenu(): UseDevMenuReturn {
     );
   }, []);
 
+  /* ストア掲載画像の撮影に使うホストを開く（app/capture-host.tsx を参照） */
+  const handleOpenCaptureHost = useCallback(() => {
+    router.push('/capture-host');
+  }, []);
+
   return {
     handleDevSubscriptionToggle,
     handleDevAdsToggle,
     handleResetDatabase,
+    handleOpenCaptureHost,
   };
 }

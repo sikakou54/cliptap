@@ -159,7 +159,8 @@ ClipTapが取りに行くべき語の仮説：
 他アプリへの挿入面は2通りある。
 
 - **メッセージApp**（`01-hero-right-insert` / `05-shortcuts-right-keyboard`）— iOS標準アプリをそのままホストにする
-- **撮影用ホスト**（`02-scene-*`）— `store/screen/host/` の無印の入力欄をホーム画面へ追加して使う。
+- **撮影用ホスト**（`02-scene-*`）— `store/screen/host/` の無印の入力欄を、アプリの
+  設定 > Developer Menu > Capture Host（WebView）で開いて使う。
   リードが言う「SNS」「メール」「AIとの対話」の場面が要るが、該当するアプリがシミュレータに無いため。
   実在するサービスに似せない方針と理由は `store/screen/host/README.md` を正とする
 
@@ -196,15 +197,14 @@ node ~/.claude/skills/html-to-png/scripts/html_to_png.js store/screen/jobs.json
 4. アプリはプロファイル「A社用」（en は Client A）に切り替えてから撮る
 5. キーボード面を撮る。**DBを wipe したあとは必ずシミュレータごと再起動する**。拡張キーボードは消えたDBを掴んだままになり、「No snippets available」と出たまま直らない
    - メッセージAppの面は、ホーム画面から起動して「◀ ClipTap」の戻り表示が出ないようにする
-   - 撮影用ホストの面は `node store/screen/host/serve.mjs` を起こし、ホーム画面のアイコンから開く。
+   - 撮影用ホストの面は `node store/screen/host/serve.mjs` を起こし、
+     **設定 > Developer Menu > Capture Host** から開く（Safariで開くとアクセサリバーが写り込む）。
      **必ずメニューからレイアウトを選び直す**（入力欄の画面はDOMごと復元されるため、前回の本文が残る）
    - 定型文はキーボードのカテゴリで絞ると目的のものが上位に来る。en の「Social media」はチップ幅に収まらず
      「So…edia」と省略されるので、英語面は絞らず「All」から選ぶ
 6. 撮ったPNGを `apps/web/public/image/<name>-<lang>.png` へ置き、`build.mjs` → `html_to_png.js` を回す
 
 **残っている改善余地**
-- 撮影用ホストはWebのため、キーボードの上にSafariのフォーム用アクセサリバー（∧ ∨ ✓）が必ず出る。
-  ページ側からは消せない（`contenteditable` にしても出る）。無くすなら撮影用のネイティブアプリが要る。
 - iPad面7枚はiPhoneのフレーム合成で、iPadの画面が1枚も入っていない（`_shared.css` に `.phone` が1種類しか無い）。
 - 可能なら1枚目を**App Preview動画**化（キーボードで挿入する3秒の動き）。動きは静止画より伝わる。
 - Google Play 用（1080×1920、縦横比9:16が上限）とフィーチャーグラフィック（1024×500）は未対応。`_shared.css` に canvas 定義を1ブロック足せば同じソースから出力できる。

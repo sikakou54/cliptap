@@ -2,7 +2,7 @@
  * 開発者メニュー
  *
  * 開発モード（__DEV__）でのみ表示されるデバッグ機能メニュー。
- * サブスクリプション状態の上書き・広告の非表示・DBリセットの3機能を提供。
+ * サブスクリプション状態の上書き・広告の非表示・DBリセット・撮影用ホストの4機能を提供。
  *
  * 開発者専用メニューのため、表示文言は英語固定とし i18n キーを持たない。
  * app/settings/index.tsx の __DEV__ 判定配下でのみ描画されるため、
@@ -18,6 +18,7 @@ interface DeveloperMenuProps {
   onSubscriptionToggle: () => void;
   onAdsToggle: () => void;
   onResetDatabase: () => void;
+  onOpenCaptureHost: () => void;
 }
 
 interface MenuItemProps {
@@ -63,6 +64,7 @@ export function DeveloperMenu({
   onSubscriptionToggle,
   onAdsToggle,
   onResetDatabase,
+  onOpenCaptureHost,
 }: DeveloperMenuProps) {
   const { colors, responsiveFontSizes, responsiveLineHeights } = useTheme();
 
@@ -82,6 +84,14 @@ export function DeveloperMenu({
       title: 'Ads Override',
       description: 'Show or hide banner and App Open ads',
       onPress: onAdsToggle,
+    },
+    {
+      id: 'capture-host',
+      icon: 'camera-outline' as const,
+      iconColor: colors.text,
+      title: 'Capture Host',
+      description: 'Open the store screenshot host in a WebView',
+      onPress: onOpenCaptureHost,
     },
     {
       id: 'reset',

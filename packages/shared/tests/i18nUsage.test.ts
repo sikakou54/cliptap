@@ -131,12 +131,13 @@ const ALLOWED_LITERALS = new Set(['R', 'G', 'B', 'Pro', 'Free', 'ClipTap Web']);
  * 表示文言のハードコードを許可するファイル
  *
  * @remarks
- * - DeveloperMenu.tsx / useDevMenu.ts: `__DEV__` のときだけ描画される開発者向けメニュー。
- *   本番ビルドでは到達しないため利用者向け文言ではない
+ * - DeveloperMenu.tsx / useDevMenu.ts / capture-host.tsx: `__DEV__` のときだけ描画される
+ *   開発者向けの画面とメニュー。本番ビルドでは到達しないため利用者向け文言ではない
  * - MobileFileShareAdapter.ts: 共有シートのタイトルは docs/機能仕様書.md §8.13 により
  *   UI言語にかかわらず日本語固定と定められている
  */
 const ALLOWED_FILES = new Set([
+  'apps/mobile/app/capture-host.tsx',
   'apps/mobile/src/components/settings/DeveloperMenu.tsx',
   'apps/mobile/src/hooks/screens/useDevMenu.ts',
   'apps/mobile/src/adapters/MobileFileShareAdapter.ts',
