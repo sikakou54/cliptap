@@ -88,11 +88,13 @@ export function ItemActionMenu({ itemName, onEdit, onDelete }: ItemActionMenuPro
         </svg>
       </button>
 
-      {/* メニュー（ボタンの真下に右端を揃えて出す） */}
+      {/* メニュー（ボタンの真下に右端を揃えて出す）。
+          上下に余白を置かず、項目の背景を角丸で切り取る（overflow-hidden）。
+          余白があると、先頭と末尾の項目を指したときに枠線との間へ背景の付かない帯が残る */}
       {isOpen && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-20 mt-1 w-40 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-[#2A2A2A]"
+          className="absolute right-0 top-full z-20 mt-1 w-40 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-[#2A2A2A]"
         >
           {/* 編集（鉛筆アイコン） */}
           <button

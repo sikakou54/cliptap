@@ -85,9 +85,11 @@ export function SortMenu({ currentSort, onSortChange }: SortMenuProps) {
         )}
       </button>
 
-      {/* ドロップダウンメニュー */}
+      {/* ドロップダウンメニュー。
+          上下に余白を置かず角丸で切り取るのは「・・・」メニュー（ItemActionMenu）と同じ理由で、
+          先頭と末尾の項目を指したときに枠線との間へ背景の付かない帯を残さないため */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#2A2A2A] rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-20">
+        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#2A2A2A] rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-20">
           {sortOptions.map((option) => (
             /* ソートオプションボタン */
             <button
