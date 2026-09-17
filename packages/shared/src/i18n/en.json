@@ -18,6 +18,7 @@
     "preview_empty": "No content to preview",
     "next": "Next",
     "column": " column(s)",
+    "columns": "Columns",
     "unsaved_changes_warning": "You have unsaved changes. Are you sure you want to discard them?",
     "closeModal": "Close modal",
     "open_menu": "Open menu",

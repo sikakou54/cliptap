@@ -206,17 +206,30 @@ export function ShortcutEditModal({
                 <label className="text-sm font-medium text-gray-700 dark:text-[#A0A0A0]">{t('shortcut.category')}</label>
                 <QuickCategoryCreateButton onCreated={setCategoryId} />
               </div>
-              <select value={categoryId ?? ''} onChange={(event) => setCategoryId(event.target.value || null)} className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 dark:border-[#2A2A2A] dark:bg-[#1A1A1A] dark:text-white">
-                <option value="">{t('category.uncategorized')}</option>
-                {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-              </select>
+              {/* 矢印を自前で置くための基準 */}
+              <div className="relative">
+                <select value={categoryId ?? ''} onChange={(event) => setCategoryId(event.target.value || null)} className="w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 py-3 pr-11 text-gray-900 dark:border-[#2A2A2A] dark:bg-[#1A1A1A] dark:text-white">
+                  <option value="">{t('category.uncategorized')}</option>
+                  {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+                </select>
+                {/* 開閉の矢印。ブラウザ標準の矢印は枠の右端に張り付いて余白を指定できないため、
+                    appearance-noneで消し、入力欄の左右余白（px-4）と同じ位置へ自前で置く */}
+                <svg
+                  className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-[#707070]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
             </div>
 
             <ProfileMultiSelect
               profiles={profiles}
               selectedProfileIds={profileIds}
               onChange={setProfileIds}
-              descriptionKey="shortcut.select_profiles_description"
             />
 
             <div>

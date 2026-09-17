@@ -50,9 +50,10 @@ export function SearchProfileBar({ profiles, selectedProfileId, getResultCount, 
   const visibleProfiles = showCount ? profiles.filter((profile) => getResultCount(profile.id) > 0) : profiles;
   if (profiles.length === 0) return null;
 
-  /* チップ行の上下は同じ余白にする（モバイルの ProfileChipSelector と同じ値） */
+  /* チップ行の上下の余白。検索画面は検索欄・チップ・結果一覧の3つだけを縦に積むため、
+     ダッシュボードのカテゴリフィルター（CategoryFilterBar）より一段広くとって行の区切りを見せる */
   return (
-    <div className="flex gap-2 overflow-x-auto py-2">
+    <div className="mt-4 flex gap-2 overflow-x-auto pb-3">
       {/* 「すべて」チップ。横断検索が既定のため先頭へ置く（§8.7） */}
       <button
         type="button"

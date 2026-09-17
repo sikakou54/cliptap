@@ -102,7 +102,8 @@ export function DashboardHeader({
                 作成日時/更新日時/タイトル/使用頻度でソート可能。 */}
             <SortMenu currentSort={currentSort} onSortChange={onSortChange} />
             {/* グリッド列数選択（デスクトップのみ表示）
-                1列・2列・3列のいずれかを選択可能。モバイルでは常に1列表示。 */}
+                選択中の列数をアイコンで示し、押して開くメニューから1列・2列・3列を選ぶ。
+                モバイルでは常に1列表示のため出さない。 */}
             <GridColumnsSelector gridColumns={gridColumns} setGridColumns={setGridColumns} />
             {/* 検索ボタン
                 クリックで検索画面を開く。閉じるのは検索画面側の役目のため、ここは開くだけ。

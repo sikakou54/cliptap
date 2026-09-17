@@ -20,8 +20,6 @@ interface ProfileMultiSelectProps {
   selectedProfileIds: string[];
   /** 選択状態変更時のコールバック */
   onChange: (ids: string[]) => void;
-  /** 選択欄の説明文。省略時は定型文向けを使う */
-  descriptionKey?: string;
 }
 
 /* ボタンの共通スタイルクラス */
@@ -32,7 +30,6 @@ export function ProfileMultiSelect({
   profiles,
   selectedProfileIds,
   onChange,
-  descriptionKey = 'snippet.select_profiles_description',
 }: ProfileMultiSelectProps) {
   /* 多言語翻訳関数を取得 */
   const { t } = useTranslation();
@@ -68,10 +65,6 @@ export function ProfileMultiSelect({
           </span>
         )}
       </div>
-      {/* 説明テキスト */}
-      <p className="text-xs text-gray-500 dark:text-[#707070] mb-3">
-        {t(descriptionKey)}
-      </p>
 
       {/* プロファイル選択ボタンエリア */}
       {profiles.length === 0 ? (

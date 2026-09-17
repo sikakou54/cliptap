@@ -212,10 +212,15 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 0,
   },
-  /** コンテンツコンテナ（横並び）。チップ行の上下は同じ余白にする（Webの SearchProfileBar と同じ値） */
+  /**
+   * コンテンツコンテナ（横並び）
+   *
+   * 上下の余白はホームのカテゴリフィルター（CategoryFilter）と同じにしている。
+   * 上は0でヘッダー側の下余白が受け持ち、下だけをここで持つ。
+   */
   contentContainer: {
     gap: UI_CONSTANTS.GAP.SM,
-    paddingVertical: UI_CONSTANTS.GAP.MD,
+    paddingBottom: UI_CONSTANTS.GAP.BASE,
   },
   /**
    * チップ（丸みのある長方形）

@@ -64,7 +64,7 @@ export default function SearchScreen() {
     handleClose,
   } = useSearchScreen({ isShowingShortcuts: params.mode === 'shortcut' });
 
-  /* ヘッダー（閉じるボタンと検索バー）。上部インセットはScreenContainerが確保するため内部余白のみ持つ */
+  /* ヘッダー（検索バーと閉じるボタン）。上部インセットはScreenContainerが確保するため内部余白のみ持つ */
   const header = (
     <View
       style={[
@@ -73,16 +73,11 @@ export default function SearchScreen() {
         {
           backgroundColor: colors.background,
           paddingTop: isTablet ? 20 : 8,
-          paddingBottom: 12,
           paddingHorizontal: responsiveSpacing.containerPadding,
         },
       ]}
     >
       <View style={styles.searchRow}>
-        {/* 閉じるボタン */}
-        <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-          <Ionicons name="close" size={responsive.header.iconSize} color={colors.text} />
-        </TouchableOpacity>
         {/* 検索バー */}
         <View style={styles.searchContainer}>
           <SearchBar
@@ -92,6 +87,10 @@ export default function SearchScreen() {
             autoFocus
           />
         </View>
+        {/* 閉じるボタン（右端） */}
+        <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+          <Ionicons name="close" size={responsive.header.iconSize} color={colors.text} />
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -158,6 +157,8 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
   },
+  /* 検索バーの下余白はホーム（app/index.tsx）のヘッダーと同じ値にし、
+     フィルター行の上の余白をホームのカテゴリフィルターと揃える */
   header: {
     paddingBottom: 8,
     flexDirection: 'column',

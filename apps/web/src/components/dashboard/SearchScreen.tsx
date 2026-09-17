@@ -86,21 +86,10 @@ export function SearchScreen({
       aria-label={t('common.search')}
       className="fixed inset-0 z-40 flex flex-col bg-gray-50/80 dark:bg-black/80"
     >
-      {/* 閉じるボタンと検索欄（モバイルの検索画面と同じ並び）。
-          下の罫線は引かない。下地を透かしているため、線を引くと後ろの画面と二重に見える */}
-      <div className="flex items-center gap-3 px-6 py-4">
-        <button
-          type="button"
-          onClick={onClose}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 dark:text-[#A0A0A0] dark:hover:bg-[#2A2A2A]"
-          aria-label={t('common.close')}
-          title={t('common.close')}
-        >
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-
+      {/* 検索欄と閉じるボタン（モバイルの検索画面と同じ並び）。
+          下の罫線は引かない。下地を透かしているため、線を引くと後ろの画面と二重に見える。
+          フィルター周囲の余白はSearchProfileBarにまとめる。 */}
+      <div className="flex shrink-0 items-center gap-3 px-6 pt-4">
         <div className="relative flex-1">
           {/* 虫眼鏡アイコン（左側） */}
           <svg
@@ -118,15 +107,27 @@ export function SearchScreen({
             onChange={(event) => setSearchQuery(event.target.value)}
             placeholder={t(placeholderKey)}
             autoFocus
-            className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none dark:border-[#2A2A2A] dark:bg-[#1A1A1A] dark:text-white dark:placeholder-[#707070]"
+            className="block h-10 w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none dark:border-[#2A2A2A] dark:bg-[#1A1A1A] dark:text-white dark:placeholder-[#707070]"
           />
         </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 dark:text-[#A0A0A0] dark:hover:bg-[#2A2A2A]"
+          aria-label={t('common.close')}
+          title={t('common.close')}
+        >
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
 
       {/* プロファイルチップ。先頭の「すべて」が既定で、有効な全プロファイルを横断して検索する。
           プロファイルを押すとその環境の結果だけに絞り込む。
           入力前から出し、件数は検索語があるときだけ添える（モバイルと同じ） */}
-      <div className="px-6">
+      <div className="shrink-0 px-6">
         <SearchProfileBar
           profiles={profiles}
           selectedProfileId={searchProfileId}
@@ -138,8 +139,9 @@ export function SearchScreen({
         />
       </div>
 
-      {/* 結果一覧。スクロールするのはここだけにして、検索欄とチップは常に見えるようにする */}
-      <div className="flex-1 overflow-y-auto px-6 py-4">{children}</div>
+      {/* 結果一覧。スクロールするのはここだけにして、検索欄とチップは常に見えるようにする。
+          フィルター下の余白と重複しないよう、一覧側には上余白を足さない。 */}
+      <div className={`min-h-0 flex-1 overflow-y-auto px-6 pb-4 ${profiles.length === 0 ? 'pt-3' : ''}`}>{children}</div>
     </div>
   );
 }
