@@ -159,12 +159,9 @@ const SnippetCardComponent = ({
           <ItemActionMenu itemName={displayTitle} onEdit={handleEdit} onDelete={handleDelete} />
         </View>
 
-        {/* カテゴリバッジ */}
-        {category && (
-          <View style={styles.categoryBadgeContainer}>
-            <CategoryBadge category={category} size="small" />
-          </View>
-        )}
+        {/* カテゴリバッジ。上下の余白は親の gap だけが持つ。
+            片側にだけ余白を足すとバッジの上下が揃わなくなる */}
+        {category && <CategoryBadge category={category} size="small" />}
 
         <TouchableOpacity
           onPress={toggleExpanded}
@@ -287,9 +284,6 @@ const styles = StyleSheet.create({
   },
   titleCopyIcon: {
     marginLeft: UI_CONSTANTS.GAP.XS,
-  },
-  categoryBadgeContainer: {
-    marginTop: UI_CONSTANTS.GAP.XS,
   },
   contentWrapper: {
     justifyContent: 'space-between',

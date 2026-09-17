@@ -50,9 +50,14 @@ function CategoryFilterBarComponent({
     requestAnimationFrame(() => onSelectCategory(categoryId));
   };
 
-  /* カテゴリフィルターバー（全カテゴリ・未分類・各カテゴリのボタン、横スクロール対応） */
+  /* カテゴリフィルターバー（全カテゴリ・未分類・各カテゴリのボタン、横スクロール対応）
+
+     上の余白（mt-1.5 = 6px）が下（pb-2 = 8px + ヘッダーの pb-1 = 4px）より小さいのは、
+     上段の行の高さが表示切替トグルのタップ領域（h-11 = 44px）で決まり、
+     トグルのトラックとプロファイル切替の下地（どちらも32px）が行の下端より6px上で終わるため。
+     その6pxを差し引いて、見た目の余白を上下とも12pxに揃えている */
   return (
-    <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
+    <div className="mt-1.5 flex gap-2 overflow-x-auto pb-2">
       {/* 全カテゴリボタン */}
       <button
         onClick={() => handleSelect(null)}

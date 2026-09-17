@@ -145,6 +145,8 @@ export default function SearchScreen() {
               onRefresh={handleRefresh}
               disableCopy={false}
               categories={categories}
+              /* 検索画面には追加ボタンが無いため、0件のときの「＋ボタンから追加」の案内は出さない */
+              showEmptyHint={false}
             />
           )}
         </View>

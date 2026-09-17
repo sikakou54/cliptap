@@ -98,9 +98,11 @@ export function ShortcutCard({
           <ItemActionMenu itemName={shortcut.name} onEdit={onEdit} onDelete={onDelete} />
         </div>
 
-        {/* カテゴリバッジ（未分類の場合はモバイル版と同じく表示しない） */}
+        {/* カテゴリバッジ（未分類の場合はモバイル版と同じく表示しない）
+            上下の余白は親の gap から4px詰める（背景色があるぶん、文字だけの行より間が空いて見えるため）。
+            上下へ同じだけ効かせて、バッジの上下の余白を揃える */}
         {categoryName && (
-          <div className="mt-1">
+          <div className="-my-1">
             <span
               className="inline-block rounded-md px-1.5 py-[3px] text-xs font-medium"
               style={{ backgroundColor: `${badgeColor}20`, color: badgeColor }}

@@ -56,12 +56,17 @@ export function DashboardHeader({
 }: DashboardHeaderProps) {
   const { t } = useTranslation();
 
-  /* ダッシュボードヘッダー（固定表示、環境切り替え・検索・新規作成・カテゴリフィルター）
-      固定ヘッダー（fixed）で、スクロール時も常に上部に表示される。
-      デスクトップではサイドメニュー分の左マージン（md:left-72）を確保。 */
+  /* ダッシュボードヘッダー（環境切り替え・検索・新規作成・カテゴリフィルター）
+      stickyでスクロール時も常に上部に表示される。fixedではなくstickyにしているのは、
+      レイアウトの流れに残ることで一覧側がヘッダーの高さ分の余白を自分で持たずに済み、
+      ヘッダーの中身を変えるたびに一覧の上余白（旧pt-36）を合わせ直す必要をなくすため。
+      左右の位置は親（サイドメニュー分のml-72を持つ要素）に従うため、ここでは指定しない。 */
   return (
-    <header className={`bg-white dark:bg-[#1A1A1A] shadow-sm fixed top-0 left-0 right-0 z-10 transition-all duration-300 ${isSideMenuOpen ? 'md:left-72' : ''}`}>
-      <div className="px-6 py-4">
+    <header className="bg-white dark:bg-[#1A1A1A] shadow-sm sticky top-0 z-10">
+      {/* 下の余白を小さくしているのは、カテゴリフィルターの下に空く間隔を
+          その上に空く間隔（mt-3 = 12px）と同じにするため。
+          カテゴリフィルター側の pb-2（8px）と合わせて12pxになる */}
+      <div className="px-6 pt-4 pb-1">
         <div className="flex items-center justify-between">
           {/* 左側：ハンバーガーメニュー + 環境切り替え */}
           <div className="flex items-center gap-4">

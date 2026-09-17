@@ -34,6 +34,7 @@
     "copied": "Copied!",
     "copy_title": "Copy title",
     "no_snippets": "No templates",
+    "no_snippets_hint": "Add a template with the + button at the top right",
     "title_placeholder": "Title",
     "title_input": "Enter Title",
     "content_input": "Enter Content",

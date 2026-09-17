@@ -156,8 +156,9 @@ class ShortcutAdapter(
          */
         fun bind(value: ShortcutValue, displayValue: String) {
             currentValue = value
-            /* 改行を含む値は1行表示だと途中で切れて何の値か分からなくなるため、
-               空白へ置き換えて1行に収める。挿入するのは元の文字列のままで、表示だけを整える */
+            /* 改行は空白へ置き換える。改行をそのまま出すと、値の中の改行の数だけ行が高くなり、
+               1件の値でキーボードの高さを使い切ってしまうため。長い値は折り返して全文を見せる。
+               挿入するのは元の文字列のままで、表示だけを整える */
             valueTextView.text = displayValue.replace(Regex("\\R"), " ")
         }
     }

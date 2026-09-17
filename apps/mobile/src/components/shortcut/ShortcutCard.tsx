@@ -142,12 +142,9 @@ function ShortcutCardComponent({
           />
         </View>
 
-        {/* カテゴリバッジ */}
-        {category !== null && (
-          <View style={styles.categoryBadgeContainer}>
-            <CategoryBadge category={category} size="small" />
-          </View>
-        )}
+        {/* カテゴリバッジ。上下の余白は親の gap だけが持つ。
+            片側にだけ余白を足すとバッジの上下が揃わなくなる */}
+        {category !== null && <CategoryBadge category={category} size="small" />}
 
         {/* 登録されている値（タップでその値だけをコピーする） */}
         <View>
@@ -217,9 +214,6 @@ const styles = StyleSheet.create({
   name: {
     flex: 1,
     fontWeight: UI_CONSTANTS.FONT_WEIGHT.SEMIBOLD,
-  },
-  categoryBadgeContainer: {
-    marginTop: UI_CONSTANTS.GAP.XS,
   },
   expandButton: {
     position: 'absolute',

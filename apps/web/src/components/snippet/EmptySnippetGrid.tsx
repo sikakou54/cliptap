@@ -6,7 +6,15 @@
  */
 import { useTranslation } from '@cliptap/shared';
 
-export function EmptySnippetGrid() {
+/**
+ * EmptySnippetGridのProps
+ * @property showEmptyHint - 追加方法の案内を出すか（追加ボタンが見えている画面だけtrue）
+ */
+interface EmptySnippetGridProps {
+  showEmptyHint?: boolean;
+}
+
+export function EmptySnippetGrid({ showEmptyHint = true }: EmptySnippetGridProps) {
   const { t } = useTranslation();
 
   /* 空状態UI（スニペットが0件の場合に表示） */
@@ -23,6 +31,8 @@ export function EmptySnippetGrid() {
       </svg>
       {/* 空状態メッセージ */}
       <p className="mt-4">{t('snippet.no_snippets')}</p>
+      {/* 追加方法の案内は、追加ボタンが見えている画面でだけ出す（ショートカットと同じ） */}
+      {showEmptyHint && <p className="mt-2 text-sm">{t('snippet.no_snippets_hint')}</p>}
     </div>
   );
 }

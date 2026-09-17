@@ -162,6 +162,8 @@ export function Dashboard() {
       onCopyTitle={handleCopySnippetTitle}
       onEdit={handleEditSnippet}
       onDelete={handleDeleteSnippet}
+      /* 検索画面には追加ボタンが無いため、0件のときの「+ ボタンから追加」の案内は出さない */
+      showEmptyHint={!isSearchOpen}
     />
   ) : (
     <ShortcutGrid
@@ -234,9 +236,11 @@ export function Dashboard() {
         />
 
         {/* メインコンテンツ（定型文グリッド）
-            pt-36でヘッダー分の上部マージンを確保（固定ヘッダーの下にコンテンツが表示されるように）。 */}
+            ヘッダーはstickyでレイアウトの流れに残るため、その高さ分の上余白は持たない。
+            上下左右の余白は同じ24pxにして、カードがヘッダーの境目へ張り付かないようにする。
+            カテゴリフィルター自身の上下の余白（12px）はヘッダー側が持つ。 */}
         {/* 検索中は描画しない。検索画面と同時に出すと同じ一覧が二重にマウントされる */}
-        {!isSearchOpen && <main className="px-6 py-6 pt-36">{listContent}</main>}
+        {!isSearchOpen && <main className="px-6 py-6">{listContent}</main>}
       </div>
 
       {/* 検索画面（画面全体を覆う）。一覧は通常表示と同じものをそのまま出す */}

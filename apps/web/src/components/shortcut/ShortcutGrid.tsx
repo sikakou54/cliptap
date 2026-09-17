@@ -43,10 +43,23 @@ export function ShortcutGrid({
 
   if (shortcuts.length === 0) {
     return (
-      <div className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center dark:border-[#333333] dark:bg-[#1A1A1A]">
-        <p className="font-semibold text-gray-700 dark:text-gray-300">{t('shortcut.empty')}</p>
+      /* 空状態は定型文（EmptySnippetGrid）と同じ出し方に揃える。
+         枠や下地を持たせず、画面の背景の上にアイコンと文言だけを置く */
+      <div className="mt-12 text-center text-gray-500 dark:text-[#A0A0A0]">
+        {/* 空状態アイコン（ショートカットを表す稲妻。ListModeToggleと同じ形） */}
+        <svg
+          className="mx-auto h-16 w-16 text-gray-300 dark:text-[#707070]"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+        {/* 空状態メッセージ */}
+        <p className="mt-4">{t('shortcut.empty')}</p>
         {/* 追加方法の案内は、追加ボタンが見えている画面でだけ出す */}
-        {showEmptyHint && <p className="mt-2 text-sm text-gray-500 dark:text-[#A0A0A0]">{t('shortcut.empty_hint')}</p>}
+        {showEmptyHint && <p className="mt-2 text-sm">{t('shortcut.empty_hint')}</p>}
       </div>
     );
   }

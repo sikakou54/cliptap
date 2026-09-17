@@ -49,6 +49,8 @@ interface SnippetGridProps {
   onEdit: (snippet: Snippet) => void;
   /** 削除ボタンクリック時のコールバック */
   onDelete: (snippetId: string) => void;
+  /** 0件のときに追加方法の案内を出すか（追加ボタンが見えている画面だけtrue） */
+  showEmptyHint?: boolean;
 }
 
 export function SnippetGrid({
@@ -63,6 +65,7 @@ export function SnippetGrid({
   onCopyTitle,
   onEdit,
   onDelete,
+  showEmptyHint = true,
 }: SnippetGridProps) {
   /* カテゴリ情報をMapに変換（カテゴリIDから色と名前を高速検索できるようにする）
       メモ化により、categoriesやgetCategoryColor/getCategoryNameが変更された時のみ再計算。
@@ -82,7 +85,7 @@ export function SnippetGrid({
   /* スニペットが0件の場合は空状態を表示
       フィルタリング結果が0件の場合、空状態メッセージと新規作成ボタンを表示。 */
   if (filteredSnippets.length === 0) {
-    return <EmptySnippetGrid />;
+    return <EmptySnippetGrid showEmptyHint={showEmptyHint} />;
   }
 
   /* グリッドの列数に応じたクラスを生成（レスポンシブ対応）

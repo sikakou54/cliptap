@@ -12,13 +12,19 @@
          定型文とショートカットはフィルター行のトグルで行き来する。
          トグル（shortcutButton）はフィルター行の中にあるため、ショートカットを表示している間も
          フィルター行が見えていないと元へ戻れなくなる。
-         そのため入れ替えるのは一覧の中身だけにして、フィルター行は出したままにする。 -->
+         そのため入れ替えるのは一覧の中身だけにして、フィルター行は出したままにする。
+
+         【上の余白を置かない理由】
+         キーボードの上端からフィルター行を始める（iOSと同じ）。行の高さが44dpあるため、
+         余白を足さなくても中のボタンは上端から離れて見える。左右と下は8dpのまま。 -->
 <LinearLayout
     android:id="@+id/mainView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="8dp">
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp"
+    android:paddingBottom="8dp">
 
     <!-- 統合フィルターエリア（環境ドロップダウン + カテゴリドロップダウン + 表示切替トグル + ソートボタン） -->
     <LinearLayout

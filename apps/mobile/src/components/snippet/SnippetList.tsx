@@ -64,6 +64,8 @@ interface SnippetListProps {
   overrideProfileId?: string | null;
   categories?: Category[];
   extraData?: unknown;
+  /** 0件のときに追加方法の案内を出すか（追加ボタンが見えている画面だけtrue） */
+  showEmptyHint?: boolean;
 }
 
 export function SnippetList({
@@ -77,6 +79,7 @@ export function SnippetList({
   disableCopy = false,
   categories,
   extraData,
+  showEmptyHint = true,
 }: SnippetListProps) {
   const { t } = useTranslation();
   const { responsiveSpacing, isTablet } = useTheme();
@@ -148,6 +151,8 @@ export function SnippetList({
         <EmptyState
           icon="document-text-outline"
           message={t('snippet.no_snippets')}
+          /* 追加方法の案内は、追加ボタンが見えている画面でだけ出す（ショートカットと同じ） */
+          description={showEmptyHint ? t('snippet.no_snippets_hint') : undefined}
         />
       </View>
     );

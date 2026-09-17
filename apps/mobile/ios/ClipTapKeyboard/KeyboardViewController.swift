@@ -152,6 +152,14 @@ class KeyboardViewController: UIInputViewController {
      */
     private var expandedShortcutId: String?
 
+    /**
+     * 最後に高さを計算したときのショートカット一覧の幅
+     *
+     * 値の行は折り返して全文を出すため、幅が変わると必要な高さも変わる。
+     * UITableViewは幅が変わっても行の高さを問い直さないため、幅の変化を自分で見て読み直す。
+     */
+    private var lastShortcutTableWidth: CGFloat = 0
+
     /// 定型文一覧の現在のソート順
     /// 値: "created" | "updated" | "title" | "usage"
     private var currentSnippetSortBy: String = KeyboardViewController.defaultSortBy
@@ -740,6 +748,22 @@ class KeyboardViewController: UIInputViewController {
         refreshAllData()
     }
 
+    /**
+     * レイアウトが確定した後に呼ばれるメソッド
+     *
+     * 画面の回転などで一覧の幅が変わると、値の行の折り返し位置が変わって必要な高さも変わる。
+     * UITableViewは幅の変化だけでは行の高さを問い直さないため、幅が変わったときだけ読み直す。
+     * 幅が変わったときに限るのは、reloadDataがレイアウトを起こして繰り返しになるのを防ぐためである。
+     */
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+
+        let width = shortcutTableView.bounds.width
+        guard width != lastShortcutTableWidth else { return }
+        lastShortcutTableWidth = width
+        shortcutTableView.reloadData()
+    }
+
     override func textDidChange(_ textInput: UITextInput?) {
         super.textDidChange(textInput)
         applyHostKeyboardAppearance()
@@ -945,8 +969,9 @@ class KeyboardViewController: UIInputViewController {
                高さはタップ領域の最小44ptにし、中のボタンは36ptのまま縦中央に置く。
                iOSは親ビューの外側へのタッチを子へ届けないため、行が36ptのままだと
                表示切替トグルが判定を44ptへ広げても、上下2ptずつしか効かない。
-               行を上下4ptずつ広げた分は、上の余白と一覧までの間隔を4ptずつ詰めて相殺し、見た目の位置は変えない */
-            filterContainerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 4),
+               上の余白は置かず、キーボードの上端から行を始める。行の高さが44ptあるため、
+               余白を足さなくても中のボタン（36pt）はキーボードの上端から4pt下がる */
+            filterContainerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             filterContainerView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 8),
             filterContainerView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -8),
             filterContainerView.heightAnchor.constraint(equalToConstant: 44),
@@ -1286,7 +1311,8 @@ class KeyboardViewController: UIInputViewController {
         /* 行の高さを固定し、自動高さ計算（セルフサイジング）を無効化する。
            スニペット一覧と同じ理由で、推定高さのままだと行の実フレームが見た目とずれ、
            余白部分でタッチが拾えないことがある。
-           ショートカットの行と値の行で高さが違うため、rowHeightではなく heightForRowAt で行ごとに返す */
+           ショートカットの行と値の行で高さが違うため、rowHeightではなく heightForRowAt で行ごとに返す。
+           値の行は折り返して全文を出すため、そこで文字量から高さを計算する */
         shortcutTableView.estimatedRowHeight = 0
 
         /* 内容が画面に収まっていてもドラッグに反応させる（無反応に見える状態をなくす） */
@@ -2360,14 +2386,7 @@ extension KeyboardViewController: UITableViewDataSource {
      *   - indexPath: 対象の行
      * - Returns: ショートカットの行、または値の行のセル
      *
-     * 【値を変数置換して表示する理由】
-     * 挿入されるのは変数トークンを展開した文字列のため、表示も選択中のプロファイルで展開して見せる
-     * （定型文一覧のタイトルと同じ）。表示には保持中の変数マップと書式を使い、
-     * 挿入時はService側がその時点の値で展開し直す。
-     *
-     * 【伏せる指定の値を記号にする理由】
-     * 画面に出さずに扱えるようにするためで、挿入されるのは伏せていても実際の値である。
-     * 展開してから伏せるのではなく展開そのものを省くのは、展開結果を作る必要がないため。
+     * 値の行に出す文字列の作り方は shortcutDisplayValue(for:) を参照。
      */
     private func shortcutCell(for tableView: UITableView, at indexPath: IndexPath) -> UITableViewCell {
         switch shortcutRows[indexPath.row] {
@@ -2388,14 +2407,7 @@ extension KeyboardViewController: UITableViewDataSource {
             ) as? ShortcutValueCell else {
                 return UITableViewCell()
             }
-            let displayValue = value.isMasked
-                ? maskedValueText
-                : variableReplacer.replace(
-                    in: value.value,
-                    variablesMap: variablesMap,
-                    formats: systemVariableFormats
-                )
-            cell.configure(value: displayValue)
+            cell.configure(value: shortcutDisplayValue(for: value))
             return cell
         }
     }
@@ -2407,6 +2419,10 @@ extension KeyboardViewController: UITableViewDelegate {
      *
      * ショートカットの行と値の行で高さが違うため、テーブル全体のrowHeightではなく行ごとに返す。
      * 定型文の一覧は1種類しか行を持たないため、こちらは既定（rowHeight）のままにする。
+     *
+     * 値の行は折り返して全文を出すため、文字量と行の幅から高さを計算して返す。
+     * 自動高さ計算を使わないのは、推定高さのままだと行の実フレームが見た目とずれ、
+     * 余白部分でタッチが拾えないことがあるためである（setupShortcutViewと同じ理由）。
      */
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         guard tableView === shortcutTableView else { return tableView.rowHeight }
@@ -2414,9 +2430,40 @@ extension KeyboardViewController: UITableViewDelegate {
         switch shortcutRows[indexPath.row] {
         case .shortcut:
             return ShortcutCell.rowHeight
-        case .value:
-            return ShortcutValueCell.rowHeight
+        case .value(let value):
+            return ShortcutValueCell.height(
+                for: shortcutDisplayValue(for: value),
+                width: tableView.bounds.width
+            )
         }
+    }
+
+    /**
+     * 値の行に出す文字列を作る
+     *
+     * 行の描画（shortcutCell）と高さの計算（heightForRowAt）で必ず同じ文字列を使うため、
+     * 組み立てはここだけに置く。ずれると計算した高さと描く文字が食い違い、末尾が切れる。
+     *
+     * 【値を変数置換して表示する理由】
+     * 挿入されるのは変数トークンを展開した文字列のため、表示も選択中のプロファイルで展開して見せる
+     * （定型文一覧のタイトルと同じ）。表示には保持中の変数マップと書式を使い、
+     * 挿入時はService側がその時点の値で展開し直す。
+     *
+     * 【伏せる指定の値を記号にする理由】
+     * 画面に出さずに扱えるようにするためで、挿入されるのは伏せていても実際の値である。
+     * 展開してから伏せるのではなく展開そのものを省くのは、展開結果を作る必要がないため。
+     *
+     * - Parameter value: 対象の値
+     * - Returns: 行に表示する文字列
+     */
+    private func shortcutDisplayValue(for value: ShortcutValue) -> String {
+        value.isMasked
+            ? maskedValueText
+            : variableReplacer.replace(
+                in: value.value,
+                variablesMap: variablesMap,
+                formats: systemVariableFormats
+            )
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -2623,9 +2670,25 @@ final class ShortcutCell: UITableViewCell {
         return label
     }()
 
+    /// 印の大きさ（pt）。Android（12dp）と同じ値にする
+    static let chevronSize: CGFloat = 12
+
+    /**
+     * 印の描き方
+     *
+     * 定型文の行が使うOS標準のアクセサリ（`.disclosureIndicator`）と同じ太さに見えるよう、
+     * 線の太さ（weight）を指定する。既定のままだとラベルの文字サイズに合わせた細い線で描かれ、
+     * 同じ大きさに縮めても定型文の「＞」より薄く見える。
+     */
+    private static let chevronConfiguration = UIImage.SymbolConfiguration(
+        pointSize: chevronSize,
+        weight: .semibold
+    )
+
     /// 開いているかを示す印（開いていれば上向き、閉じていれば下向き）
     private let chevronImageView: UIImageView = {
         let imageView = UIImageView()
+        /* 色も定型文の行のアクセサリに合わせる */
         imageView.tintColor = .tertiaryLabel
         imageView.contentMode = .scaleAspectFit
         imageView.translatesAutoresizingMaskIntoConstraints = false
@@ -2663,8 +2726,8 @@ final class ShortcutCell: UITableViewCell {
 
             chevronImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             chevronImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            chevronImageView.widthAnchor.constraint(equalToConstant: 12),
-            chevronImageView.heightAnchor.constraint(equalToConstant: 12)
+            chevronImageView.widthAnchor.constraint(equalToConstant: Self.chevronSize),
+            chevronImageView.heightAnchor.constraint(equalToConstant: Self.chevronSize)
         ])
 
         let selectedBackground = UIView()
@@ -2681,7 +2744,10 @@ final class ShortcutCell: UITableViewCell {
      */
     func configure(name: String, isExpanded: Bool) {
         nameLabel.text = name
-        chevronImageView.image = UIImage(systemName: isExpanded ? "chevron.up" : "chevron.down")
+        chevronImageView.image = UIImage(
+            systemName: isExpanded ? "chevron.up" : "chevron.down",
+            withConfiguration: Self.chevronConfiguration
+        )
     }
 }
 
@@ -2702,15 +2768,32 @@ final class ShortcutValueCell: UITableViewCell {
     /// 再利用識別子
     static let reuseIdentifier = "ShortcutValueCell"
 
-    /// 行の高さ（pt）。ショートカットの行と同じく、最小タップ領域を割らない固定値にする
-    static let rowHeight: CGFloat = 44
+    /// 行の高さの下限（pt）。値が短くても最小タップ領域を割らないようにする
+    static let minimumRowHeight: CGFloat = 44
+
+    /// 値の文字（高さの計算にも同じものを使う）
+    private static let valueFont = UIFont.systemFont(ofSize: 14)
+
+    /// ショートカットの行より下げる左の余白（pt）
+    private static let leadingInset: CGFloat = 32
+
+    /// 右の余白（pt）
+    private static let trailingInset: CGFloat = 16
+
+    /// 文字の上下に置く余白（pt）
+    private static let verticalInset: CGFloat = 12
 
     /// 挿入される値を表示するラベル
     private let valueLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 14)
+        label.font = ShortcutValueCell.valueFont
         label.textColor = .secondaryLabel
-        label.lineBreakMode = .byTruncatingTail
+        /* 収まらない値は折り返して全文を見せる。
+           末尾を省略すると、末尾だけが違う値（同じサービスのIDなど）を見分けられないためである */
+        label.numberOfLines = 0
+        /* 単語単位ではなく文字単位で折り返す。値はIDやトークンのように空白を持たない文字列が多く、
+           単語単位だと折り返す場所が無く1行からはみ出すためである */
+        label.lineBreakMode = .byCharWrapping
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -2735,9 +2818,12 @@ final class ShortcutValueCell: UITableViewCell {
         contentView.addSubview(valueLabel)
         NSLayoutConstraint.activate([
             /* ショートカットの行より左を下げ、その下にぶら下がっていることを示す */
-            valueLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 32),
-            valueLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            valueLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor)
+            valueLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: Self.leadingInset),
+            valueLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -Self.trailingInset),
+            /* 行の高さは heightForRowAt が文字量から計算して渡すため、ラベルは上下の余白を残して広げる。
+               値が1行で収まって行が下限（44pt）まで伸びたときは、UILabelが文字を上下中央へ描く */
+            valueLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: Self.verticalInset),
+            valueLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -Self.verticalInset)
         ])
 
         let selectedBackground = UIView()
@@ -2751,9 +2837,50 @@ final class ShortcutValueCell: UITableViewCell {
      * - Parameter value: 表示する文字列（変数は展開済み。伏せる指定なら記号に置き換え済み）
      */
     func configure(value: String) {
-        /* 改行を含む値は1行表示だと途中で切れて何の値か分からなくなるため、
-           空白へ置き換えて1行に収める。挿入するのは元の文字列のままで、表示だけを整える */
-        valueLabel.text = value.components(separatedBy: .newlines).joined(separator: " ")
+        valueLabel.text = Self.displayText(for: value)
+    }
+
+    /**
+     * 行に出す文字列を作る
+     *
+     * 改行は空白へ置き換える。改行をそのまま出すと、値の中の改行の数だけ行が高くなり、
+     * 1件の値でキーボードの高さを使い切ってしまうためである。
+     * 挿入するのは元の文字列のままで、表示だけを整える。
+     *
+     * - Parameter value: 表示する文字列
+     * - Returns: 折り返して表示する文字列
+     */
+    static func displayText(for value: String) -> String {
+        value.components(separatedBy: .newlines).joined(separator: " ")
+    }
+
+    /**
+     * 値を折り返して表示するのに必要な行の高さを返す
+     *
+     * 【自動高さ計算（automaticDimension）を使わない理由】
+     * 拡張キーボードでは推定高さのままだと行の実フレームが見た目とずれ、余白部分でタッチが拾えないことがある。
+     * 一覧全体で自動高さ計算を無効にしているため、値の行も文字量から高さを自分で計算して確定した値を返す。
+     *
+     * - Parameters:
+     *   - value: 表示する文字列（変数は展開済み。伏せる指定なら記号に置き換え済み）
+     *   - width: 行の幅（テーブルビューの幅）
+     * - Returns: 下限（44pt）を割らない行の高さ
+     */
+    static func height(for value: String, width: CGFloat) -> CGFloat {
+        /* 幅が確定する前（レイアウト前）に呼ばれても計算が破綻しないよう、最低1ptは残す */
+        let textWidth = max(1, width - leadingInset - trailingInset)
+
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineBreakMode = .byCharWrapping
+
+        let boundingBox = (displayText(for: value) as NSString).boundingRect(
+            with: CGSize(width: textWidth, height: .greatestFiniteMagnitude),
+            options: [.usesLineFragmentOrigin, .usesFontLeading],
+            attributes: [.font: valueFont, .paragraphStyle: paragraphStyle],
+            context: nil
+        )
+
+        return max(minimumRowHeight, ceil(boundingBox.height) + verticalInset * 2)
     }
 }
 

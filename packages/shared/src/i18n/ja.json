@@ -34,6 +34,7 @@
     "copied": "コピーしました",
     "copy_title": "タイトルをコピー",
     "no_snippets": "定型文がありません",
+    "no_snippets_hint": "右上の + ボタンから定型文を追加できます",
     "title_placeholder": "タイトル",
     "title_input": "タイトルを入力",
     "content_input": "本文を入力",
