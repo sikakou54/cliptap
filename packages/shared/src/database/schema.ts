@@ -281,6 +281,24 @@ export const CREATE_INDEXES = {
     CREATE INDEX IF NOT EXISTS idx_shortcut_values_use_count
     ON shortcut_values(useCount DESC);
   `,
+  /**
+   * 表示を伏せる指定のindex
+   *
+   * @remarks
+   * isMaskedで絞り込むクエリは無く、このindexで速くなるものも無い。
+   * それでも置いているのは、移行・取込の後に `isMasked` 列が存在することを確かめる唯一の経路だから
+   * （役割は上の idx_shortcut_values_use_count と同じ）。
+   *
+   * この列を後から足したため、値の名前を持っていた頃の `shortcut_values` が残っているDBでは
+   * テーブル名も useCount 列も揃ってしまい、起動時の確認をすべて通り抜ける。
+   * 実際に壊れるのはショートカット画面を開いて `SELECT ... v.isMasked` を投げた時点で、
+   * 起動からは離れた場所で落ちるため原因を追いにくい。ここで起動時に落とす。
+   * 参照するクエリが無いことを理由に消さないこと。
+   */
+  shortcutValuesMasked: `
+    CREATE INDEX IF NOT EXISTS idx_shortcut_values_masked
+    ON shortcut_values(isMasked);
+  `,
 };
 
 /**
