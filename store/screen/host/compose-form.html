@@ -1,0 +1,60 @@
+<!doctype html>
+<!--
+  撮影用ホスト — お届け先の入力フォーム。05-shortcuts-right-keyboard-<lang>.png 用。
+  氏名・電話番号・住所という、申し込みや配送先の入力に共通する最小の構成だけを置く。
+  特定のサービスの配色・ロゴ・固有の文言は入れない（README参照）。
+
+  3欄とも contenteditable にしてある。<input> だとタップしてもキーボードが上がらず
+  （WebView内で実測）、撮影そのものが始められないため。
+
+  ショートカットの使いどころ（毎回同じ値を打ち直す欄）をそのまま写すための面。
+  3つの欄はいずれも空で置き、撮影時に ClipTap キーボードのショートカットから入れる。
+  ホスト側に値を書いてしまうと、キーボードで入れたことが何も伝わらない。
+-->
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Composer" />
+<meta name="color-scheme" content="dark" />
+<title>Composer</title>
+<link rel="apple-touch-icon" href="icon.png" />
+<link rel="stylesheet" href="host.css" />
+</head>
+<body>
+
+<div class="nav">
+  <button class="nav-action leading" type="button" data-back>
+    <span class="ja">キャンセル</span><span class="en">Cancel</span>
+  </button>
+  <span class="nav-title">
+    <span class="ja">お届け先の入力</span><span class="en">Delivery details</span>
+  </span>
+  <button class="nav-action trailing filled" type="button">
+    <span class="ja">保存</span><span class="en">Save</span>
+  </button>
+</div>
+
+<div class="body body--form">
+  <!-- 3欄ともラベルを上に置く積み重ね型。1行の flex 行に置いた contenteditable は
+       タップしてもフォーカスが入らずキーボードが出なかったため（WebView内で実測）。 -->
+  <div class="field field--stacked">
+    <span class="field-label"><span class="ja">氏名</span><span class="en">Name</span></span>
+    <div class="textarea editable" contenteditable="true" role="textbox" data-ja="氏名を入力" data-en="Full name"></div>
+  </div>
+  <div class="field field--stacked">
+    <span class="field-label"><span class="ja">電話番号</span><span class="en">Phone</span></span>
+    <div class="textarea editable" contenteditable="true" role="textbox" data-ja="電話番号を入力" data-en="Phone number"></div>
+  </div>
+  <div class="field field--stacked">
+    <span class="field-label"><span class="ja">住所</span><span class="en">Address</span></span>
+    <div class="textarea editable" contenteditable="true" role="textbox" aria-multiline="true" data-ja="住所を入力" data-en="Street address"></div>
+  </div>
+</div>
+
+<script src="host.js"></script>
+</body>
+</html>

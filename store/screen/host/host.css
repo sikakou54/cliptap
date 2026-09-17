@@ -183,6 +183,26 @@ body {
   overflow-y: auto;
 }
 
+/* ラベルを上に置き、値を全幅で受ける欄。入力フォームの各欄で使う。
+   中の入力欄は自然高にする（.textarea の flex: 1 のままだと残りの高さを全部取る）。
+   1行ぶんの高さを確保しているのは当たり判定のため。空の contenteditable を
+   .field の flex 行へ置くとタップが通らず、キーボードが出なかった（実測）。 */
+.field--stacked {
+  display: block;
+}
+
+.field--stacked .field-label {
+  display: block;
+  width: auto;
+  margin-bottom: 6px;
+}
+
+.field--stacked .textarea {
+  flex: none;
+  padding: 0;
+  min-height: 25px;
+}
+
 /* 本文の入力欄は contenteditable にしてある。textarea や input だと iOS が
    フォーム移動用のアクセサリバー（∧ ∨ 完了）をキーボードの上へ足し、
    撮影した画像にブラウザの部品が写り込むため。contenteditable にはそれが出ない。

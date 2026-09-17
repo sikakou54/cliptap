@@ -461,17 +461,6 @@
         ]
       },
       {
-        "name": "自宅の住所",
-        "profiles": [],
-        "category": "日常",
-        "values": [
-          {
-            "value": "〒150-xxxx 東京都渋谷区神宮前x-x-x サンプルマンションxxx",
-            "isMasked": false
-          }
-        ]
-      },
-      {
         "name": "Instagram",
         "profiles": [],
         "category": "SNS",
@@ -494,6 +483,28 @@
           {
             "value": "Pxxxxxxxxxxx",
             "isMasked": true
+          }
+        ]
+      },
+      {
+        "name": "自宅の住所",
+        "profiles": [],
+        "category": "日常",
+        "values": [
+          {
+            "value": "〒150-xxxx 東京都渋谷区神宮前x-x-x サンプルマンションxxx",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "氏名",
+        "profiles": [],
+        "category": "連絡先",
+        "values": [
+          {
+            "value": "山田 太郎",
+            "isMasked": false
           }
         ]
       },
@@ -989,17 +1000,6 @@
         ]
       },
       {
-        "name": "Home address",
-        "profiles": [],
-        "category": "Daily",
-        "values": [
-          {
-            "value": "xxx Cedar Ave, Apt xxx, Portland, OR 972xx",
-            "isMasked": false
-          }
-        ]
-      },
-      {
         "name": "Instagram",
         "profiles": [],
         "category": "Social media",
@@ -1022,6 +1022,28 @@
           {
             "value": "Pxxxxxxxxxxx",
             "isMasked": true
+          }
+        ]
+      },
+      {
+        "name": "Home address",
+        "profiles": [],
+        "category": "Daily",
+        "values": [
+          {
+            "value": "xxx Cedar Ave, Apt xxx, Portland, OR 972xx",
+            "isMasked": false
+          }
+        ]
+      },
+      {
+        "name": "Full name",
+        "profiles": [],
+        "category": "Contacts",
+        "values": [
+          {
+            "value": "Taylor Morgan",
+            "isMasked": false
           }
         ]
       },

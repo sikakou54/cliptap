@@ -62,13 +62,32 @@ WebViewなら `hideKeyboardAccessoryView` が WKContentView の `inputAccessoryV
 メールの件名は、プレビュー右上のボタン（タイトルだけを挿入）で入れる。
 件名を先に入れてから本文を入れる。逆順にすると本文へフォーカスが残り、タイトルまで本文へ入る。
 
+### WebViewの制約（撮影の手順を縛るもの）
+
+自動操作で確かめた範囲で、次が効かない。構図を決めるときはこれを前提にする。
+
+- **入力欄が複数ある面では、最初に触れた欄からフォーカスが動かせない。**
+  タップしても別の欄へ移らず（`click` で `focus()` を呼んでも同じ）、挿入は最初の欄へ入り続ける。
+  そのため入力フォームの面は、見せたい1欄だけを空にして撮る
+- **キーボードの一覧とカテゴリのドロップダウンはスクロールできない。**
+  撮影に使うショートカット・定型文は、絞り込みなしで見える上位5件に入れておく
+  （`apps/mobile/dummy.json` の配列の末尾ほど一覧の上に出る）
+- 入力欄をタップしたときに「ペースト／自動入力」の吹き出しが出ることがある。
+  撮影前に `xcrun simctl pbcopy <udid> < /dev/null` でクリップボードを空にしておくと出ない
+
 ## レイアウト
 
 | ファイル | 用途 | 対応するキャプチャ |
 |---|---|---|
 | `compose-mail.html` | 宛先・件名・本文のメール作成欄 | `02-scene-3-mail-<lang>.png` |
 | `compose-post.html` | SNSの投稿コンポーザ | `02-scene-2-sns-<lang>.png` |
+| `compose-message.html` | 人とのメッセージのやりとり | `01-hero-right-insert-<lang>.png` |
 | `compose-chat.html` | AIアシスタントとの対話 | `02-scene-1-ai-<lang>.png` |
+| `compose-form.html` | 氏名・電話番号・住所の入力フォーム | `05-shortcuts-right-keyboard-<lang>.png` |
+
+`compose-message.html` と `compose-chat.html` は骨格が同じなので、見分けがつくよう
+前者はタイトルを人名にして往復の吹き出しを置き、後者は吹き出し1つと長いプロンプトにしている。
+どちらかを直すときは、もう片方と似すぎていないかを確認すること。
 
 ## 撮影時の注意
 

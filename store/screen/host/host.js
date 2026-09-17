@@ -142,6 +142,12 @@ function scrollToStart(el) {
 
 for (const el of document.querySelectorAll('.editable')) {
   el.addEventListener('input', () => scrollToStart(el));
+
+  /* タップされた欄へ明示的にフォーカスを移す。
+     WebView内では contenteditable どうしのフォーカス移動がタップだけでは起こらず、
+     最初に触れた欄へ入り続ける。入力フォームのように欄が複数ある面で、
+     2つ目以降の欄へショートカットを入れられなくなる（実測）。 */
+  el.addEventListener('click', () => el.focus());
 }
 
 /* 文字数の表示を本文に連動させる。

@@ -156,13 +156,15 @@ ClipTapが取りに行くべき語の仮説：
 
 キャプチャは**すべてシミュレータ撮影**（1206×2622、ダークモード、開発用シード `apps/mobile/dummy.json` の架空データ、プロファイルは「A社用」／en は「Client A」）で、ファイル名に `-ja` / `-en` を持ち言語別に出し分ける。実機キャプチャは残っていない。
 
-他アプリへの挿入面は2通りある。
+他アプリへの挿入面は**すべて撮影用ホスト**（`store/screen/host/`）で撮る。
+`01-hero-right-insert` / `02-scene-*` / `05-shortcuts-right-keyboard` の全部が対象で、
+アプリの 設定 > Developer Menu > Capture Host（WebView）から開く。
+メール・投稿・メッセージ・AIとの対話・入力フォームという場面に当たるアプリがシミュレータに無く、
+あっても他社のUIを掲載画像へ持ち込まないため。
+実在するサービスに似せない方針と理由は `store/screen/host/README.md` を正とする。
 
-- **メッセージApp**（`01-hero-right-insert` / `05-shortcuts-right-keyboard`）— iOS標準アプリをそのままホストにする
-- **撮影用ホスト**（`02-scene-*`）— `store/screen/host/` の無印の入力欄を、アプリの
-  設定 > Developer Menu > Capture Host（WebView）で開いて使う。
-  リードが言う「SNS」「メール」「AIとの対話」の場面が要るが、該当するアプリがシミュレータに無いため。
-  実在するサービスに似せない方針と理由は `store/screen/host/README.md` を正とする
+他アプリへ挿入する面は**すべて「挿入する直前」**で撮る。キーボードのプレビューに
+これから入る文字と挿入ボタンが出ている状態で、1枚で「選ぶ → 入る」が伝わる。
 
 | # | ファイル | 訴求 |
 |---|---|---|
@@ -196,7 +198,6 @@ node ~/.claude/skills/html-to-png/scripts/html_to_png.js store/screen/jobs.json
    時刻は **9:41 ではなく、システム変数画面に出ている実時刻に合わせる**。`{{time}}` は端末の実時刻で描画されるので、9:41 に固定すると同じ画面の中で状態バーと値が食い違う
 4. アプリはプロファイル「A社用」（en は Client A）に切り替えてから撮る
 5. キーボード面を撮る。**DBを wipe したあとは必ずシミュレータごと再起動する**。拡張キーボードは消えたDBを掴んだままになり、「No snippets available」と出たまま直らない
-   - メッセージAppの面は、ホーム画面から起動して「◀ ClipTap」の戻り表示が出ないようにする
    - 撮影用ホストの面は `node store/screen/host/serve.mjs` を起こし、
      **設定 > Developer Menu > Capture Host** から開く（Safariで開くとアクセサリバーが写り込む）。
      **必ずメニューからレイアウトを選び直す**（入力欄の画面はDOMごと復元されるため、前回の本文が残る）
