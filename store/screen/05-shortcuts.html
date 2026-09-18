@@ -6,8 +6,10 @@
   （store/screen/host/compose-form.html）へ、住所のショートカットを挿入する直前。
   どちらもシミュレータで撮影し、開発用シード（apps/mobile/dummy.json）の架空データを
   プロファイル「A社用」（en は Client A）で表示している。
+  見出しとリードは LP の shortcuts セクション（#shortcuts）から。リードは版面に合わせて
+  末尾の「長い住所を打ち直す手間が省けます」を落としている。
   一覧の先頭が「携帯番号」「請求先」「氏名」「自宅の住所」になるのは dummy.json の並びによる
-  （配列の末尾ほど一覧の上に出る）。見出しの「電話番号や請求先」と、右のフォームが持つ
+  （配列の末尾ほど一覧の上に出る）。見出しの「電話番号も住所も」と、右のフォームが持つ
   氏名・電話番号・住所の欄の両方に写っているものを合わせるための並びなので、入れ替えると崩れる。
   キーボードの一覧は自動操作でスクロールできないため、撮影に使うショートカットは
   必ずこの上位5件へ入れておくこと。
@@ -16,16 +18,16 @@
 <template id="slide">
   <div class="head">
     <h1 class="ja">
-      <span class="line">電話番号や請求先は、</span>
-      <span class="line accent">値だけタップで入る。</span>
+      <span class="line">電話番号も住所も、</span>
+      <span class="line accent">打たずに選ぶ。</span>
     </h1>
     <h1 class="en">
-      <span class="line">Phone and billing info,</span>
-      <span class="line accent">just tap to insert.</span>
+      <span class="line">Phone and address,</span>
+      <span class="line accent">ready to insert.</span>
     </h1>
 
-    <p class="sub ja">よく入力する値をショートカットに登録。プロファイルごとに使い分けて、キーボードから値だけを入力できます。</p>
-    <p class="sub en">Save the values you type often as shortcuts, switch them by profile, and insert just the value from the keyboard.</p>
+    <p class="sub ja">申し込みのたびに入力する氏名・電話番号・住所を、ショートカットに登録。入力したい欄を選び、キーボードから必要な項目をタップ。</p>
+    <p class="sub en">Save the name, phone number and address you enter on forms again and again. Select a field and tap the detail you need.</p>
 
     <p class="note"></p>
   </div>
