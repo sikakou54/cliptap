@@ -138,7 +138,7 @@
             <h4 style="font-size: 1.1em; margin-top: 20px; margin-bottom: 10px; color: #667eea;">🔐 連携方法</h4>
 
             <div style="margin-bottom: 20px;">
-                <p style="font-weight: 600; margin-bottom: 8px;">① Apple Sign-In（iOS専用）</p>
+                <p style="font-weight: 600; margin-bottom: 8px;">① Apple Sign-In</p>
                 <ul style="margin-top: 8px;">
                     <li><strong>対応環境：</strong>iOSアプリおよびWeb版（ブラウザ）</li>
                     <li><strong>認証基盤：</strong>Firebase Authentication（Google LLC提供）</li>
@@ -153,7 +153,7 @@
             </div>
 
             <div style="margin-bottom: 20px;">
-                <p style="font-weight: 600; margin-bottom: 8px;">② Google Sign-In（iOS・Android対応）<span style="background-color: #28a745; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.85em; margin-left: 8px;">推奨</span></p>
+                <p style="font-weight: 600; margin-bottom: 8px;">② Google Sign-In<span style="background-color: #28a745; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.85em; margin-left: 8px;">推奨</span></p>
                 <ul style="margin-top: 8px;">
                     <li><strong>対応環境：</strong>iOS・AndroidアプリおよびWeb版（ブラウザ）</li>
                     <li><strong>認証基盤：</strong>Firebase Authentication（Google LLC提供）</li>
@@ -161,6 +161,7 @@
                         <ul style="margin-top: 5px;">
                             <li>Googleアカウントに紐付けられたユーザー識別子（UID）</li>
                             <li>メールアドレス</li>
+                            <li>表示名およびプロフィール画像URL（Googleアカウントの設定からFirebaseが自動で取得します。本サービスの画面には表示せず、機能にも使用していません）</li>
                         </ul>
                     </li>
                     <li><strong>外部ポリシー：</strong><a href="https://policies.google.com/privacy" style="color: #667eea; text-decoration: none;" target="_blank">Google Privacy Policy</a></li>
@@ -180,13 +181,13 @@
                 <ul style="margin: 0; color: #856404;">
                     <li><strong>定型文、カテゴリ、プロファイル、カスタム変数、ショートカットとその値等のユーザーが作成したコンテンツは、Firebaseサーバーに一切送信されません</strong></li>
                     <li>これらのデータは、アカウント連携の有無にかかわらず、常に端末内にのみ保存されます</li>
-                    <li>Firebaseに保存されるのは、<strong>ユーザー識別子（UID）、メールアドレスおよび認証プロバイダー情報</strong>のみです。購入内容や加入状態そのものはFirebaseには保存されず、RevenueCat（2.4）および各ストアが保持します</li>
+                    <li>Firebaseに保存されるのは、<strong>ユーザー識別子（UID）、メールアドレス、認証プロバイダー情報、および認証プロバイダーが自動で設定する表示名とプロフィール画像URL</strong>のみです。表示名とプロフィール画像URLは、本サービスの画面には表示せず、機能にも使用していません。購入内容や加入状態そのものはFirebaseには保存されず、RevenueCat（2.4）および各ストアが保持します</li>
                 </ul>
             </div>
 
             <h4 style="font-size: 1.1em; margin-top: 20px; margin-bottom: 10px; color: #667eea;">↩️ 解除方法</h4>
             <p>アカウント連携はいつでも解除（ログアウト）できます。設定画面から簡単に解除可能です。なお、解除後も端末内のデータは保持されます。</p>
-            <p>解除（ログアウト）を行っても、Firebase AuthenticationおよびRevenueCatに記録されたユーザー識別子（UID）とメールアドレスは削除されません。これらの削除をご希望の場合は、11のお問い合わせ先までご請求ください（8をご確認ください）。</p>
+            <p>解除（ログアウト）を行っても、Firebase AuthenticationおよびRevenueCatに記録された情報（ユーザー識別子（UID）、メールアドレス、認証プロバイダー情報、表示名、プロフィール画像URL）は削除されません。これらの削除をご希望の場合は、11のお問い合わせ先までご請求ください（8をご確認ください）。</p>
 
             <h3 style="font-size: 1.2em; margin-top: 20px; margin-bottom: 10px;">2.4 サブスクリプション関連情報</h3>
             <p>Proプラン（有料サブスクリプション）の購入および管理は、各プラットフォームのストアを通じて行われます：</p>
@@ -296,7 +297,7 @@
             <p>ユーザーが任意でアカウント連携機能を利用する場合、Firebase Authentication（Google LLC提供）を使用します。</p>
             <ul>
                 <li><strong>提供元：</strong>Google LLC</li>
-                <li><strong>収集される情報：</strong>ユーザー識別子（UID）、メールアドレス、認証プロバイダー情報（Apple / Google）</li>
+                <li><strong>収集される情報：</strong>ユーザー識別子（UID）、メールアドレス、認証プロバイダー情報（Apple / Google）、および認証プロバイダーが自動で設定する表示名とプロフィール画像URL</li>
                 <li><strong>目的：</strong>複数の端末で共通して使えるアカウント識別子を発行し、購入した権利をひも付けること。購入内容や加入状態そのものはFirebaseには保存されません（5.4）</li>
                 <li><strong>データの保存場所：</strong>Google Cloudの米国リージョン（Firebaseプロジェクト: cliptap-194b5）</li>
                 <li><strong>詳細：</strong><a href="https://firebase.google.com/support/privacy" style="color: #667eea; text-decoration: none;" target="_blank">Firebase Privacy and Security</a></li>
@@ -399,7 +400,7 @@
             <p>Web版をご利用の場合は、メニューの「ファイルを閉じる」を実行することで、ブラウザ内に保存されている作業データを削除できます。</p>
             <p>アプリをアンインストールした後は、当方からデータを復元することはできませんのでご注意ください。</p>
             <p>ただしAndroidでは、OSの自動バックアップ機能が有効な場合に限り、同じ端末・同じGoogleアカウントでの再インストール時にアプリデータが復元されることがあります（4.4をご確認ください）。</p>
-            <p style="margin-top: 10px;"><strong>アカウント連携で当方側に残る情報について：</strong>アカウント連携（2.3）を利用した場合、Firebase Authenticationに記録されたユーザー識別子（UID）およびメールアドレスと、RevenueCat（5.4）に記録されたユーザー識別子は、ログアウトやアプリのアンインストールでは削除されません。これらの情報について、開示、訂正、利用停止または削除をご希望の場合は、11のお問い合わせ先までご請求ください。ご本人からのご請求であることを確認のうえ、合理的な期間内に対応します。</p>
+            <p style="margin-top: 10px;"><strong>アカウント連携で当方側に残る情報について：</strong>アカウント連携（2.3）を利用した場合、Firebase Authenticationに記録された情報（ユーザー識別子（UID）、メールアドレス、認証プロバイダー情報、表示名、プロフィール画像URL）と、RevenueCat（5.4）に記録されたユーザー識別子は、ログアウトやアプリのアンインストールでは削除されません。これらの情報について、開示、訂正、利用停止または削除をご希望の場合は、11のお問い合わせ先までご請求ください。ご本人からのご請求であることを確認のうえ、合理的な期間内に対応します。</p>
             <p style="margin-top: 10px;">サブスクリプション情報は、各プラットフォームのストアで管理されており、アプリのアンインストールだけでは解約されません。解約は各ストアの設定から行ってください。</p>
         </div>
 

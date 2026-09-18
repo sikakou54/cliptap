@@ -56,7 +56,7 @@ Variables for the parts that change
 Seven system variables - {{today}}, {{now}}, {{time}}, {{year}}, {{month}}, {{day}}, {{weekday}} - fill in the date and time as you insert. Custom variables like {{name}} or {{company}} hold your own details: enter once, reuse everywhere. Free: 5. Pro: unlimited.
 
 94 date and time formats
-Pick the output format for each system variable from 94 presets in total, 34 for the date alone: 2026/08/04, 08/04/2026, 09:05, Tue. Preview against the real date; every template using it follows at once. All 94 are free.
+Pick the output format for each system variable from 94 presets in total, 34 for the date alone: 2026/08/04, 08/04/2026, 09:05, Tue. Preview against the real date; every template using it follows at once.
 
 Profiles for every hat you wear
 Profiles like "Company A", "Side project" and "Personal" each keep their own variable and shortcut values, so one template comes out with a different company name and signature. Free: 3. Pro: unlimited.
@@ -77,7 +77,7 @@ Backup & Restore: back up everything as a .cliptap file and restore it on anothe
 
 FREE AND PRO
 
-Free: 50 templates, 50 shortcuts with 5 values each, unlimited categories, the snippet keyboard, all 7 variables with all 94 formats, 3 profiles, 5 custom variables. Anything already saved above a limit keeps working; only new entries need Pro.
+Free: 50 templates, 50 shortcuts with 5 values each, unlimited categories, the snippet keyboard, all 7 variables with all 94 formats, 3 profiles, 5 custom variables. Templates and shortcuts already saved above a limit keep working; only new entries need Pro.
 Pro (monthly or yearly): no ads and no limits. Prices vary by region; see the app for the current price. Billing runs through your store account, cancel any time.
 
 FROM THE DEVELOPER
