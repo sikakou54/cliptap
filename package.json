@@ -18,6 +18,7 @@
     "build:mobile": "npm run eas:prod --workspace=@cliptap/mobile",
     "build:mobile:preview": "npm run eas:preview --workspace=@cliptap/mobile",
     "build:web": "npm run build --workspace=@cliptap/web",
+    "store:screens": "./scripts/store-screens.sh",
     "ios": "cd apps/mobile && npx --prefix ../.. expo run:ios",
     "android": "cd apps/mobile && npx --prefix ../.. expo run:android",
     "prebuild": "npm run expo:prebuild --workspace=@cliptap/mobile",

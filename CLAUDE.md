@@ -277,6 +277,14 @@ clipTap/
 
 判定の詳細と対応バージョンの範囲は [docs/機能仕様書.md](docs/機能仕様書.md) を正とする。
 
+#### 公開文書（規約・プライバシーポリシー・EULA・ストア掲載文・ストア画像・LP・アプリ内文言）
+- **手数と経路と動作が同居する記述は事実の主張**。「1タップでキーボードから入力」のように書くなら実機で数える。経路を特定しない標語（「いつもの文章を、ワンタップで。」）は対象外
+- **見出しに条件を書かない**。対応環境・制限・例外は本文の該当行だけに書く（見出しと本文がずれて自文書内で矛盾するため）
+- **挙動が異なるものを1文にまとめない**。定型文・ショートカットは上限超過分もそのまま使えるが、プロファイル・カスタム変数は無効化される
+- **「〜のみ」という閉じた列挙は、実装から導ける形にする**。実装に項目が増えると静かに嘘になる
+- 主張を直すときは `packages/shared/tests/publicDocs/claims.ts` を同じ変更で更新する。`npm test` が全文書の複製箇所を名指しする
+- `apps/web/public/{terms,privacy}.html` を編集したら `npm run sync-legal --workspace=@cliptap/mobile` を実行する（同梱コピーのずれは `npm test` が検知する）
+
 ---
 
 ### 🛠️ 開発時の注意事項
@@ -358,7 +366,7 @@ clipTap/
 
 #### App Store/Google Play 提出前
 - プライバシーポリシー最新版（クリップボード使用、AdMob広告、サブスクリプション）
-- スクリーンショット最新版（`store/screen/` を編集 → `node store/screen/build.mjs` → html-to-png で `store/out/` を再生成）
+- スクリーンショット最新版（`store/screen/` を編集 → `npm run store:screens` で `store/out/` を再生成。焼き漏れは `store/out/BUILT_FROM.json` との不一致で `npm test` が検知する）
   - App Store: iPhone 6.9" `1290×2796` と iPad 13" `2064×2752`（`app.json` の `supportsTablet: true` によりiPad用が必須）
   - Google Play: 縦横比9:16が上限のため App Store 用は流用できない（未対応。canvas定義の追加が必要）
   - OGP `apps/web/public/ogp/og-{ja,en}.png` も同じパイプラインで再生成される
@@ -435,6 +443,7 @@ Metro（`expo start`）はスクリプトに含めない。`npm run dev:mobile` 
 5. **回帰テストなしの既存マイグレーション編集** - 原則は共通マイグレーションへ新しい連続版を追加
 6. **eslint-disableコメント** - ESLintエラーは根本的に解決すること
 7. **画面での `SafeAreaView` / `Header` の直接使用** - `ScreenContainer` 経由必須
+8. **公開文書の主張を1箇所だけ直すこと** - 同じ主張が複数の文書に刷られている。`packages/shared/tests/publicDocs/claims.ts` を同じ変更で更新する
 
 ---
 
