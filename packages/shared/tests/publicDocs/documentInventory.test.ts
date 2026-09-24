@@ -71,6 +71,6 @@ describe('公開文書の台帳', () => {
     expect(registered.length).toBe(new Set(registered).size);
     expect(found).toContain('apps/web/public/terms.html');
     expect(found).toContain('store/screen/06-pricing.html');
-    expect(found).not.toContain('store/screen/dist/00-hero--ios69-ja.html');
+    expect(found).not.toContain('store/screen/dist/00-hero--ios65-ja.html');
   });
 });

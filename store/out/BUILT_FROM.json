@@ -28,12 +28,12 @@
   "apps/web/public/image/badge-googleplay.svg": "6c99827d95a3015d0d410c118b90918e17ea6c948fbddacb352cb384a7c3ab0f",
   "store/screen/00-hero.html": "df0bf71ca1350d347ebbf1ee63209b4eb63021f52ec24e3a98e47565c46f3678",
   "store/screen/01-keyboard.html": "5a404d3d4a9edd658db9496e182b6e83f2f319c14ee45f9eae1cf2d3a4a8c8b9",
-  "store/screen/02-scenes.html": "15db86b773fc59b6ea889eefde00a8112003f5b026c7a81cf17cd42e05f4ffff",
+  "store/screen/02-scenes.html": "e36745b3e2bd615ac89c6db535ee6eee53bbf20c56dc9bfb305b169060d429f8",
   "store/screen/03-variables.html": "14344bef380a625d7acf6681f9f22d83ecf372c25829b43674c5bbdc7650b1cf",
   "store/screen/04-profiles.html": "7948c6ecfad333b7ebd8062d0f7dcf7884097cbdfccbfc1a58d3e4bdf4375cf6",
   "store/screen/05-shortcuts.html": "39cc19b101a1319458eebd978b684aab4d7a3e0b01a887e9abeedecf66e03839",
-  "store/screen/06-pricing.html": "c873201a94f985a18e4170e04a8a0d8910893f08c3b16c8af393e3fa38ae530b",
-  "store/screen/_shared.css": "93604abd0e3e38cf618e7c104b4ac806e918383fe472a35454703f6d19404fec",
-  "store/screen/_wrapper.html": "d532017172c50f58391e1360c5f6fd6f046403fec45feb0d95546835cc748b43",
-  "store/screen/build.mjs": "73a6e1b3c0ed934c07b4d289221effe942e8d4bc6605ef8c8b1e0252f88bcc82"
+  "store/screen/06-pricing.html": "d054599223b116e45a09c97df4db9c4e6e9818b24ac2f48dcd63fc08a8938a25",
+  "store/screen/_shared.css": "d25b3c1f28a7e56f748b64f23abfe921f83dda51095c5e4921f80414e8387bc2",
+  "store/screen/_wrapper.html": "d437ad12ed858d71f8b8f99f2f41e728d941c9de5da35066908b466f3600abcc",
+  "store/screen/build.mjs": "d1f90634952b1aec3cdfd1c1eb083650817e3c7b936fe13e177a36c26f6df441"
 }

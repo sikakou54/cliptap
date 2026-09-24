@@ -8,7 +8,7 @@
  *
  * 単位について:
  *   構図中のすべての長さは calc(N * var(--u)) で書く。N はマスター 1290x2796 上の値、
- *   --u は canvas ごとに1つだけ定義する「長さ」で、マスターではちょうど 1px になる。
+ *   --u は canvas ごとに1つだけ定義する「長さ」。iPhone と iPad は高さで縮小する。
  *   --u は必ず長さにすること。単位なしにすると calc(96 * 0.98) が数値になり
  *   font-size 等で computed-value time に無効となって全滅する（無地の矩形だけが出る）。
  *
@@ -116,9 +116,9 @@ img {
 
 /* =========================================================================
    canvas 定義
-   --cw / --ch は実デバイス px のリテラル。よって html_to_png は scale 1 で
+   --cw / --ch は提出画像の px のリテラル。よって html_to_png は scale 1 で
    走らせられ、PNG の寸法が丸め誤差でずれることが構造的に起こらない。
-   iPad と OGP は「高さ基準」でリベースする。設計高さが保たれるため
+   各 canvas は「高さ基準」でリベースする。設計高さが保たれるため
    端末が短い面で切れることがない。
    ========================================================================= */
 .canvas {
@@ -139,11 +139,11 @@ img {
   -webkit-font-smoothing: antialiased;
 }
 
-/* A — App Store iPhone 6.9"  1290x2796 : 作図そのまま。--u = 1px */
-.canvas[data-canvas="ios69"] {
-  --cw: 1290px;
-  --ch: 2796px;
-  --u: calc(var(--cw) / 1290);
+/* A — App Store iPhone 6.5"  1242x2688 : 高さ基準でマスターから縮小 */
+.canvas[data-canvas="ios65"] {
+  --cw: 1242px;
+  --ch: 2688px;
+  --u: calc(var(--ch) / 2796);
 }
 
 /* B — App Store iPad 13"     2064x2752 : 高さ基準。設計面 2097x2796
@@ -186,11 +186,11 @@ img {
    clamp(26px,3vw,40px) で、ヒーローだけ約1.45倍。英語は字数が多いので1段落とす。
    canvas 別に書いているのは、canvas の上書きと詳細度が並ぶのを避けるため。
    ========================================================================= */
-.canvas[data-canvas="ios69"][data-slide="00-hero"] {
+.canvas[data-canvas="ios65"][data-slide="00-hero"] {
   --fs-h1: 120;
 }
 
-[lang="en"] .canvas[data-canvas="ios69"][data-slide="00-hero"] {
+[lang="en"] .canvas[data-canvas="ios65"][data-slide="00-hero"] {
   --fs-h1: 110;
 }
 
@@ -543,4 +543,3 @@ img {
 .canvas[data-tone="poster"] .stats {
   text-align: left;
 }
-

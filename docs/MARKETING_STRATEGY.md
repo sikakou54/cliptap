@@ -178,7 +178,7 @@ ClipTapが取りに行くべき語の仮説：
 **LP との関係**
 
 掲載画像は LP の同じ節と**同じ主張・同じ語彙**で組む。ただし版面の制約（`.head h1 .line` は
-nowrap、ios69 の版面は見出し1行が ja 11字 / 欧文 23字、アイキャッチは ja 9字 / 欧文 20字、
+nowrap、ios65 の版面は見出し1行が ja 11字 / 欧文 23字、アイキャッチは ja 9字 / 欧文 20字、
 `.stat-label` は35字）で LP の原文がそのまま入らない面があるため、**逐語であることは前提にしない**。
 差分が出た面は、その理由をスライド冒頭のコメントに列挙する（`02-scenes.html` と
 `06-pricing.html` が実例）。LP を参照するときは**行番号ではなく節のアンカー**
@@ -188,11 +188,10 @@ nowrap、ios69 の版面は見出し1行が ja 11字 / 欧文 23字、アイキ�
 **再生成の手順**
 
 ```bash
-node store/screen/build.mjs
-node ~/.claude/skills/html-to-png/scripts/html_to_png.js store/screen/jobs.json
+npm run store:screens
 ```
 
-出力先は `store/out/<canvas>/<lang>/` と `apps/web/public/ogp/`。canvas は `ios69`（1290×2796）と `ipad13`（2064×2752）、言語は ja / en。OGP（1200×630）は `00-hero` から生成され、LP の `og:image` の実体をそのまま置き換える（シェアカードとリンク先ページの第一声が一致する）。
+出力先は `store/out/<canvas>/<lang>/` と `apps/web/public/ogp/`。canvas は `ios65`（1242×2688）と `ipad13`（2064×2752）、言語は ja / en。OGP（1200×630）は `00-hero` から生成され、LP の `og:image` の実体をそのまま置き換える（シェアカードとリンク先ページの第一声が一致する）。
 文言を直すときは `store/screen/NN-*.html` を1つ編集すれば ja / en とすべての canvas に同時に反映される。
 
 **端末キャプチャの撮り直し手順**

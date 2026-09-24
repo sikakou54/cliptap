@@ -39,11 +39,11 @@ const SLIDES = [
  */
 const CANVASES = [
   {
-    id: 'ios69',
-    width: 1290,
-    height: 2796,
-    /** App Store iPhone 6.9" */
-    out: (slide, lang) => path.join(REPO, 'store', 'out', 'ios69', lang, `${slide.slug}.png`),
+    id: 'ios65',
+    width: 1242,
+    height: 2688,
+    /** App Store iPhone 6.5" */
+    out: (slide, lang) => path.join(REPO, 'store', 'out', 'ios65', lang, `${slide.slug}.png`),
   },
   {
     id: 'ipad13',
@@ -130,6 +130,7 @@ for (const slide of SLIDES) {
            低いとビューポート高さで出力されてしまうため使わない。 */
         selector: '.canvas',
         width: canvas.width,
+        height: canvas.height,
         scale: 1,
         wait: 2500,
         bg: 'white',

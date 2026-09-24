@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { readdirSync, readFileSync } from 'node:fs';
 /* store/screen 側のスクリプトと同じ計算を使う（ハッシュの求め方を二重に持たないため） */
 import { computeSourceHashes, listSources, readManifest } from '../../../../store/screen/builtFrom.mjs';
 
@@ -49,5 +50,24 @@ describe('ストア提出画像の鮮度', () => {
     /* 記録の書き方を直してもPNGは変わらないため、このファイル自身は対象外 */
     expect(sources).not.toContain('store/screen/builtFrom.mjs');
     expect(sources.length).toBeGreaterThan(20);
+  });
+
+  it('ストア提出用PNGが指定寸法である', () => {
+    for (const { canvas, size } of [
+      { canvas: 'ios65', size: [1242, 2688] },
+      { canvas: 'ipad13', size: [2064, 2752] },
+    ]) {
+      for (const lang of ['ja', 'en']) {
+        const directory = new URL(`../../../../store/out/${canvas}/${lang}/`, import.meta.url);
+        const files = readdirSync(directory).filter((name) => name.endsWith('.png'));
+        expect(files).toHaveLength(7);
+
+        for (const file of files) {
+          const header = readFileSync(new URL(file, directory)).subarray(0, 24);
+          expect(header.toString('ascii', 12, 16), file).toBe('IHDR');
+          expect([header.readUInt32BE(16), header.readUInt32BE(20)], file).toEqual(size);
+        }
+      }
+    }
   });
 });

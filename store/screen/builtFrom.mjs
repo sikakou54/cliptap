@@ -82,11 +82,30 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     throw new Error('store/screen/jobs.json が無い。先に node store/screen/build.mjs を実行する');
   }
 
-  const missing = JSON.parse(fs.readFileSync(jobsPath, 'utf8'))
-    .map((job) => job.png)
-    .filter((png) => !fs.existsSync(png));
+  const jobs = JSON.parse(fs.readFileSync(jobsPath, 'utf8'));
+  const missing = jobs.map((job) => job.png).filter((png) => !fs.existsSync(png));
   if (missing.length) {
     throw new Error(`焼かれていないPNGがある: ${missing.map((p) => path.relative(REPO, p)).join(', ')}`);
+  }
+
+  const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+  for (const job of jobs) {
+    const header = Buffer.alloc(24);
+    const fd = fs.openSync(job.png, 'r');
+    try {
+      if (fs.readSync(fd, header, 0, header.length, 0) !== header.length ||
+          !header.subarray(0, 8).equals(pngSignature) ||
+          header.toString('ascii', 12, 16) !== 'IHDR') {
+        throw new Error(`PNGが不正: ${path.relative(REPO, job.png)}`);
+      }
+    } finally {
+      fs.closeSync(fd);
+    }
+    const width = header.readUInt32BE(16);
+    const height = header.readUInt32BE(20);
+    if (width !== job.width || height !== job.height) {
+      throw new Error(`PNGの寸法が異なる: ${path.relative(REPO, job.png)} (${width}x${height}, 期待値 ${job.width}x${job.height})`);
+    }
   }
 
   fs.writeFileSync(MANIFEST_PATH, `${JSON.stringify(computeSourceHashes(), null, 2)}\n`);
