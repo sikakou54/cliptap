@@ -2,13 +2,13 @@
   "expo": {
     "name": "ClipTap",
     "slug": "cliptap",
-    "version": "1.4.0",
+    "version": "1.4.1",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.sikakou.cliptap",
-      "buildNumber": "61",
+      "buildNumber": "62",
       "requireFullScreen": false,
       "googleServicesFile": "./GoogleService-Info.plist",
       "entitlements": {
