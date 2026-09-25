@@ -286,6 +286,9 @@ enum L10n {
         /// "並び替えボタン" / "Sort button"
         static let sortButton = localized("accessibility.sort_button")
 
+        /// "次のキーボード" / "Next keyboard"
+        static let nextKeyboardButton = localized("accessibility.next_keyboard_button")
+
         /// "タイトル挿入ボタン" / "Insert title button"
         static let insertTitleButton = localized("accessibility.insert_title_button")
 

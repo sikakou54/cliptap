@@ -222,6 +222,10 @@ class KeyboardViewController: UIInputViewController {
      */
     private var keyboardHeightConstraint: NSLayoutConstraint?
 
+    /// iOSが切替キーを提供しない端末では、全画面状態に共通の下部領域に置く。
+    private static let inputModeSwitchAreaHeight: CGFloat = 48
+    private var inputModeSwitchAreaHeightConstraint: NSLayoutConstraint?
+
     /**
      * ショートカット行の二度押しを無視する時間（秒）
      *
@@ -344,6 +348,25 @@ class KeyboardViewController: UIInputViewController {
         button.tintColor = .label
         button.backgroundColor = .clear
         button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+
+    private let inputModeSwitchArea: UIView = {
+        let area = UIView()
+        area.backgroundColor = .clear
+        area.translatesAutoresizingMaskIntoConstraints = false
+        area.isHidden = true
+        return area
+    }()
+
+    private let inputModeSwitchButton: UIButton = {
+        let button = UIButton(type: .system)
+        let config = UIImage.SymbolConfiguration(pointSize: 19, weight: .regular)
+        button.setImage(UIImage(systemName: "globe", withConfiguration: config), for: .normal)
+        button.tintColor = .label
+        button.backgroundColor = .clear
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.accessibilityLabel = L10n.Accessibility.nextKeyboardButton
         return button
     }()
 
@@ -740,6 +763,8 @@ class KeyboardViewController: UIInputViewController {
         /* キーボードの高さを再適用する（制約は1本だけ保持するので増殖しない） */
         applyKeyboardHeightConstraint()
 
+        updateInputModeSwitchKey()
+
         applyHostKeyboardAppearance()
 
         // キーボードが表示される度に全データをリフレッシュ
@@ -767,6 +792,17 @@ class KeyboardViewController: UIInputViewController {
     override func textDidChange(_ textInput: UITextInput?) {
         super.textDidChange(textInput)
         applyHostKeyboardAppearance()
+        updateInputModeSwitchKey()
+    }
+
+    /// 端末と有効なキーボードの構成に合わせて、OSが要求する切替キーだけを表示する。
+    private func updateInputModeSwitchKey() {
+        let shouldShow = needsInputModeSwitchKey
+        inputModeSwitchAreaHeightConstraint?.constant = shouldShow ? Self.inputModeSwitchAreaHeight : 0
+        inputModeSwitchArea.isHidden = !shouldShow
+        if shouldShow {
+            view.bringSubviewToFront(inputModeSwitchArea)
+        }
     }
 
     /**
@@ -940,6 +976,23 @@ class KeyboardViewController: UIInputViewController {
     }
 
     private func setupUI() {
+        view.addSubview(inputModeSwitchArea)
+        inputModeSwitchArea.addSubview(inputModeSwitchButton)
+        let areaHeight = inputModeSwitchArea.heightAnchor.constraint(equalToConstant: 0)
+        inputModeSwitchAreaHeightConstraint = areaHeight
+        NSLayoutConstraint.activate([
+            inputModeSwitchArea.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            inputModeSwitchArea.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            inputModeSwitchArea.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            areaHeight,
+            inputModeSwitchButton.leadingAnchor.constraint(equalTo: inputModeSwitchArea.safeAreaLayoutGuide.leadingAnchor, constant: 8),
+            inputModeSwitchButton.centerYAnchor.constraint(equalTo: inputModeSwitchArea.centerYAnchor),
+            inputModeSwitchButton.widthAnchor.constraint(equalToConstant: 44),
+            inputModeSwitchButton.heightAnchor.constraint(equalToConstant: 44)
+        ])
+        // タップで次のキーボード、長押しでキーボード一覧を表示する。
+        inputModeSwitchButton.addTarget(self, action: #selector(handleInputModeList(from:with:)), for: .allTouchEvents)
+
         // 統合フィルターコンテナ（環境ドロップダウン + カテゴリドロップダウン + ショートカットボタン + ソートボタン + 設定ボタン）
         view.addSubview(filterContainerView)
         filterContainerView.addSubview(profileDropdownButton)
@@ -1070,7 +1123,7 @@ class KeyboardViewController: UIInputViewController {
             tableView.topAnchor.constraint(equalTo: filterContainerView.bottomAnchor, constant: 4),
             tableView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+            tableView.bottomAnchor.constraint(equalTo: inputModeSwitchArea.topAnchor)
         ])
 
         // Detail View (全画面表示)
@@ -1100,7 +1153,7 @@ class KeyboardViewController: UIInputViewController {
             detailScrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
             detailScrollView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             detailScrollView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            detailScrollView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            detailScrollView.bottomAnchor.constraint(equalTo: inputModeSwitchArea.topAnchor),
 
             // ContentView: ScrollViewのコンテンツ（ボタン分の下パディング追加）
             detailContentView.topAnchor.constraint(equalTo: detailScrollView.topAnchor),
@@ -1131,7 +1184,7 @@ class KeyboardViewController: UIInputViewController {
             detailContentLabel.bottomAnchor.constraint(equalTo: detailContentView.bottomAnchor, constant: -72),
 
             // Buttons: 画面右下に固定（丸ボタン、セーフエリア内に収める）
-            copyButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12),
+            copyButton.bottomAnchor.constraint(equalTo: inputModeSwitchArea.topAnchor, constant: -12),
             copyButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -12),
             copyButton.widthAnchor.constraint(equalToConstant: 40),
             copyButton.heightAnchor.constraint(equalToConstant: 40),
@@ -1327,7 +1380,7 @@ class KeyboardViewController: UIInputViewController {
             shortcutView.topAnchor.constraint(equalTo: filterContainerView.bottomAnchor, constant: 4),
             shortcutView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             shortcutView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            shortcutView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            shortcutView.bottomAnchor.constraint(equalTo: inputModeSwitchArea.topAnchor),
 
             /* TableView: ショートカット画面いっぱい（一覧・値一覧とも見出しの行は置かない）。
                左右は横向き時のノッチ側を避けるためセーフエリア基準。
@@ -1336,7 +1389,7 @@ class KeyboardViewController: UIInputViewController {
             shortcutTableView.topAnchor.constraint(equalTo: shortcutView.topAnchor),
             shortcutTableView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             shortcutTableView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            shortcutTableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            shortcutTableView.bottomAnchor.constraint(equalTo: shortcutView.bottomAnchor),
 
             // Empty Label: テーブルビューの中央
             shortcutEmptyLabel.centerXAnchor.constraint(equalTo: shortcutTableView.centerXAnchor),
@@ -1711,6 +1764,9 @@ class KeyboardViewController: UIInputViewController {
         loadingView.isHidden = screenState != .loading
         settingsView.isHidden = screenState != .settings
         shortcutView.isHidden = !isShortcutList
+        if !inputModeSwitchArea.isHidden {
+            view.bringSubviewToFront(inputModeSwitchArea)
+        }
     }
 
     /**
