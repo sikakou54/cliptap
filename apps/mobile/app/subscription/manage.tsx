@@ -32,11 +32,12 @@ import { useManageSubscriptionScreen } from '@hooks/screens/useManageSubscriptio
 /**
  * Proプランの機能カード定義
  *
- * 3枚のカードはアイコンと翻訳キーだけが違う同一構造だったため、差分をデータとして並べる。
+ * 各カードはアイコンと翻訳キーだけが違う同一構造のため、差分をデータとして並べる。
  * 翻訳キーはリテラルで保持し、grep で参照箇所を追えるようにしている。
  */
 const PRO_FEATURES = [
   { icon: 'close-circle-outline', titleKey: 'subscription.feature_no_ads', descKey: 'subscription.feature_no_ads_desc' },
+  { icon: 'documents-outline', titleKey: 'subscription.feature_unlimited_items', descKey: 'subscription.feature_unlimited_items_desc' },
   { icon: 'options-outline', titleKey: 'subscription.feature_unlimited_profiles', descKey: 'subscription.feature_unlimited_profiles_desc' },
   { icon: 'code-slash-outline', titleKey: 'subscription.feature_custom_variables', descKey: 'subscription.feature_custom_variables_desc' },
 ] as const;

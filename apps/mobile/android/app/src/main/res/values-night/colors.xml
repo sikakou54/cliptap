@@ -5,4 +5,7 @@
   <color name="keyboardAccent">#0A84FF</color>
   <color name="keyboardOnAccent">#FFFFFF</color>
   <color name="keyboardSeparator">#33FFFFFF</color>
+  <!-- 表示切替トグルの枠線。アプリのダークテーマの textTertiary と同値。
+       ノブの塗りとアイコンの色はライト・ダーク共通のため values にだけ置く -->
+  <color name="keyboardToggleOutline">#707070</color>
 </resources>

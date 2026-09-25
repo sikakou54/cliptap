@@ -161,6 +161,7 @@ a:hover { color: var(--color-accent-400); }
 /* — scenes — */
 .scenes { padding: var(--section-y) 0; }
 .scenes .section-title { max-width: 24em; }
+.scenes .lead { margin-top: 24px; }
 .scene {
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 300px);
   gap: 28px clamp(24px, 4vw, 72px); align-items: center;

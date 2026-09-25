@@ -15,7 +15,7 @@ import { Logger } from '@cliptap/shared';
  * 共有シートのタイトルは仕様（docs/機能仕様書.md §8.13）でUI言語にかかわらず
  * 日本語固定と定められているため、意図的に i18next を経由しない。
  */
-const SHARE_DIALOG_TITLE = 'エクスポートファイルを保存';
+const SHARE_DIALOG_TITLE = 'バックアップファイルを保存';
 
 export class MobileFileShareAdapter implements FileShareAdapter {
   /**

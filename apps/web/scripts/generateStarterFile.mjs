@@ -251,6 +251,9 @@ function verifyExportJson(SQL, json, schema, exportUtils, password, dataset) {
       snippets: dataset.snippets.length,
       snippet_profiles: 0,
       system_variable_formats: 0,
+      shortcuts: 0,
+      shortcut_profiles: 0,
+      shortcut_values: 0,
     };
     for (const [table, count] of Object.entries(expected)) {
       const actual = countOf(table);

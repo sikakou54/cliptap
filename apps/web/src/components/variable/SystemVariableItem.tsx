@@ -39,7 +39,7 @@ export function SystemVariableItem({ variable, isLast, preview, onFormat }: Syst
         {/* 変数コード（{{変数名}}） */}
         <p className="font-medium text-gray-900 dark:text-white">{'{{'}{variable.name}{'}}'}</p>
         {/* 変数説明 */}
-        <p className="text-sm text-gray-500 dark:text-[#707070]">{t(`variables.${variable.name}`)}</p>
+        <p className="text-sm text-gray-500 dark:text-[#707070]">{t(variable.labelKey)}</p>
         {/* 現在の書式によるプレビュー */}
         <p className="mt-1 text-sm font-mono text-gray-700 dark:text-[#A0A0A0]">{preview}</p>
       </div>

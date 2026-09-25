@@ -3,8 +3,8 @@
  *
  * @description
  * エクスポート処理で必要なプラットフォーム固有の機能を抽象化。
- * Adapterはプラットフォーム固有の処理（ファイルI/O、DB操作）のみを担当し、
- * ビジネスロジック（データ削除など）はService層で実行する。
+ * Adapterはファイルの保存・共有だけを担当し、
+ * データベースの直列化とファイル内容の組み立てはService層で実行する。
  *
  * @module ExportAdapter
  */
@@ -21,18 +21,6 @@ export interface ExportAdapter {
    * @returns 保存したファイルのパス（またはURL）
    */
   saveExportFile(fileName: string, content: string): Promise<string>;
-
-  /**
-   * 部分エクスポート用の一時データベースファイルを作成
-   *
-   * @returns 一時データベースファイルのパス（file://プレフィックスなし）
-   *
-   * @remarks
-   * - Mobile: 本番DBを一時ファイルにコピーしてパスを返す
-   * - Web: メインDBをエクスポートしてBlob URLを返す
-   * - Service層でgetTempDbAdapter()を使って一時DBを開く
-   */
-  createTempDbFile(): Promise<string>;
 }
 
 let exportAdapter: ExportAdapter | null = null;

@@ -1,0 +1,53 @@
+<!doctype html>
+<!--
+  スライド 05 — ショートカット。
+  仕様書 §8.24（拡張キーボードから呼び出す値を、ショートカットとその値として管理する機能）を訴求する。
+  左はアプリのショートカット一覧、右は撮影用ホストのお届け先フォーム
+  （store/screen/host/compose-form.html）へ、住所のショートカットを挿入する直前。
+  どちらもシミュレータで撮影し、開発用シード（apps/mobile/dummy.json）の架空データを
+  プロファイル「A社用」（en は Client A）で表示している。
+  見出しとリードは LP の shortcuts セクション（#shortcuts）から。リードは版面に合わせて
+  末尾の「長い住所を打ち直す手間が省けます」を落としている。
+  一覧の先頭が「携帯番号」「請求先」「氏名」「自宅の住所」になるのは dummy.json の並びによる
+  （配列の末尾ほど一覧の上に出る）。見出しの「電話番号も住所も」と、右のフォームが持つ
+  氏名・電話番号・住所の欄の両方に写っているものを合わせるための並びなので、入れ替えると崩れる。
+  キーボードの一覧は自動操作でスクロールできないため、撮影に使うショートカットは
+  必ずこの上位5件へ入れておくこと。
+-->
+<meta charset="utf-8" />
+<template id="slide">
+  <div class="head">
+    <h1 class="ja">
+      <span class="line">電話番号も住所も、</span>
+      <span class="line accent">打たずに選ぶ。</span>
+    </h1>
+    <h1 class="en">
+      <span class="line">Phone and address,</span>
+      <span class="line accent">ready to insert.</span>
+    </h1>
+
+    <p class="sub ja">申し込みのたびに入力する氏名・電話番号・住所を、ショートカットに登録。入力したい欄を選び、キーボードから必要な項目をタップ。</p>
+    <p class="sub en">Save the name, phone number and address you enter on forms again and again. Select a field and tap the detail you need.</p>
+
+    <p class="note"></p>
+  </div>
+
+  <div class="stage" data-shots="2">
+    <figure class="shot">
+      <div class="phone">
+        <div class="phone-inner">
+          <img src="{{IMG}}/05-shortcuts-left-list-{{LANG}}.png" width="1206" height="2622" alt="" />
+        </div>
+      </div>
+      <figcaption class="cap"></figcaption>
+    </figure>
+    <figure class="shot">
+      <div class="phone">
+        <div class="phone-inner">
+          <img src="{{IMG}}/05-shortcuts-right-keyboard-{{LANG}}.png" width="1206" height="2622" alt="" />
+        </div>
+      </div>
+      <figcaption class="cap"></figcaption>
+    </figure>
+  </div>
+</template>

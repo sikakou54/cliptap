@@ -9,13 +9,16 @@
  * 公開範囲の違い:
  * - Provider版（providers/SubscriptionProvider.tsx の useSubscription）が公開するのは
  *   isSubscribed / isLoading / verificationFailed / shouldShowAds / canAddCustomVariable /
- *   canAddProfile / refresh / setDevSubscriptionOverride のみ。
+ *   canAddProfile / canAddSnippet / canAddShortcut / canAddShortcutValue / refresh /
+ *   setDevSubscriptionOverride のみ。
  *   購入・復元・プラン一覧・SubscriptionStatus（プラン種別・有効期限）は公開しない。
  * - このフックは status（SubscriptionStatus）・getPlans・purchase（planId指定）・restore を公開する。
- *   一方で広告表示や追加可否の判定（shouldShowAds / canAddCustomVariable / canAddProfile）は持たない。
+ *   一方で広告表示や追加可否の判定（shouldShowAds / canAddCustomVariable / canAddProfile /
+ *   canAddSnippet / canAddShortcut / canAddShortcutValue）は持たない。
  *
  * 使い分け:
- * - 加入状態と機能制限（広告表示・変数/プロファイルの追加可否）の参照は Provider版の useSubscription を使う。
+ * - 加入状態と機能制限（広告表示・変数/プロファイル/定型文/ショートカット/ショートカットの値の追加可否）の参照は
+ *   Provider版の useSubscription を使う。
  * - プラン一覧の取得・planId指定の購入・復元・プラン種別/有効期限の表示が必要な画面
  *   （ペイウォール／サブスク管理）はこのフックを使う。
  */

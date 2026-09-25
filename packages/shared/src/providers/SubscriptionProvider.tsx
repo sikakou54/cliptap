@@ -8,7 +8,7 @@
  * 主な機能:
  * - Reactの描画状態としての加入状態の保持
  * - 権利確認に失敗したときのFree表示へのフォールバック制御
- * - 機能制限チェック（変数数・プロファイル数）の窓口
+ * - 機能制限チェック（変数数・プロファイル数・定型文数・ショートカット数・ショートカットの値の数）の窓口
  *
  * @remarks
  * 課金抽象の責務境界:
@@ -46,6 +46,18 @@ export interface SubscriptionContextValue {
   canAddCustomVariable: (currentCount: number) => boolean;
   /** プロファイルを追加可能か判定 */
   canAddProfile: (currentCount: number) => boolean;
+  /**
+   * 定型文を追加可能か判定
+   *
+   * @remarks
+   * 権利確認中も保留せず、その時点の権利状態（未確定はFree）で判定する。
+   * 起動直後の追加ボタンで判定を保留するかは呼出側が決め、保存時はこのまま判定する。
+   */
+  canAddSnippet: (currentCount: number) => boolean;
+  /** ショートカットを追加可能か判定（権利確認中の扱いは canAddSnippet と同じ） */
+  canAddShortcut: (currentCount: number) => boolean;
+  /** ショートカットに値を追加可能か判定（引数は追加前の値の件数。権利確認中の扱いは canAddSnippet と同じ） */
+  canAddShortcutValue: (currentCount: number) => boolean;
   /** サブスク状態を最新化 */
   refresh: () => Promise<void>;
   /** 開発者オーバーライドを設定（DEVのみ） */
@@ -180,6 +192,9 @@ export function SubscriptionProvider({
     shouldShowAds: () => !SubscriptionService.isSubscribed(),
     canAddCustomVariable: (count) => SubscriptionService.canAddVariable(count),
     canAddProfile: (count) => SubscriptionService.canAddProfile(count),
+    canAddSnippet: (count) => SubscriptionService.canAddSnippet(count),
+    canAddShortcut: (count) => SubscriptionService.canAddShortcut(count),
+    canAddShortcutValue: (count) => SubscriptionService.canAddShortcutValue(count),
     refresh,
     setDevSubscriptionOverride,
   }), [isSubscribed, isLoading, verificationFailed, refresh, setDevSubscriptionOverride]);

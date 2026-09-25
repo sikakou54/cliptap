@@ -4,7 +4,7 @@ import {
   runMigrations,
   tableExists,
 } from '../../src/database/migrations';
-import { CREATE_INDEXES, CREATE_TABLES } from '../../src/database/schema';
+import { CREATE_INDEXES, CREATE_TABLES, SCHEMA_VERSION } from '../../src/database/schema';
 import { DatabaseError, NewerVersionError, VersionMismatchError } from '../../src/errors';
 import {
   createMemoryDbAdapter,
@@ -55,8 +55,10 @@ describe('runMigrations', () => {
 
     await runMigrations(mainDb, systemDb, version);
 
-    expect(getSchemaVersionFromDb(systemDb)).toBe(7);
+    expect(getSchemaVersionFromDb(systemDb)).toBe(SCHEMA_VERSION);
     expect(tableExists(mainDb, 'system_variable_formats')).toBe(true);
+    expect(tableExists(mainDb, 'shortcuts')).toBe(true);
+    expect(tableExists(mainDb, 'shortcut_values')).toBe(true);
     expect(
       mainDb
         .all<{ name: string }>("SELECT name FROM pragma_table_info('snippets')")
@@ -74,13 +76,14 @@ describe('runMigrations', () => {
   it('rejects a future database before migration and preserves its user_version', async () => {
     const mainDb = createDatabase();
     const systemDb = createDatabase();
-    await systemDb.exec('PRAGMA user_version = 8');
+    const futureVersion = SCHEMA_VERSION + 1;
+    await systemDb.exec(`PRAGMA user_version = ${futureVersion}`);
 
-    await expect(runMigrations(mainDb, systemDb, 8)).rejects.toBeInstanceOf(
+    await expect(runMigrations(mainDb, systemDb, futureVersion)).rejects.toBeInstanceOf(
       NewerVersionError
     );
 
-    expect(getSchemaVersionFromDb(systemDb)).toBe(8);
+    expect(getSchemaVersionFromDb(systemDb)).toBe(futureVersion);
     expect(
       mainDb.get<{ count: number }>(
         "SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'table'"
@@ -88,7 +91,7 @@ describe('runMigrations', () => {
     ).toBe(0);
   });
 
-  it('validates a current V7 database without changing its business data', async () => {
+  it('validates a current-version database without changing its business data', async () => {
     const mainDb = createDatabase();
     const systemDb = createDatabase();
     for (const sql of Object.values(CREATE_TABLES)) await mainDb.exec(sql);
@@ -96,16 +99,16 @@ describe('runMigrations', () => {
     mainDb.run(
       "INSERT INTO snippets (id, title, content, categoryId, copyWithTitle, copyCount, createdAt, updatedAt) VALUES ('s1', 'Title', 'Content', NULL, 1, 9, 'created', 'updated')"
     );
-    await systemDb.exec('PRAGMA user_version = 7');
+    await systemDb.exec(`PRAGMA user_version = ${SCHEMA_VERSION}`);
 
     const rowBefore = mainDb.get('SELECT * FROM snippets WHERE id = ?', ['s1']);
-    await runMigrations(mainDb, systemDb, 7);
+    await runMigrations(mainDb, systemDb, SCHEMA_VERSION);
 
     expect(mainDb.get('SELECT * FROM snippets WHERE id = ?', ['s1'])).toEqual(rowBefore);
-    expect(getSchemaVersionFromDb(systemDb)).toBe(7);
+    expect(getSchemaVersionFromDb(systemDb)).toBe(SCHEMA_VERSION);
   });
 
-  it('repairs a derived index missing from a historical V7 workspace', async () => {
+  it('repairs a derived index missing from a historical current-version workspace', async () => {
     const mainDb = createDatabase();
     const systemDb = createDatabase();
     for (const sql of Object.values(CREATE_TABLES)) await mainDb.exec(sql);
@@ -120,10 +123,10 @@ describe('runMigrations', () => {
     mainDb.run(
       "INSERT INTO profile_variables VALUES ('pv1', 'p1', 'v1', 'Value', 'created', 'updated')"
     );
-    await systemDb.exec('PRAGMA user_version = 7');
+    await systemDb.exec(`PRAGMA user_version = ${SCHEMA_VERSION}`);
     const rowBefore = mainDb.get('SELECT * FROM profile_variables WHERE id = ?', ['pv1']);
 
-    await runMigrations(mainDb, systemDb, 7);
+    await runMigrations(mainDb, systemDb, SCHEMA_VERSION);
 
     expect(
       mainDb.get<{ count: number }>(
@@ -133,17 +136,19 @@ describe('runMigrations', () => {
     expect(mainDb.get('SELECT * FROM profile_variables WHERE id = ?', ['pv1'])).toEqual(
       rowBefore
     );
-    expect(getSchemaVersionFromDb(systemDb)).toBe(7);
+    expect(getSchemaVersionFromDb(systemDb)).toBe(SCHEMA_VERSION);
   });
 
-  it('does not certify a declared V7 database that lacks the current shape', async () => {
+  it('does not certify a declared current-version database that lacks the current shape', async () => {
     const mainDb = createDatabase();
     const systemDb = createDatabase();
-    await systemDb.exec('PRAGMA user_version = 7');
+    await systemDb.exec(`PRAGMA user_version = ${SCHEMA_VERSION}`);
 
-    await expect(runMigrations(mainDb, systemDb, 7)).rejects.toBeInstanceOf(DatabaseError);
+    await expect(runMigrations(mainDb, systemDb, SCHEMA_VERSION)).rejects.toBeInstanceOf(
+      DatabaseError
+    );
 
-    expect(getSchemaVersionFromDb(systemDb)).toBe(7);
+    expect(getSchemaVersionFromDb(systemDb)).toBe(SCHEMA_VERSION);
   });
 
   it.each([0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY])(

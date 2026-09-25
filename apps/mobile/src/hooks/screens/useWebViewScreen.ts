@@ -8,11 +8,13 @@
  * - URLパラメータからファイル名とタイトルを取得
  * - HTMLファイルの読み込み
  * - ローディング状態の管理
+ * - ページ内のリンクのうち、WebViewが扱えないもの（mailto）をOSへ渡す
  *
  * @see app/webview.tsx - WebView画面UI
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { Linking } from 'react-native';
 import { File } from 'expo-file-system';
 import { Asset } from 'expo-asset';
 import { Logger } from '@cliptap/shared';
@@ -39,6 +41,8 @@ export interface UseWebViewScreenReturn {
   loading: boolean;
   /** 表示タイトル */
   title: string;
+  /** WebViewが読み込みを始める前の判定（falseを返すとWebViewでは開かない） */
+  handleShouldStartLoad: (request: { url: string }) => boolean;
 }
 
 /* ======================================== */
@@ -97,6 +101,31 @@ export function useWebViewScreen(params: UseWebViewScreenParams): UseWebViewScre
   }, [file]);
 
   /* ======================================== */
+  /* イベントハンドラ */
+  /* ======================================== */
+
+  /**
+   * ページ内のリンクを開く前の判定
+   *
+   * @param request - WebViewが読み込もうとしている対象
+   * @returns WebViewで読み込む場合はtrue
+   *
+   * @remarks
+   * お問い合わせ先のメールアドレスは `mailto:` のリンクにしてある。
+   * WebViewはこのスキームを扱えず、そのままではタップしても何も起きないため、
+   * OSへ渡してメールアプリを開く（件名はリンク側のsubjectが持つ）。
+   * メールアプリが無い端末では開けないので、失敗しても画面は保ったまま記録だけ残す。
+   */
+  const handleShouldStartLoad = useCallback((request: { url: string }): boolean => {
+    if (!request.url.startsWith('mailto:')) return true;
+
+    Linking.openURL(request.url).catch((error) =>
+      Logger.error('Open mail app failed:', error)
+    );
+    return false;
+  }, []);
+
+  /* ======================================== */
   /* 戻り値 */
   /* ======================================== */
 
@@ -104,5 +133,6 @@ export function useWebViewScreen(params: UseWebViewScreenParams): UseWebViewScre
     htmlContent,
     loading,
     title: paramTitle,
+    handleShouldStartLoad,
   };
 }

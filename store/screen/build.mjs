@@ -28,7 +28,8 @@ const SLIDES = [
   { slug: '02-scenes', tone: 'light' },
   { slug: '03-variables', tone: 'light' },
   { slug: '04-profiles', tone: 'light' },
-  { slug: '05-pricing', tone: 'poster' },
+  { slug: '05-shortcuts', tone: 'light' },
+  { slug: '06-pricing', tone: 'poster' },
 ];
 
 /**
@@ -38,11 +39,11 @@ const SLIDES = [
  */
 const CANVASES = [
   {
-    id: 'ios69',
-    width: 1290,
-    height: 2796,
-    /** App Store iPhone 6.9" */
-    out: (slide, lang) => path.join(REPO, 'store', 'out', 'ios69', lang, `${slide.slug}.png`),
+    id: 'ios65',
+    width: 1242,
+    height: 2688,
+    /** App Store iPhone 6.5" */
+    out: (slide, lang) => path.join(REPO, 'store', 'out', 'ios65', lang, `${slide.slug}.png`),
   },
   {
     id: 'ipad13',
@@ -74,10 +75,18 @@ function readSlideMarkup(slug) {
   return m[1].trim();
 }
 
-/** 参照している画像が実在するか確認する（レンダリング後に気付くと手戻りが大きい）。 */
+/**
+ * 参照している画像が実在するか確認する（レンダリング後に気付くと手戻りが大きい）。
+ *
+ * ファイル名に {{LANG}} を含む参照は言語ごとに別ファイルなので、LANGS のぶんへ
+ * 展開してから見る。片方の言語だけ撮り忘れてもここで止まる。
+ */
 function assertImagesExist(slug, markup) {
-  const missing = [...markup.matchAll(/\{\{IMG\}\}\/([\w.-]+)/g)]
+  const missing = [...markup.matchAll(/\{\{IMG\}\}\/([\w.{}-]+)/g)]
     .map((m) => m[1])
+    .flatMap((name) =>
+      name.includes('{{LANG}}') ? LANGS.map((lang) => name.replaceAll('{{LANG}}', lang)) : [name]
+    )
     .filter((name) => !fs.existsSync(path.join(IMAGE_DIR, name)));
   if (missing.length) {
     throw new Error(`${slug}.html が参照する画像が存在しない: ${missing.join(', ')}`);
@@ -121,6 +130,7 @@ for (const slide of SLIDES) {
            低いとビューポート高さで出力されてしまうため使わない。 */
         selector: '.canvas',
         width: canvas.width,
+        height: canvas.height,
         scale: 1,
         wait: 2500,
         bg: 'white',

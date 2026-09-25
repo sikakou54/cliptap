@@ -1,0 +1,85 @@
+<!doctype html>
+<!--
+  撮影用ホスト — メニュー。
+  ホーム画面へ追加したときの起動画面。ここからレイアウトを選ぶ。
+  言語の切り替えもここだけに置く（composer側に置くと撮影対象に写り込むため）。
+-->
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<!-- ホーム画面から起動したときにURLバーを消し、アプリとして見える状態にする -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Composer" />
+<meta name="color-scheme" content="dark" />
+<title>Composer</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icon.png" />
+<link rel="stylesheet" href="host.css" />
+</head>
+<body data-screen="menu">
+
+<!-- メニューのヘッダー。言語スイッチはここにだけ置く -->
+<div class="nav nav--menu">
+  <span class="nav-title">Composer</span>
+  <span class="lang-switch">
+    <button type="button" data-set-lang="ja" aria-pressed="false">JA</button>
+    <button type="button" data-set-lang="en" aria-pressed="false">EN</button>
+  </span>
+</div>
+
+<div class="menu">
+  <h1 class="ja">入力欄</h1>
+  <h1 class="en">Text fields</h1>
+  <p class="ja">キーボードから入力するところを撮るための画面です。</p>
+  <p class="en">Screens for capturing text typed from the keyboard.</p>
+
+  <ul class="menu-list">
+    <li>
+      <a href="compose-mail.html">
+        <span class="ja">メールを作成</span>
+        <span class="en">New message</span>
+        <span class="sub ja">宛先・件名・本文</span>
+        <span class="sub en">To, subject, body</span>
+      </a>
+    </li>
+    <li>
+      <a href="compose-post.html">
+        <span class="ja">投稿する</span>
+        <span class="en">New post</span>
+        <span class="sub ja">投稿コンポーザ</span>
+        <span class="sub en">Post composer</span>
+      </a>
+    </li>
+    <li>
+      <a href="compose-message.html">
+        <span class="ja">メッセージ</span>
+        <span class="en">Message</span>
+        <span class="sub ja">やりとりの入力欄</span>
+        <span class="sub en">Chat with a person</span>
+      </a>
+    </li>
+    <li>
+      <a href="compose-chat.html">
+        <span class="ja">アシスタント</span>
+        <span class="en">Assistant</span>
+        <span class="sub ja">対話の入力欄</span>
+        <span class="sub en">Chat input</span>
+      </a>
+    </li>
+    <li>
+      <a href="compose-form.html">
+        <span class="ja">お届け先の入力</span>
+        <span class="en">Delivery details</span>
+        <span class="sub ja">氏名・電話番号・住所</span>
+        <span class="sub en">Name, phone, address</span>
+      </a>
+    </li>
+  </ul>
+</div>
+
+<script src="host.js"></script>
+</body>
+</html>

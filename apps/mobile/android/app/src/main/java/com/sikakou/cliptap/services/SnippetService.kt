@@ -1,6 +1,7 @@
 package com.sikakou.cliptap.services
 
 import android.content.Context
+import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.util.Log
@@ -38,6 +39,9 @@ class SnippetService private constructor(private val context: Context) {
 
     companion object {
         private const val TAG = "SnippetService"
+
+        /** 挿入時の振動の長さ（ミリ秒）。定型文とショートカットで手応えを揃える */
+        private const val VIBRATION_DURATION_MS = 50L
 
         @Volatile
         private var INSTANCE: SnippetService? = null
@@ -275,12 +279,20 @@ class SnippetService private constructor(private val context: Context) {
         try {
             val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
             if (vibrator?.hasVibrator() == true) {
-                vibrator.vibrate(
-                    VibrationEffect.createOneShot(
-                        50,
-                        VibrationEffect.DEFAULT_AMPLITUDE
+                /* VibrationEffectはAPI 26以降にしか存在しない。minSdkは24のため、
+                   版を確かめずに触るとAPI 24/25でNoClassDefFoundErrorになる。
+                   これはErrorであってExceptionではないので下のcatchでも拾えず、IMEごと落ちる */
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vibrator.vibrate(
+                        VibrationEffect.createOneShot(
+                            VIBRATION_DURATION_MS,
+                            VibrationEffect.DEFAULT_AMPLITUDE
+                        )
                     )
-                )
+                } else {
+                    /* API 24/25向けの旧API。強さは指定できないが、長さは同じにする */
+                    vibrator.vibrate(VIBRATION_DURATION_MS)
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to perform haptic feedback", e)

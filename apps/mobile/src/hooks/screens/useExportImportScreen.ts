@@ -1,25 +1,26 @@
 /**
- * エクスポート・インポート画面カスタムフック
+ * バックアップ・復元画面カスタムフック
  *
- * データのバックアップと復元のビジネスロジックを管理するフック。
- * UI層からエクスポート・インポート処理を分離する。
+ * 全データのバックアップと、バックアップファイルによる復元（全件置換）のビジネスロジックを管理するフック。
+ * UI層からバックアップ・復元処理を分離する。
  *
  * 主な責務:
  * - パスワードモーダルの状態管理
- * - エクスポート処理の実行
- * - インポート処理の実行（フルリストア/部分インポート）
- * - 一時データベースのクリーンアップ
+ * - バックアップ処理の実行
+ * - 復元処理の実行（確認後に全件置換）
+ * - 一時データベースと選択元キャッシュのクリーンアップ
  *
- * @see app/settings/export-import.tsx - エクスポート・インポート画面UI
+ * @see app/settings/export-import.tsx - バックアップ・復元画面UI
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import * as DocumentPicker from 'expo-document-picker';
 import { useRouter } from 'expo-router';
 import {
   useTranslation,
   InvalidFileTypeError,
   PasswordRequiredError,
+  ExportService,
   ImportService,
   translateError,
   useSnippets,
@@ -37,16 +38,14 @@ import { showAlert, showConfirm, showErrorAlert } from '@utils/alerts';
 export type ModalMode = 'export' | 'import';
 
 /**
- * モバイル用の一時DBハンドル
- * フルリストアと部分インポートの両方に対応するために必要な情報を保持する
+ * 復元の準備で作成・保持したファイルの組
+ * 確認の取消・復元の成功・失敗のいずれでも両方を削除する
  */
-interface TempDbHandle {
-  /** 一時データベースファイルのパス（部分インポート用） */
+interface PreparedRestore {
+  /** 検証と移行を終えた一時データベースファイルのパス */
   tempDbPath: string;
-  /** 元のバックアップファイルのURI（フルリストア用） */
-  originalFileUri: string;
-  /** パスワード（フルリストア時の再検証用） */
-  password: string;
+  /** 選択したバックアップファイルのキャッシュURI */
+  sourceFileUri: string;
 }
 
 /** useExportImportScreen フックの返却値 */
@@ -60,28 +59,20 @@ export interface UseExportImportScreenReturn {
   password: string;
   /** 処理中フラグ */
   isProcessing: boolean;
-  /** インポートモード選択モーダル表示状態 */
-  showImportModeModal: boolean;
 
   /* セッター */
   /** パスワード更新 */
   setPassword: (password: string) => void;
 
   /* ハンドラ */
-  /** エクスポートボタン押下 */
+  /** バックアップボタン押下 */
   handleExportBackup: () => void;
-  /** インポートボタン押下 */
+  /** 復元ボタン押下 */
   handleImportBackup: () => Promise<void>;
   /** パスワード送信 */
   handlePasswordSubmit: () => Promise<void>;
   /** パスワードモーダルを閉じる */
   closePasswordModal: () => void;
-  /** インポートモード選択モーダルを閉じる */
-  closeImportModeModal: () => void;
-  /** フルリストア実行 */
-  executeFullRestore: () => void;
-  /** 部分インポート準備 */
-  preparePartialImport: () => Promise<void>;
 }
 
 /* ======================================== */
@@ -106,16 +97,17 @@ export function useExportImportScreen(): UseExportImportScreenReturn {
   const [password, setPassword] = useState('');
   const [selectedBackupFileUri, setSelectedBackupFileUri] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showImportModeModal, setShowImportModeModal] = useState(false);
-  const tempDbHandleRef = useRef<TempDbHandle | null>(null);
 
   /* ======================================== */
   /* イベントハンドラ */
   /* ======================================== */
 
+  /** パスワード入力モーダルをバックアップ用に表示 */
   const handleExportBackup = useCallback(() => {
-    router.push('/settings/select-export-data');
-  }, [router]);
+    setModalMode('export');
+    setPassword('');
+    setShowPasswordModal(true);
+  }, []);
 
   /** ファイルピッカーでバックアップファイルを選択し、パスワード入力モーダルを表示 */
   const handleImportBackup = useCallback(async () => {
@@ -143,106 +135,109 @@ export function useExportImportScreen(): UseExportImportScreenReturn {
     }
   }, []);
 
-  /** パスワードモーダルのOKボタン押下（インポートモード: ファイル解析してモード選択へ） */
-  const handlePasswordSubmit = useCallback(async () => {
+  /** 準備した一時DBと選択元キャッシュを削除し、選択状態を戻す */
+  const discardPreparedRestore = useCallback((prepared: PreparedRestore) => {
+    ImportService.cleanupTempDatabase(prepared.tempDbPath);
+    ImportService.cleanupImportSourceFile(prepared.sourceFileUri);
+    setSelectedBackupFileUri(null);
+  }, []);
+
+  /** 準備済みの一時DBの内容で、現在のデータを全件置き換える */
+  const executeRestore = useCallback(async (prepared: PreparedRestore) => {
+    setIsProcessing(true);
     try {
-      if (!password.trim()) {
-        throw new PasswordRequiredError();
-      }
+      await ImportService.importDatabaseFromTempDb(prepared.tempDbPath);
 
-      if (modalMode === 'export') {
-        setShowPasswordModal(false);
-        setPassword('');
-      } else {
-        if (!selectedBackupFileUri) return;
+      /* 復元後にProvider refresh */
+      refreshSnippets();
+      refreshProfiles();
+      refreshVariables();
+      refreshCategories();
 
-        setShowPasswordModal(false);
-        setIsProcessing(true);
-
-        try {
-          const tempDbPath = await ImportService.prepareImportDatabase(password, selectedBackupFileUri);
-
-          tempDbHandleRef.current = {
-            tempDbPath,
-            originalFileUri: selectedBackupFileUri,
-            password,
-          };
-
-          setShowImportModeModal(true);
-        } catch (error) {
-          showErrorAlert(translateError(error));
-        } finally {
-          setIsProcessing(false);
+      showAlert(
+        '',
+        t('backup.import_success'),
+        undefined,
+        () => {
+          /* 前の画面に戻る */
+          router.back();
         }
-      }
+      );
     } catch (error) {
       showErrorAlert(translateError(error));
+    } finally {
+      /* 再試行はファイル選択からやり直すため、成功・失敗のいずれでも準備したファイルを残さない */
+      discardPreparedRestore(prepared);
+      setIsProcessing(false);
     }
-  }, [password, modalMode, selectedBackupFileUri]);
+  }, [router, t, refreshSnippets, refreshProfiles, refreshVariables, refreshCategories, discardPreparedRestore]);
 
-  const executeFullRestore = useCallback(() => {
-    const handle = tempDbHandleRef.current;
-    if (!handle) return;
+  /**
+   * 選択したファイルを検証し、一時DBへ移行まで済ませる
+   *
+   * @returns 準備したファイルの組。検証・移行に失敗した場合はnull
+   *
+   * @remarks
+   * 失敗時は選択元キャッシュを自動削除しない（パスワード誤りなどの再入力に備えた既存の扱い）。
+   */
+  const prepareRestore = useCallback(async (
+    submittedPassword: string,
+    sourceFileUri: string
+  ): Promise<PreparedRestore | null> => {
+    setIsProcessing(true);
+    try {
+      const tempDbPath = await ImportService.prepareImportDatabase(submittedPassword, sourceFileUri);
+      return { tempDbPath, sourceFileUri };
+    } catch (error) {
+      showErrorAlert(translateError(error));
+      return null;
+    } finally {
+      setIsProcessing(false);
+    }
+  }, []);
+
+  /** パスワードモーダルのOKボタン押下（バックアップ実行、または復元の準備と確認） */
+  const handlePasswordSubmit = useCallback(async () => {
+    if (!password.trim()) {
+      showErrorAlert(translateError(new PasswordRequiredError()));
+      return;
+    }
+
+    const submittedPassword = password;
+    /* モーダルを閉じてから処理を始める（共有シートや確認ダイアログをモーダルと重ねない） */
+    setShowPasswordModal(false);
+    setPassword('');
+
+    if (modalMode === 'export') {
+      setIsProcessing(true);
+      try {
+        /* 共有シートで保存先を選ぶ。完了後はこの画面に留まる */
+        await ExportService.exportAllData(submittedPassword);
+      } catch (error) {
+        showErrorAlert(translateError(error));
+      } finally {
+        setIsProcessing(false);
+      }
+      return;
+    }
+
+    if (!selectedBackupFileUri) return;
+
+    const prepared = await prepareRestore(submittedPassword, selectedBackupFileUri);
+    if (!prepared) return;
 
     showConfirm(
       'backup.restore_confirm',
       async () => {
-        setIsProcessing(true);
-        try {
-          /* 既存の一時DBを使用してインポート */
-          await ImportService.importDatabaseFromTempDb(handle.tempDbPath);
-
-          /* インポート後にProvider refresh */
-          refreshSnippets();
-          refreshProfiles();
-          refreshVariables();
-          refreshCategories();
-
-          /* キャッシュ内の選択ファイルを削除 */
-          ImportService.cleanupImportSourceFile(handle.originalFileUri);
-
-          showAlert(
-            '',
-            t('backup.import_success'),
-            undefined,
-            () => {
-              /* 前の画面に戻る */
-              router.back();
-            }
-          );
-
-          setShowImportModeModal(false);
-          /* 復元済みの一時DBはもう使わないため、キャッシュ領域に残さず削除する */
-          ImportService.cleanupTempDatabase(handle.tempDbPath);
-          tempDbHandleRef.current = null;
-          setPassword('');
-          setSelectedBackupFileUri(null);
-        } catch (error) {
-          showErrorAlert(translateError(error));
-        } finally {
-          setIsProcessing(false);
-        }
+        await executeRestore(prepared);
       },
-      () => {},
+      () => {
+        /* 取消時も一時DBと選択元キャッシュを残さない */
+        discardPreparedRestore(prepared);
+      },
       'danger'
     );
-  }, [router, t, refreshSnippets, refreshProfiles, refreshVariables, refreshCategories]);
-
-  const preparePartialImport = useCallback(async () => {
-    const handle = tempDbHandleRef.current;
-    if (!handle) return;
-
-    /* キャッシュ内の選択ファイルを削除（一時DBは部分インポート画面で使用するため保持） */
-    ImportService.cleanupImportSourceFile(handle.originalFileUri);
-    setSelectedBackupFileUri(null);
-
-    setShowImportModeModal(false);
-
-    router.push({
-      pathname: '/settings/select-import-data',
-      params: { tempDbPath: handle.tempDbPath }
-    });
-  }, [router]);
+  }, [password, modalMode, selectedBackupFileUri, prepareRestore, executeRestore, discardPreparedRestore]);
 
   const closePasswordModal = useCallback(() => {
     /* キャッシュ内の選択ファイルを削除 */
@@ -254,31 +249,15 @@ export function useExportImportScreen(): UseExportImportScreenReturn {
     setSelectedBackupFileUri(null);
   }, [selectedBackupFileUri]);
 
-  const closeImportModeModal = useCallback(() => {
-    if (tempDbHandleRef.current) {
-      ImportService.cleanupTempDatabase(tempDbHandleRef.current.tempDbPath);
-      /* キャッシュ内の選択ファイルも削除 */
-      ImportService.cleanupImportSourceFile(tempDbHandleRef.current.originalFileUri);
-      tempDbHandleRef.current = null;
-    }
-    setShowImportModeModal(false);
-    setPassword('');
-    setSelectedBackupFileUri(null);
-  }, []);
-
   return {
     showPasswordModal,
     modalMode,
     password,
     isProcessing,
-    showImportModeModal,
     setPassword,
     handleExportBackup,
     handleImportBackup,
     handlePasswordSubmit,
     closePasswordModal,
-    closeImportModeModal,
-    executeFullRestore,
-    preparePartialImport,
   };
 }

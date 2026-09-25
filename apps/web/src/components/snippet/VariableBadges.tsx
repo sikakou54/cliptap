@@ -34,7 +34,7 @@ export function VariableBadges({ variables, onInsertVariable }: VariableBadgesPr
               className="px-3 py-1.5 bg-white dark:bg-[#2A2A2A] border border-blue-200 dark:border-blue-900 text-blue-700 dark:text-blue-300 rounded-lg text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors shadow-sm"
               title={`{{${variable.name}}}`}
             >
-              {t(`variables.${variable.name}`)}
+              {t(variable.labelKey)}
             </button>
           ))}
         </div>

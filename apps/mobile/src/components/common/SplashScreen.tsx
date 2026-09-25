@@ -5,16 +5,17 @@
  * アプリアイコンを1秒表示した後、フェードアウトして終了。
  *
  * 動作フロー:
- * 1. コンポーネントマウント時にonReadyを呼び出し
- * 2. isLoadingがfalseになるまで待機
- * 3. 1秒間表示を維持
- * 4. 500msかけてフェードアウト
- * 5. onFinishコールバックで終了を通知
+ * 1. コンポーネントマウント時にonReadyを呼び出し、同時に保持時間の計測を開始
+ * 2. 保持時間（1秒）の経過と、isLoadingがfalseになることの両方を待つ
+ * 3. 500msかけてフェードアウト
+ * 4. onFinishコールバックで終了を通知
  *
  * 技術的ポイント:
  * - Animated.Valueでスムーズなフェードアウト
  * - useNativeDriver: false でフェードアウト（アニメーション対象は opacity のみ）
- * - pointerEvents="none"でタッチイベントを透過
+ * - 保持時間はマウント時点から数える。isLoadingの完了後に数え始めると、
+ *   初期化の待ちと直列に積み上がって起動が遅くなる
+ * - 不透明な間はタッチを遮断し、フェード中だけ下位へ透過する
  * - zIndex: 9999で最前面に表示
  *
  * @see app/_layout.tsx - 使用例
@@ -42,7 +43,7 @@ const SPLASH_FADE_MS = 500;
 /**
  * SplashScreenのProps
  * @property onFinish - スプラッシュ終了時のコールバック（メインコンテンツ表示開始）
- * @property isLoading - 初期化処理中フラグ（trueの間はフェードアウトを待機）
+ * @property isLoading - 初期化中、または起動時広告の準備待ちのフラグ（trueの間はフェードアウトを待機）
  * @property onReady - コンポーネント準備完了コールバック（ネイティブスプラッシュ非表示用）
  */
 interface SplashScreenProps {
@@ -61,6 +62,9 @@ export function SplashScreen({ onFinish, isLoading, onReady }: SplashScreenProps
   /* useStateの初期化子は初回マウント時のみ評価されるため、useRefと同じ単一インスタンスを保持する */
   const [fadeAnim] = useState(() => new Animated.Value(1));
   const hasCalledReady = useRef(false);
+
+  /** 保持時間が経過したか */
+  const [isHoldElapsed, setIsHoldElapsed] = useState(false);
 
   /*
    * ========================================
@@ -86,28 +90,35 @@ export function SplashScreen({ onFinish, isLoading, onReady }: SplashScreenProps
   }, [onReady]);
 
   /**
+   * 保持時間の計測
+   * マウント直後から数え始めることで、初期化の待ちと並行して進む。
+   * isLoadingの完了後に数え始めると、その待ちに1秒が上乗せされてしまう。
+   */
+  useEffect(() => {
+    const timer = setTimeout(() => setIsHoldElapsed(true), SPLASH_HOLD_MS);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  /**
    * フェードアウトアニメーション制御
-   * isLoadingがfalseになったらSPLASH_HOLD_MS待機し、SPLASH_FADE_MSかけてフェードアウトする
+   * 保持時間の経過と初期化の完了が揃ったら、SPLASH_FADE_MSかけてフェードアウトする。
    * アニメーション対象は Animated.View の opacity のみ。背景色は非アニメーションの wrapper が
    * SPLASH_BACKGROUND_COLOR で塗るため、フェード中も背景色は変化しない。
    */
   useEffect(() => {
-    if (isLoading) {
+    if (isLoading || !isHoldElapsed) {
       return;
     }
 
-    const timer = setTimeout(() => {
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: SPLASH_FADE_MS,
-        useNativeDriver: false,
-      }).start(() => {
-        onFinish();
-      });
-    }, SPLASH_HOLD_MS);
-
-    return () => clearTimeout(timer);
-  }, [fadeAnim, onFinish, isLoading]);
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: SPLASH_FADE_MS,
+      useNativeDriver: false,
+    }).start(() => {
+      onFinish();
+    });
+  }, [fadeAnim, onFinish, isLoading, isHoldElapsed]);
 
   /*
    * ========================================
@@ -115,9 +126,12 @@ export function SplashScreen({ onFinish, isLoading, onReady }: SplashScreenProps
    * ========================================
    */
 
-  /* スプラッシュスクリーン（最前面に表示、タッチイベント無効） */
+  /* スプラッシュスクリーン（最前面に表示）
+     不透明で覆っている間はタッチを遮断する。透過したままだと、見えていないホーム画面の
+     定型文カードに指が当たってクリップボードが書き換わる。
+     フェードが始まってからは下位へ透過し、従来どおり素早く操作を始められるようにする */
   return (
-    <View style={styles.wrapper} pointerEvents="none">
+    <View style={styles.wrapper} pointerEvents={isLoading || !isHoldElapsed ? 'auto' : 'none'}>
       {/* フェードアニメーションコンテナ */}
       <Animated.View
         style={[

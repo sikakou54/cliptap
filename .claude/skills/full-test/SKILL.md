@@ -20,7 +20,7 @@ CSVのテスト仕様書へ落として、iOSシミュレータ上で機械的�
 
 | 場所 | 内容 |
 |---|---|
-| `docs/test/features.csv` | 機能台帳（F-01〜F-23） |
+| `docs/test/features.csv` | 機能台帳（F-01〜F-24） |
 | `docs/test/screens.csv` | 画面台帳（`apps/mobile/app/**` の全ルート） |
 | `docs/test/routes.csv` | ルート台帳（起点・条件別） |
 | `docs/test/pattern-matrix.csv` | パターン網羅表 |
@@ -167,6 +167,8 @@ $S logs 5                        # JSエラー
   見えていないものを「ある」と判定する。
 - **画面内でも下端は広告バナーに覆われる。** そこをタップしても届かない。
   `sim.sh tap` は対象が安全域の外なら自動でスクロールしてから押す。
+  ただし画面外の要素が1つも無い（スクロールできる一覧が無い）ときは、スクロールせずにそのまま押す。
+  画面下端に固定したボトムシートの項目でスクロールすると、スワイプがシートの外側のタップになりシートが閉じるため。
   安全域の比率は `config.env` の `SAFE_TOP_RATIO` / `SAFE_BOTTOM_RATIO`。
 - **アイコンだけのボタンはラベルを持たない。** ClipTapは `accessibilityLabel` が
   5箇所しか無いため、ヘッダーのアイコンなどは位置と順序で特定する。
@@ -222,7 +224,7 @@ $T snapshot before / restore before
 
 - [ ] `validate.mjs` がエラー0件
 - [ ] `_layout.tsx` を除く `apps/mobile/app/**` の全画面ルートファイルが `screens.csv` にある
-- [ ] `features.csv` が F-01〜F-23 を持つ
+- [ ] `features.csv` が F-01〜F-24 を持つ
 - [ ] 全REACHABLEパターンに TestID が割り当たっている
 - [ ] 各機能に正常系・異常系・境界値がある
 - [ ] Free / Pro の差がある機能で両方のパターンがある

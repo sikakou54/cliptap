@@ -28,6 +28,25 @@ import {
 /* SQLクエリ定義 */
 /* ======================================== */
 
+/**
+ * 削除するプロファイル「だけ」に紐づくショートカットのIDを返すサブクエリ（`?` は2個とも削除するプロファイルID）
+ *
+ * @remarks
+ * 紐づけから判定するため、紐づけ（shortcut_profiles）を消す前に評価すること。
+ * 紐づけが0件のショートカット（全プロファイル向け）は `sp.profileId = ?` に一致する行を持たないため拾わない。
+ *
+ * 他の紐づけとして数えるのは、実在するプロファイルへの紐づけだけに限る。
+ * 存在しないプロファイルへの紐づけを「他にも紐づく」と数えると、削除後にその紐づけだけが残り、
+ * どのプロファイルからも見えず0件（全プロファイル向け）にも戻らない行が残ってしまう。
+ */
+const SHORTCUT_IDS_ONLY_IN_PROFILE = `
+  SELECT sp.shortcutId FROM shortcut_profiles sp
+  WHERE sp.profileId = ?
+    AND NOT EXISTS (SELECT 1 FROM shortcut_profiles other
+                    WHERE other.shortcutId = sp.shortcutId AND other.profileId <> ?
+                      AND other.profileId IN (SELECT id FROM profiles))
+`;
+
 const ProfileQueries = {
   /* 全プロファイルを取得（標準優先→表示順）
      有効判定がSET_VALID_BY_LIMITと同じ並びになるため、
@@ -72,6 +91,14 @@ const ProfileQueries = {
   `,
   /* プロファイル削除時、関連するスニペット・プロファイル紐付けを削除 */
   DELETE_SNIPPET_PROFILES: 'DELETE FROM snippet_profiles WHERE profileId = ?',
+  /* プロファイル削除時、そのプロファイルだけに紐づくショートカットの値を削除（バインドは [id, id]） */
+  DELETE_SHORTCUT_VALUES: `DELETE FROM shortcut_values
+    WHERE shortcutId IN (${SHORTCUT_IDS_ONLY_IN_PROFILE})`,
+  /* プロファイル削除時、そのプロファイルだけに紐づくショートカット本体を削除（バインドは [id, id]） */
+  DELETE_SHORTCUTS: `DELETE FROM shortcuts
+    WHERE id IN (${SHORTCUT_IDS_ONLY_IN_PROFILE})`,
+  /* プロファイル削除時、ショートカットとの紐づけを削除（値・本体の削除より後に行う） */
+  DELETE_SHORTCUT_PROFILES: 'DELETE FROM shortcut_profiles WHERE profileId = ?',
 };
 
 const ProfileVariableQueries = {
@@ -327,9 +354,19 @@ export class ProfileMapper {
       throw new DefaultProfileDeleteError();
     }
 
-    /* カスケード削除: 関連データを全て削除（参照整合性維持） */
+    /* カスケード削除: 関連データを全て削除（参照整合性維持）。
+       実行時に外部キーを強制していないため、宣言したON DELETE CASCADEは働かない。
+       ショートカットは、このプロファイルだけに紐づくものを値ごと消す。紐づけだけを外すと
+       紐づけが0件になり、全プロファイル向けとして他のプロファイルへ静かに広がってしまうため。
+       他のプロファイルにも紐づくものは紐づけだけを外し、はじめから0件（全プロファイル向け）のものは触らない
+       （定型文・変数は本体が残る） */
     db.run(ProfileVariableQueries.DELETE_BY_PROFILE, [id]); /* プロファイル変数を削除 */
     db.run(ProfileQueries.DELETE_SNIPPET_PROFILES, [id]); /* スニペット関連を削除 */
+    /* 値→本体→紐づけの順に消す。値と本体は「このプロファイルだけに紐づくか」を紐づけから判定するため、
+       先に紐づけを消すと判定できなくなる（専用のものが0件になって全プロファイル向けに残る） */
+    db.run(ProfileQueries.DELETE_SHORTCUT_VALUES, [id, id]); /* 専用ショートカットの値を削除 */
+    db.run(ProfileQueries.DELETE_SHORTCUTS, [id, id]); /* 専用ショートカット本体を削除 */
+    db.run(ProfileQueries.DELETE_SHORTCUT_PROFILES, [id]); /* このプロファイルへの紐づけを削除 */
     db.run(ProfileQueries.DELETE, [id]); /* プロファイルを削除 */
   }
 
@@ -363,7 +400,7 @@ export class ProfileMapper {
     }
 
     /* 全プロファイルのisDefaultをリセット後、指定プロファイルのみデフォルト化 */
-    /* ここでトランザクションを張らないこと。インポートの全復元・選択インポートが
+    /* ここでトランザクションを張らないこと。復元（全件置換）が
        トランザクション内からsetDefaultを呼ぶため入れ子になり、
        SAVEPOINT非対応のアダプターで取込全体が失敗する。
        不可分性が必要な呼び出し側（ProfileProvider）でトランザクションを張る */

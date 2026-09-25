@@ -4,17 +4,23 @@
  * @description
  * スニペットの作成・編集モーダルの状態管理とロジックを提供。
  * Dashboard画面から分離された専用フック。
+ * 新規作成では無料プランの登録上限（定型文50件）も判定する。
  *
  * @see pages/Dashboard.tsx - 使用元
  */
 
 import { useState, useCallback, useMemo } from 'react';
 import {
+  FREE_SNIPPETS_LIMIT,
   Logger,
+  SnippetService,
+  useSharedSubscription,
   useSnippets,
+  useTranslation,
   type Snippet,
   type SnippetProfile,
 } from '@cliptap/shared';
+import { showErrorAlert } from '@utils/alerts';
 
 /** スニペットフォームの値 */
 export interface SnippetFormValues {
@@ -65,7 +71,9 @@ export function useSnippetModal({
   snippetProfiles,
   onSnippetsChange,
 }: UseSnippetModalParams): UseSnippetModalReturn {
+  const { t } = useTranslation();
   const { createSnippet, updateSnippet, deleteSnippet } = useSnippets();
+  const { isLoading: isSubscriptionLoading, canAddSnippet } = useSharedSubscription();
 
   /* ======================================== */
   /* 状態管理 */
@@ -89,18 +97,54 @@ export function useSnippetModal({
   /* ハンドラ */
   /* ======================================== */
 
-  /** 新規作成モーダルを開く */
+  /**
+   * 定型文を1件追加できるか判定し、できなければ上限の案内を出す
+   *
+   * @returns 追加できる場合true
+   * @remarks
+   * 件数は絞り込み前の総数をDBから数える。ダッシュボードの一覧はプロファイル・カテゴリで
+   * 絞り込まれており、その件数では他のプロファイルの分を取りこぼすためである。
+   * 上限以上ある既存の定型文は使えるまま残し、止めるのは新規作成だけとする。
+   */
+  const ensureCanAddSnippet = useCallback((): boolean => {
+    if (canAddSnippet(SnippetService.count())) {
+      return true;
+    }
+    showErrorAlert(t('snippet.limit_message', { limit: FREE_SNIPPETS_LIMIT }));
+    return false;
+  }, [canAddSnippet, t]);
+
+  /**
+   * 新規作成モーダルを開く
+   *
+   * @remarks
+   * 権利確認中（起動直後・ログイン直後）は上限の判定を保留して開く。確認が終わるまでは
+   * Pro利用者もFree扱いのため、ここで判定すると誤って上限の案内を出してしまう。
+   * 上限は保存時に必ず判定する。
+   */
   const handleCreate = useCallback(() => {
+    if (!isSubscriptionLoading && !ensureCanAddSnippet()) {
+      return;
+    }
     setIsCreating(true);
-  }, []);
+  }, [isSubscriptionLoading, ensureCanAddSnippet]);
 
   /** 新規作成モーダルを閉じる */
   const closeCreateModal = useCallback(() => {
     setIsCreating(false);
   }, []);
 
-  /** 新規スニペットを保存 */
+  /**
+   * 新規スニペットを保存
+   *
+   * @remarks
+   * 保存時は権利確認中でも上限を判定する（未確定はFree扱い）。確認中に開いたモーダル、
+   * 開いた後の件数の変化、保存の二度押しもここで止める。
+   */
   const handleSaveCreate = useCallback(async (values: SnippetFormValues) => {
+    if (!ensureCanAddSnippet()) {
+      return;
+    }
     try {
       await createSnippet(values);
       setIsCreating(false);
@@ -109,7 +153,7 @@ export function useSnippetModal({
     } catch (err) {
       Logger.error('Failed to create:', err);
     }
-  }, [createSnippet, onSnippetsChange]);
+  }, [ensureCanAddSnippet, createSnippet, onSnippetsChange]);
 
   /** 編集モーダルを開く */
   const handleEdit = useCallback((snippet: Snippet) => {

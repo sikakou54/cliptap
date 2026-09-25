@@ -111,6 +111,17 @@ async function seedSchema(db: MemoryDbAdapter, schemaVersion: number): Promise<v
       'CREATE TABLE system_variable_formats (variableKey TEXT PRIMARY KEY, pattern TEXT NOT NULL, updatedAt TEXT NOT NULL)'
     );
   }
+
+  if (schemaVersion >= 8) {
+    await db.exec(`
+      CREATE TABLE shortcuts (id TEXT PRIMARY KEY, categoryId TEXT, name TEXT NOT NULL, sortOrder INTEGER DEFAULT 0, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL, FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE SET NULL);
+      CREATE TABLE shortcut_profiles (shortcutId TEXT NOT NULL, profileId TEXT NOT NULL, PRIMARY KEY (shortcutId, profileId), FOREIGN KEY (shortcutId) REFERENCES shortcuts(id) ON DELETE CASCADE, FOREIGN KEY (profileId) REFERENCES profiles(id) ON DELETE CASCADE);
+      CREATE TABLE shortcut_values (id TEXT PRIMARY KEY, shortcutId TEXT NOT NULL, value TEXT NOT NULL, isMasked INTEGER DEFAULT 0, useCount INTEGER DEFAULT 0, sortOrder INTEGER DEFAULT 0, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL, FOREIGN KEY (shortcutId) REFERENCES shortcuts(id) ON DELETE CASCADE);
+      CREATE INDEX idx_shortcut_profiles_profile ON shortcut_profiles(profileId);
+      CREATE INDEX idx_shortcut_values_shortcut ON shortcut_values(shortcutId);
+      CREATE INDEX idx_shortcut_values_use_count ON shortcut_values(useCount DESC);
+    `);
+  }
 }
 
 describe('ImportService.prepareImportDatabase', () => {
@@ -167,6 +178,8 @@ describe('ImportService.prepareImportDatabase', () => {
       .map((column) => column.name);
     expect(snippetColumns).toContain('copyCount');
     expect(tableExists(base, 'system_variable_formats')).toBe(true);
+    expect(tableExists(base, 'shortcuts')).toBe(true);
+    expect(tableExists(base, 'shortcut_values')).toBe(true);
   });
 
   it('persists after validating a file that already matches the current schema version', async () => {

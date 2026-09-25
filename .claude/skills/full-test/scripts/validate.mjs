@@ -96,8 +96,8 @@ requireColumns('features.csv', features.header, ['FeatureID', 'Name', 'SpecRef',
     if (!r.FeatureID) { err(`features.csv:${r.__line}: FeatureIDが空です`); continue; }
     if (seen.has(r.FeatureID)) err(`features.csv:${r.__line}: FeatureIDが重複しています: ${r.FeatureID}`);
     seen.add(r.FeatureID);
-    if (!/^F-(?:0[1-9]|1\d|2[0-3])$/.test(r.FeatureID)) {
-      err(`features.csv:${r.__line}: FeatureIDは F-01〜F-23 の形式です: ${r.FeatureID}`);
+    if (!/^F-(?:0[1-9]|1\d|2[0-4])$/.test(r.FeatureID)) {
+      err(`features.csv:${r.__line}: FeatureIDは F-01〜F-24 の形式です: ${r.FeatureID}`);
     }
     if (!r.SpecRef) err(`features.csv:${r.__line}: ${r.FeatureID} にSpecRef（機能仕様書の節番号）がありません`);
     if (!VALID_SCOPE.includes(r.Scope)) {

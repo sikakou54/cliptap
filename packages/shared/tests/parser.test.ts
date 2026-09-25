@@ -30,5 +30,33 @@ describe('VariableParser', () => {
     const result = await replaceVariables(text, { customResolver: resolver });
     expect(result).toBe('Start [var1] middle [var2] end');
   });
+
+  /* 値に置換パターンの記号が含まれていても、そのままの文字列で出力する。
+     文字列で置換すると `$&` がトークン自身に、`$$` が `$` に化け、一覧表示とコピーがずれる */
+  it.each([['$&'], ['$$5'], ['$`'], ["$'"], ['$1'], ['A$&B $$ C']])(
+    'keeps the replacement-pattern characters in %s literally',
+    async (value) => {
+      const result = await replaceVariables('[{{price}}]', { customResolver: () => value });
+      expect(result).toBe(`[${value}]`);
+    }
+  );
+
+  /* 展開した値に別のトークンが含まれていても再展開しない（一覧表示・キーボードと同じ） */
+  it('does not expand a token that appears inside a resolved value', async () => {
+    const resolver = (name: string) => (name === 'a' ? '{{b}}' : 'B');
+    const result = await replaceVariables('{{a}} {{b}}', { customResolver: resolver });
+    expect(result).toBe('{{b}} B');
+  });
+
+  it('resolves the same token only once', async () => {
+    let calls = 0;
+    const resolver = () => {
+      calls += 1;
+      return 'X';
+    };
+    const result = await replaceVariables('{{a}}-{{a}}-{{a}}', { customResolver: resolver });
+    expect(result).toBe('X-X-X');
+    expect(calls).toBe(1);
+  });
 });
 

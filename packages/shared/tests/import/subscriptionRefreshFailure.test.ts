@@ -71,24 +71,6 @@ describe('ImportService subscription refresh failure', () => {
     return { main, backup };
   };
 
-  it('completes a partial import even if refreshing the entitlement fails', async () => {
-    const { main, backup } = setupDatabases();
-
-    main.run(
-      "INSERT INTO profiles VALUES ('main', 'Main', 1, 1, 1, 0, 'old-time', 'old-time')"
-    );
-    backup.run("INSERT INTO categories VALUES ('new', 'Mail', NULL, 0, 'new-time')");
-
-    await expect(
-      ImportService.importPartial('memory', [], [], [], ['new'])
-    ).resolves.toBeUndefined();
-
-    expect(refreshCalls).toBe(1);
-    expect(
-      main.all<{ name: string }>('SELECT name FROM categories')
-    ).toEqual([{ name: 'Mail' }]);
-  });
-
   it('completes a full restore even if refreshing the entitlement fails', async () => {
     const { main, backup } = setupDatabases();
 

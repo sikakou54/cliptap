@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 開いているショートカットの値の行（タップで挿入される）
+     minHeight 44dpは、行全体をタッチ対象にするためiOS HIGの最小タップ領域に合わせたもの
+
+     左の余白をショートカットの行より広く取り、上の行にぶら下がっていることを示す。
+     どちらを押すと入力されるのかが、押す前に見分けられるようにするため -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="44dp"
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    android:background="?attr/selectableItemBackground"
+    android:paddingStart="28dp"
+    android:paddingEnd="12dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="12dp">
+
+    <!-- 挿入される値（伏せる指定の値は記号に置き換えて表示する）
+         収まらない値は折り返して全文を見せる。末尾を省略すると、末尾だけが違う値
+         （同じサービスのIDなど）を見分けられないため。行の高さは値の長さに応じて伸びる -->
+    <TextView
+        android:id="@+id/shortcutValue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:textColor="?android:attr/textColorSecondary" />
+
+</LinearLayout>

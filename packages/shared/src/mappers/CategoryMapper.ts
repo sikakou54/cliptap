@@ -37,6 +37,8 @@ const CategoryQueries = {
   SELECT_MAX_SORT_ORDER: 'SELECT MAX(sortOrder) as maxOrder FROM categories',
   /* カテゴリ削除時、関連するスニペットのcategoryIdをNULLに更新 */
   NULLIFY_SNIPPET_CATEGORY: 'UPDATE snippets SET categoryId = NULL WHERE categoryId = ?',
+  /* 削除するカテゴリを参照しているショートカットを未分類へ戻す */
+  NULLIFY_SHORTCUT_CATEGORY: 'UPDATE shortcuts SET categoryId = NULL WHERE categoryId = ?',
 };
 
 /* ======================================== */
@@ -179,14 +181,21 @@ export class CategoryMapper {
    * カテゴリを削除
    * @param id - カテゴリID
    * @description
-   * カテゴリに属するスニペットのcategoryIdはNULLに更新される
+   * カテゴリを参照しているスニペットとショートカットのcategoryIdはNULLに更新される。
+   * 実行時に外部キーを強制していないため、DDLの`ON DELETE SET NULL`だけでは
+   * NULLにならない。この明示的なUPDATEが実質の本体である。
    */
   static delete(id: string): void {
     const db = getMainDbAdapter();
-    /* カテゴリ削除前に、関連するスニペットのcategoryIdをNULLに更新（参照整合性維持、カスケード削除の代替） */
-    db.run(CategoryQueries.NULLIFY_SNIPPET_CATEGORY, [id]);
-    /* カテゴリ本体を削除（スニペットは未分類として残る） */
-    db.run(CategoryQueries.DELETE, [id]);
+    /* 途中で失敗すると、カテゴリだけ消えて参照が残る状態になるためまとめて実行する */
+    db.transaction(() => {
+      /* カテゴリ削除前に、関連するスニペットのcategoryIdをNULLに更新（参照整合性維持、カスケード削除の代替） */
+      db.run(CategoryQueries.NULLIFY_SNIPPET_CATEGORY, [id]);
+      /* ショートカットも定型文と同じカテゴリを共用するため、同じくNULLへ戻す */
+      db.run(CategoryQueries.NULLIFY_SHORTCUT_CATEGORY, [id]);
+      /* カテゴリ本体を削除（スニペットとショートカットは未分類として残る） */
+      db.run(CategoryQueries.DELETE, [id]);
+    });
   }
 
   /**

@@ -37,7 +37,7 @@ function buildSharedDbPath(sharedDir: string): string {
  * - Android: files/group.com.sikakou.cliptap/databases
  *
  * Web版の getMainDatabasePath() と同様の役割を果たします。
- * 同じ共有コンテナDBを指す getSharedDatabaseFile() / getDatabasePath() とは戻り値と失敗時の扱いが異なり、
+ * 同じ共有コンテナDBを指す getSharedDatabaseFile() とは戻り値と失敗時の扱いが異なり、
  * こちらは `file://` 付きURIを返し、失敗時は例外ではなく null を返す（存在チェック用）。
  */
 async function getMainDatabasePath(
@@ -125,23 +125,4 @@ export async function checkSystemDatabaseExists(
   const exists = await fileIO.exists(systemDbUri);
   Logger.info(`[System DB Check] Exists: ${exists}`);
   return exists;
-}
-
-/**
- * 共有コンテナDBファイルパスを取得（エクスポート・インポート用）
- *
- * getMainDatabasePath と異なり、コンテナが取得できないときは null ではなく例外を投げ、
- * URI形式ではなくファイルシステムパスを返します。
- * getSharedDatabaseFile とは例外メッセージが異なり、App Group識別子は
- * メッセージへ含めずログ側へ出します。
- */
-export async function getDatabasePath(fileIO: FileIOAdapter): Promise<string> {
-  const sharedDir = await fileIO.getAppGroupDirectory(APP_GROUP_IDENTIFIER);
-
-  if (!sharedDir) {
-    Logger.error(`[DatabaseFileManager] App Group container not found: ${APP_GROUP_IDENTIFIER}`);
-    throw new Error('App Group container not found');
-  }
-
-  return buildSharedDbPath(sharedDir);
 }

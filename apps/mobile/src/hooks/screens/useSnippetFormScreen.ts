@@ -14,13 +14,14 @@
  * @see packages/shared/src/providers/SnippetProvider.tsx - 定型文CRUD操作（useSnippets）
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useTranslation } from '@cliptap/shared';
 import { useSnippets, useCategories, useProfiles, type Category } from '@cliptap/shared';
 import { showInfo, showErrorAlert } from '@utils/alerts';
 import { Profile } from '@cliptap/shared';
 import { Logger } from '@cliptap/shared';
+import { useItemLimitGuard } from '@hooks/useItemLimitGuard';
 
 /**
  * useSnippetFormScreenの引数
@@ -78,7 +79,8 @@ export function useSnippetFormScreen({
   const { createSnippet, updateSnippet, getById } = useSnippets();
   const { categories, refresh: refreshCategories } = useCategories();
   /* 選択済みプロファイル名の表示は、選択肢と同じく有効なプロファイルだけを対象にする */
-  const { validProfiles: profiles } = useProfiles();
+  const { validProfiles: profiles, activeProfile } = useProfiles();
+  const { ensureCanAddSnippet } = useItemLimitGuard();
 
   /* ======================================== */
   /* 状態管理 */
@@ -109,6 +111,37 @@ export function useSnippetFormScreen({
       void refreshCategories();
     }, [refreshCategories])
   );
+
+  /* ======================================== */
+  /* 新規作成時の初期選択（アクティブなプロファイル） */
+  /* ======================================== */
+
+  /**
+   * 初期選択を一度だけ適用したか
+   *
+   * @remarks
+   * アクティブなプロファイルは初回レンダリングでは未確定になりうるため、確定してから入れる。
+   * 判定を入れないと、利用者が選択を全部外して0件（＝全プロファイル向け）にした直後に
+   * 再レンダリングで選択が戻ってしまう。
+   */
+  const didApplyInitialProfiles = useRef(false);
+
+  useEffect(() => {
+    /* 編集モードは保存済みの選択をそのまま使うため、初期選択を被せない */
+    if (isEditMode) {
+      didApplyInitialProfiles.current = true;
+      return;
+    }
+    if (didApplyInitialProfiles.current) return;
+
+    /* 無効なプロファイル（Free上限超過分）は選択画面に出ないため、既定にも入れない。
+       出ない項目を選択済みにすると、画面上は0件に見えるのに保存すると1件入る食い違いになる */
+    const initialProfile = profiles.find((profile) => profile.id === activeProfile?.id);
+    if (!initialProfile) return;
+
+    setSelectedProfileIds([initialProfile.id]);
+    didApplyInitialProfiles.current = true;
+  }, [isEditMode, activeProfile, profiles]);
 
   /* ======================================== */
   /* 編集モード時のスニペットデータ読み込み */
@@ -189,14 +222,15 @@ export function useSnippetFormScreen({
   /**
    * プロファイル選択画面へ遷移
    * グローバルコールバックで選択結果を受け取る
+   * 選択画面はショートカット編集と共有のため、target で定型文向けの説明文を出させる
    */
   const handleProfilePress = useCallback(() => {
     global.profileSelectCallback = (profileIds: string[]) => {
       setSelectedProfileIds(profileIds);
     };
     router.push({
-      pathname: '/snippet/profile-select',
-      params: { selectedIds: selectedProfileIds.join(',') },
+      pathname: '/profile/select',
+      params: { selectedIds: selectedProfileIds.join(','), target: 'snippet' },
     });
   }, [selectedProfileIds, router]);
 
@@ -219,6 +253,13 @@ export function useSnippetFormScreen({
 
     if (!content.trim()) {
       showInfo('error.empty_content');
+      return;
+    }
+
+    /* 新規作成だけ登録上限を判定する。ディープリンクなどホームの追加ボタンを経由しない開き方があり、
+       権利確認中にホームが判定を保留した場合もここで止めるため、保存時は保留せず必ず判定する。
+       止めた場合も画面は閉じず、入力は残る。条件は下の作成・更新の分岐と揃える */
+    if (!(isEditMode && snippetId) && !ensureCanAddSnippet()) {
       return;
     }
 
@@ -256,6 +297,7 @@ export function useSnippetFormScreen({
     selectedCategoryId,
     selectedProfileIds,
     copyWithTitle,
+    ensureCanAddSnippet,
     updateSnippet,
     createSnippet,
     router,

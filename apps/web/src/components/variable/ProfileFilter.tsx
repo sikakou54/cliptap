@@ -4,6 +4,12 @@
  * @description
  * 変数値を表示する対象プロファイル（環境）を切り替えるフィルター。
  * プロファイルごとに異なる値を持つカスタム変数の値を確認できる。
+ *
+ * 【チップの見た目の出どころ】
+ * 角丸・枠線・配色は、モバイルのチップ実装（apps/mobile/src/components/profile/ProfileChipSelector.tsx と
+ * apps/mobile/src/components/category/CategoryFilter.tsx）が使うテーマトークンと同じ値に揃えている。
+ * Web内の3つのチップ（dashboard/SearchProfileBar、common/CategoryFilterBar、variable/ProfileFilter）は
+ * すべて同じ値のため、見た目を変えるときは3つとモバイル側をまとめて直す。
  */
 import type { Profile } from '@cliptap/shared';
 
@@ -18,7 +24,7 @@ export function ProfileFilter({ profiles, selectedProfileId, onSelectProfile }: 
 
   /* プロファイルフィルター（環境切り替え、選択状態に応じてスタイル変更） */
   return (
-    <div className="flex gap-2 overflow-x-auto pb-2">
+    <div className="flex gap-2 overflow-x-auto py-2">
       {profiles.map((profile) => {
         const isSelected = selectedProfileId === profile.id;
         /* プロファイルフィルターボタン */
@@ -26,10 +32,10 @@ export function ProfileFilter({ profiles, selectedProfileId, onSelectProfile }: 
           <button
             key={profile.id}
             onClick={() => onSelectProfile(profile.id)}
-            className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${
+            className={`whitespace-nowrap rounded-2xl border px-3 py-1.5 text-sm font-medium transition-colors ${
               isSelected
-                ? 'bg-blue-600 dark:bg-blue-500 text-white'
-                : 'bg-gray-100 dark:bg-[#2A2A2A] text-gray-700 dark:text-[#A0A0A0] hover:bg-gray-200 dark:hover:bg-[#333333]'
+                ? 'border-[#3B82F6] bg-[#3B82F6] text-white dark:border-[#60A5FA] dark:bg-[#60A5FA]'
+                : 'border-[#E5E7EB] bg-[#F8FAFC] text-[#111827] hover:bg-[#F3F4F6] dark:border-[#2A2A2A] dark:bg-[#1A1A1A] dark:text-white dark:hover:bg-[#2A2A2A]'
             }`}
           >
             {profile.name}

@@ -1,0 +1,47 @@
+TestID,PatternID,StepNo,Action,Result,Expected,Actual,Evidence,ExecutedAt
+TC-1211,P-F10-020;P-F10-021;P-F10-022;P-F10-023;P-F10-024,1,TAP,PASS,ショートカット表示へ切り替わる,"tap 1491,187 hold=60ms",,2026-09-15T23:55:32.687Z
+TC-1211,P-F10-020;P-F10-021;P-F10-022;P-F10-023;P-F10-024,2,SCROLL_TO,PASS,対象カードが画面内に入る,safe after 0 scroll(s),,2026-09-15T23:55:34.038Z
+TC-1211,P-F10-020;P-F10-021;P-F10-022;P-F10-023;P-F10-024,3,TAP,PASS,その他の操作メニューが開く,"tap 1618,285 hold=60ms",,2026-09-15T23:55:35.850Z
+TC-1211,P-F10-020;P-F10-021;P-F10-022;P-F10-023;P-F10-024,4,TAP,PASS,ショートカット編集画面が開く,"tap 1478,729 hold=60ms",,2026-09-15T23:55:37.514Z
+TC-1211,P-F10-020;P-F10-021;P-F10-022;P-F10-023;P-F10-024,5,ASSERT_VISIBLE,PASS,値一覧には保存文字列が未展開で表示される,見えている（1478 542）,,2026-09-15T23:55:38.995Z
+TC-1211,P-F10-020;P-F10-021;P-F10-022;P-F10-023;P-F10-024,6,ASSERT_VISIBLE,FAIL,会社のプレビューがMainで展開される,見つからない,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview-retry/evidence/TC-1211-6-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview-retry/evidence/TC-1211-6-FAIL.txt,2026-09-15T23:55:47.588Z
+TC-1211,P-F10-020;P-F10-021;P-F10-022;P-F10-023;P-F10-024,7,ASSERT_SCREEN_HAS,SKIPPED,日付が実行日の既定書式へ展開される,前のステップが失敗したため未実行,,2026-09-15T23:55:48.191Z
+TC-1211,P-F10-020;P-F10-021;P-F10-022;P-F10-023;P-F10-024,8,ASSERT_VISIBLE,SKIPPED,Mainのチップが表示される,前のステップが失敗したため未実行,,2026-09-15T23:55:48.191Z
+TC-1211,P-F10-020;P-F10-021;P-F10-022;P-F10-023;P-F10-024,9,ASSERT_VISIBLE,SKIPPED,A社用のチップが表示される,前のステップが失敗したため未実行,,2026-09-15T23:55:48.191Z
+TC-1211,P-F10-020;P-F10-021;P-F10-022;P-F10-023;P-F10-024,10,ASSERT_NOT_VISIBLE,SKIPPED,無効なC社用は候補に表示されない,前のステップが失敗したため未実行,,2026-09-15T23:55:48.191Z
+TC-1212,P-F10-025,1,TAP,PASS,ショートカット表示へ切り替わる,"tap 1491,187 hold=60ms",,2026-09-15T23:56:03.600Z
+TC-1212,P-F10-025,2,TAP,PASS,新規作成画面が開く,"tap 1624,187 hold=60ms",,2026-09-15T23:56:05.375Z
+TC-1212,P-F10-025,3,ASSERT_VISIBLE,PASS,Mainのチップが表示される,見えている（1351 639）,,2026-09-15T23:56:06.820Z
+TC-1212,P-F10-025,4,ASSERT_NOT_VISIBLE,PASS,A社用のチップは表示されない,見えていない,,2026-09-15T23:56:08.252Z
+TC-1213,P-F10-026,1,TAP,PASS,ショートカット表示へ切り替わる,"tap 1491,187 hold=60ms",,2026-09-15T23:56:24.061Z
+TC-1213,P-F10-026,2,TAP,PASS,新規作成画面が開く,"tap 1624,187 hold=60ms",,2026-09-15T23:56:25.879Z
+TC-1213,P-F10-026,3,ASSERT_SCREEN_HAS,PASS,プレビューに空表示が出る,含む,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview-retry/evidence/TC-1213-3-preview-empty.png,2026-09-15T23:56:27.619Z
+TC-1214,P-F10-027,1,TAP,PASS,ショートカット表示へ切り替わる,"tap 1491,187 hold=60ms",,2026-09-15T23:56:43.467Z
+TC-1214,P-F10-027,2,TAP,PASS,メニューが開く,"tap 1618,285 hold=60ms",,2026-09-15T23:56:45.270Z
+TC-1214,P-F10-027,3,TAP,PASS,編集画面が開く,"tap 1478,729 hold=60ms",,2026-09-15T23:56:46.974Z
+TC-1214,P-F10-027,4,TAP,PASS,A社用へ切り替わる,"tap 1408,638 hold=60ms",,2026-09-15T23:56:53.941Z
+TC-1214,P-F10-027,5,ASSERT_VISIBLE,PASS,会社の値がA社用で再展開される,見えている（1478 680）,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview-retry/evidence/TC-1214-5-preview-a.png,2026-09-15T23:56:55.767Z
+TC-1215,P-F10-028;P-F10-029,1,TAP,PASS,ショートカット表示へ切り替わる,"tap 1491,187 hold=60ms",,2026-09-15T23:57:11.897Z
+TC-1215,P-F10-028;P-F10-029,2,TAP,PASS,メニューが開く,"tap 1618,285 hold=60ms",,2026-09-15T23:57:13.719Z
+TC-1215,P-F10-028;P-F10-029,3,TAP,PASS,編集画面が開く,"tap 1478,729 hold=60ms",,2026-09-15T23:57:15.400Z
+TC-1215,P-F10-028;P-F10-029,4,TAP,PASS,会社のプレビュー行が押される,"tap 1478,680 hold=60ms",,2026-09-15T23:57:22.338Z
+TC-1215,P-F10-028;P-F10-029,5,ASSERT_CLIPBOARD,PASS,会社の展開値だけがコピーされる,"""Main株式会社""",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview-retry/evidence/TC-1215-5-clipboard.png,2026-09-15T23:57:23.535Z
+TC-1215,P-F10-028;P-F10-029,6,ASSERT_DB,PASS,プレビューコピーで使用回数が増えない,"""7""",,2026-09-15T23:57:24.309Z
+TC-1215,P-F10-028;P-F10-029,7,ASSERT_DB,PASS,親ショートカットの更新日時が変わらない,"""2026-03-01T00:00:00.000Z""",,2026-09-15T23:57:25.088Z
+TC-1215,P-F10-028;P-F10-029,8,ASSERT_DB,PASS,保存値が未展開のまま変わらない,"""{{company}}""",/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview-retry/evidence/TC-1215-8-db-unchanged.png,2026-09-15T23:57:26.145Z
+TC-1216,P-F10-030,1,TAP,PASS,ショートカット表示へ切り替わる,"tap 1491,187 hold=60ms",,2026-09-15T23:57:41.484Z
+TC-1216,P-F10-030,2,TAP,PASS,メニューが開く,"tap 1618,285 hold=60ms",,2026-09-15T23:57:43.298Z
+TC-1216,P-F10-030,3,TAP,PASS,編集画面が開く,"tap 1478,729 hold=60ms",,2026-09-15T23:57:44.969Z
+TC-1216,P-F10-030,4,ASSERT_DISABLED,FAIL,空の値のプレビュー行が操作不能である,操作可能または不在,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview-retry/evidence/TC-1216-4-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview-retry/evidence/TC-1216-4-FAIL.txt,2026-09-15T23:57:47.597Z
+TC-1216,P-F10-030,5,ASSERT_CLIPBOARD,SKIPPED,クリップボードが変わらない,前のステップが失敗したため未実行,,2026-09-15T23:57:48.199Z
+TC-1217,P-F10-031,1,TAP,PASS,ショートカット表示へ切り替わる,"tap 1491,187 hold=60ms",,2026-09-15T23:58:02.684Z
+TC-1217,P-F10-031,2,TAP,PASS,メニューが開く,"tap 1618,285 hold=60ms",,2026-09-15T23:58:04.351Z
+TC-1217,P-F10-031,3,TAP,PASS,編集画面が開く,"tap 1478,729 hold=60ms",,2026-09-15T23:58:06.005Z
+TC-1217,P-F10-031,4,ASSERT_VISIBLE,FAIL,無効な変数が元トークンのまま表示される,見つからない,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview-retry/evidence/TC-1217-4-FAIL.png | /Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview-retry/evidence/TC-1217-4-FAIL.txt,2026-09-15T23:58:14.504Z
+TC-1218,P-F10-032,1,TAP,PASS,ショートカット表示へ切り替わる,"tap 1491,187 hold=60ms",,2026-09-15T23:58:30.021Z
+TC-1218,P-F10-032,2,TAP,PASS,メニューが開く,"tap 1618,285 hold=60ms",,2026-09-15T23:58:31.827Z
+TC-1218,P-F10-032,3,TAP,PASS,編集画面が開く,"tap 1478,729 hold=60ms",,2026-09-15T23:58:33.414Z
+TC-1218,P-F10-032,4,TAP,PASS,会社のプレビュー行が押される,"tap 1478,680 hold=60ms",,2026-09-15T23:58:40.330Z
+TC-1218,P-F10-032,5,ASSERT_VISIBLE,PASS,コピー直後にチェックマークが現れる,見えている（1478 680）,/Users/sasakikouhei/trunk/project/cliptap/docs/test/results/20260916-shortcut-preview-retry/evidence/TC-1218-5-copied.png,2026-09-15T23:58:42.105Z
+TC-1218,P-F10-032,6,WAIT,PASS,コピー済み表示の2秒が経過するのを待つ,waited 2500ms,,2026-09-15T23:58:45.216Z
+TC-1218,P-F10-032,7,ASSERT_NOT_VISIBLE,PASS,チェックマークが消える,見えていない,,2026-09-15T23:58:46.681Z

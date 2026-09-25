@@ -4,9 +4,11 @@ import {
   migrateV4ToV5,
   migrateV5ToV6,
   migrateV6ToV7,
+  migrateV7ToV8,
   migrateImportTempDb,
   tableExists,
 } from '../../src/database/migrations';
+import { SCHEMA_VERSION } from '../../src/database/schema';
 import {
   DatabaseError,
   NewerVersionError,
@@ -39,6 +41,13 @@ describe('migrateImportTempDb', () => {
       await db.exec(
         'CREATE TABLE system_variable_formats (variableKey TEXT PRIMARY KEY, pattern TEXT NOT NULL, updatedAt TEXT NOT NULL)'
       );
+    }
+    if (version >= 8) {
+      await db.exec(`
+        CREATE TABLE shortcuts (id TEXT PRIMARY KEY, categoryId TEXT, name TEXT NOT NULL, sortOrder INTEGER DEFAULT 0, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL, FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE SET NULL);
+        CREATE TABLE shortcut_profiles (shortcutId TEXT NOT NULL, profileId TEXT NOT NULL, PRIMARY KEY (shortcutId, profileId), FOREIGN KEY (shortcutId) REFERENCES shortcuts(id) ON DELETE CASCADE, FOREIGN KEY (profileId) REFERENCES profiles(id) ON DELETE CASCADE);
+        CREATE TABLE shortcut_values (id TEXT PRIMARY KEY, shortcutId TEXT NOT NULL, value TEXT NOT NULL, isMasked INTEGER DEFAULT 0, useCount INTEGER DEFAULT 0, sortOrder INTEGER DEFAULT 0, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL, FOREIGN KEY (shortcutId) REFERENCES shortcuts(id) ON DELETE CASCADE);
+      `);
     }
     await db.exec(`
       CREATE INDEX idx_snippets_category ON snippets(categoryId);
@@ -74,7 +83,7 @@ describe('migrateImportTempDb', () => {
     return db;
   };
 
-  it.each([3, 4, 5, 6, 7])('accepts V%i and produces the V7 shape', async (version) => {
+  it.each([3, 4, 5, 6, 7, 8])('accepts V%i and produces the current shape', async (version) => {
     const db = await createVersion(version);
 
     await migrateImportTempDb(db, version);
@@ -89,6 +98,8 @@ describe('migrateImportTempDb', () => {
       'copyCount'
     );
     expect(tableExists(db, 'system_variable_formats')).toBe(true);
+    expect(tableExists(db, 'shortcuts')).toBe(true);
+    expect(tableExists(db, 'shortcut_values')).toBe(true);
     expect(
       db.get<{ count: number }>(
         "SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'index' AND name = 'idx_profile_variables_variable'"
@@ -134,13 +145,15 @@ describe('migrateImportTempDb', () => {
     ).toBe(1);
   });
 
-  it('treats an already-current V7 database as a no-op', async () => {
-    const db = await createVersion(7);
+  it('treats an already-current database as a no-op', async () => {
+    const db = await createVersion(SCHEMA_VERSION);
+    /* 派生indexは移行完了時の後処理が作るため、比較前に一度通しておく */
+    await migrateImportTempDb(db, SCHEMA_VERSION);
     const schemaBefore = db.all<{ name: string; sql: string }>(
       "SELECT name, sql FROM sqlite_master WHERE type IN ('table', 'index') ORDER BY name"
     );
 
-    await migrateImportTempDb(db, 7);
+    await migrateImportTempDb(db, SCHEMA_VERSION);
 
     expect(db.all(
       "SELECT name, sql FROM sqlite_master WHERE type IN ('table', 'index') ORDER BY name"
@@ -160,10 +173,10 @@ describe('migrateImportTempDb', () => {
     }
   );
 
-  it.each([8, 99])(
+  it.each([SCHEMA_VERSION + 1, 99])(
     'rejects future import version V%i without rewriting user_version',
     async (version) => {
-      const db = await createVersion(7);
+      const db = await createVersion(SCHEMA_VERSION);
       await db.exec(`PRAGMA user_version = ${version}`);
 
       await expect(migrateImportTempDb(db, version)).rejects.toBeInstanceOf(
@@ -174,31 +187,31 @@ describe('migrateImportTempDb', () => {
     }
   );
 
-  it('rejects a declared V7 database with an older shape instead of guessing a migration', async () => {
-    const db = await createVersion(6);
+  it('rejects a declared current database with an older shape instead of guessing a migration', async () => {
+    const db = await createVersion(SCHEMA_VERSION - 1);
 
-    await expect(migrateImportTempDb(db, 7)).rejects.toBeInstanceOf(DatabaseError);
+    await expect(migrateImportTempDb(db, SCHEMA_VERSION)).rejects.toBeInstanceOf(DatabaseError);
 
-    expect(tableExists(db, 'system_variable_formats')).toBe(false);
+    expect(tableExists(db, 'shortcuts')).toBe(false);
   });
 
   /**
    * 移行段の選択は宣言バージョンだけで行うため、V7を名乗るファイルには移行が1段も走らない。
    * その結果テーブルが欠けたままなら、取り込んだ後の全操作が壊れるので手前で明示的に失敗させる。
    */
-  it('rejects a declared V7 database missing a required table', async () => {
-    const db = await createVersion(7);
+  it('rejects a declared current database missing a required table', async () => {
+    const db = await createVersion(SCHEMA_VERSION);
     await db.exec('DROP TABLE system_variable_formats');
 
-    await expect(migrateImportTempDb(db, 7)).rejects.toBeInstanceOf(DatabaseError);
+    await expect(migrateImportTempDb(db, SCHEMA_VERSION)).rejects.toBeInstanceOf(DatabaseError);
   });
 
-  it('repairs a derived index missing from a historical V7 export', async () => {
-    const db = await createVersion(7);
+  it('repairs a derived index missing from a historical current-version export', async () => {
+    const db = await createVersion(SCHEMA_VERSION);
     await db.exec('DROP INDEX idx_profile_variables_variable');
     const rowBefore = db.get('SELECT * FROM profile_variables WHERE id = ?', ['pv1']);
 
-    await migrateImportTempDb(db, 7);
+    await migrateImportTempDb(db, SCHEMA_VERSION);
 
     expect(
       db.get<{ count: number }>(
@@ -260,6 +273,76 @@ describe('migrateImportTempDb', () => {
         .all<{ name: string }>("SELECT name FROM pragma_table_info('system_variable_formats')")
         .map((c) => c.name)
     ).toEqual(['variableKey', 'pattern', 'updatedAt']);
+  });
+
+  /** V7→V8はショートカットと値のテーブルを追加する。列構成は現行スキーマ定義と一致していなければならない */
+  it('creates the shortcut tables on a V7 database', async () => {
+    const db = await createVersion(7);
+
+    await migrateV7ToV8(db);
+
+    expect(
+      db
+        .all<{ name: string }>("SELECT name FROM pragma_table_info('shortcuts')")
+        .map((c) => c.name)
+    ).toEqual(['id', 'categoryId', 'name', 'sortOrder', 'createdAt', 'updatedAt']);
+    /* 所属プロファイルは中間テーブルが持つ */
+    expect(
+      db
+        .all<{ name: string }>("SELECT name FROM pragma_table_info('shortcut_profiles')")
+        .map((c) => c.name)
+    ).toEqual(['shortcutId', 'profileId']);
+    expect(
+      db
+        .all<{ name: string }>("SELECT name FROM pragma_table_info('shortcut_values')")
+        .map((c) => c.name)
+    ).toEqual([
+      'id',
+      'shortcutId',
+      'value',
+      'isMasked',
+      'useCount',
+      'sortOrder',
+      'createdAt',
+      'updatedAt',
+    ]);
+  });
+
+  /** 既にテーブルがあるDBへ再実行しても、保存済みのショートカットを作り直してはならない */
+  it('keeps existing rows when the shortcut tables already exist', async () => {
+    const db = await createVersion(8);
+    db.run(
+      "INSERT INTO shortcuts VALUES ('sc1', NULL, 'Phone', 0, 'created', 'updated')"
+    );
+    db.run("INSERT INTO shortcut_profiles VALUES ('sc1', 'p1')");
+    db.run(
+      "INSERT INTO shortcut_values VALUES ('sv1', 'sc1', '080-0000-0000', 0, 3, 0, 'created', 'updated')"
+    );
+
+    await migrateV7ToV8(db);
+
+    expect(db.all('SELECT * FROM shortcuts')).toEqual([
+      {
+        id: 'sc1',
+        categoryId: null,
+        name: 'Phone',
+        sortOrder: 0,
+        createdAt: 'created',
+        updatedAt: 'updated',
+      },
+    ]);
+    expect(db.all('SELECT * FROM shortcut_values')).toEqual([
+      {
+        id: 'sv1',
+        shortcutId: 'sc1',
+        value: '080-0000-0000',
+        isMasked: 0,
+        useCount: 3,
+        sortOrder: 0,
+        createdAt: 'created',
+        updatedAt: 'updated',
+      },
+    ]);
   });
 
   /** 既にテーブルがあるDBへ再実行しても、保存済みの書式を作り直してはならない */

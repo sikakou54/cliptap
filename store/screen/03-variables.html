@@ -1,7 +1,7 @@
 <!doctype html>
 <!--
   スライド 03 — システム変数。
-  見出しは LP の system variables セクション（apps/web/index.html:256- / en:256-）から逐語流用。
+  見出しは LP の system variables セクション（#variables）から逐語流用。
   リードは同じ節を、主張を変えずに縮めたもの。削っているのは次のとおりで、
   ja だけ文中にも手が入っている:
     en — 末尾の「 — 7 variables, 94 formats.」のみ削除。他は逐語一致。
@@ -9,19 +9,21 @@
          「しておくだけ」も削除（「システム変数にしておくだけ。」→「システム変数に。」）。
   残る主張は ja / en とも「毎回変わるところを変数にすると、入力時点の
   日付・時刻・曜日に置き換わる」で一致している。
-  右のキャプチャはラジオ選択の書式ピッカー。ラジオ列がキャプチャ幅の 91-95% にあるため、
-  2台組の外接幅を 1088.4 に抑えて左右とも裁ち落とさない。
+  左はシステム変数の一覧、右は {{today}} を使った定型文の編集画面で、下部のプレビューで
+  入力時点の日付に展開されている（ファイル名は format だが、書式ピッカーではない）。
+  右端の「保存」やトグルはキャプチャ幅の 91-95% にあるが、2台組の外接幅は 1088.4 で
+  1290 に収まるため（_shared.css の .stage[data-shots="2"]）、左右とも裁ち落とさない。
 -->
 <meta charset="utf-8" />
 <template id="slide">
   <div class="head">
     <h1 class="ja">
-      <span class="line">日付や時刻は、</span>
-      <span class="line accent">自動で入る。</span>
+      <span class="line">日付の書き直しも、</span>
+      <span class="line accent">まとめて省く。</span>
     </h1>
     <h1 class="en">
-      <span class="line">Dates and times</span>
-      <span class="line accent">fill themselves in.</span>
+      <span class="line">Let the date</span>
+      <span class="line accent">update itself.</span>
     </h1>
 
     <p class="sub ja">毎回変わるところはシステム変数に。入力したその瞬間の日付・時刻・曜日に置き換わります。</p>
@@ -34,7 +36,7 @@
     <figure class="shot">
       <div class="phone">
         <div class="phone-inner">
-          <img src="{{IMG}}/03-variables-left-list.png" width="1170" height="2532" alt="" />
+          <img src="{{IMG}}/03-variables-left-list-{{LANG}}.png" width="1206" height="2622" alt="" />
         </div>
       </div>
       <figcaption class="cap"></figcaption>
@@ -42,7 +44,7 @@
     <figure class="shot">
       <div class="phone">
         <div class="phone-inner">
-          <img src="{{IMG}}/03-variables-right-format.png" width="1170" height="2532" alt="" />
+          <img src="{{IMG}}/03-variables-right-format-{{LANG}}.png" width="1206" height="2622" alt="" />
         </div>
       </div>
       <figcaption class="cap"></figcaption>

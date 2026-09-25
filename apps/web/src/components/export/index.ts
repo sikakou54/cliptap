@@ -1,8 +1,8 @@
 /**
- * エクスポート関連コンポーネントのエクスポート
+ * バックアップ関連コンポーネントのエクスポート
  *
  * @description
- * データエクスポートに関するコンポーネントを一括エクスポート
+ * バックアップ（全データのエクスポート）に関するコンポーネントを一括エクスポート
  */
 
-export { ExportSelectionModal } from './ExportSelectionModal';
+export { ExportPasswordModal } from './ExportPasswordModal';

@@ -1,0 +1,48 @@
+<!doctype html>
+<!--
+  撮影用ホスト — アシスタントとの対話。02-scene-1-ai-<lang>.png 用。
+  吹き出し1つと入力欄だけ。特定のAIサービスの名称・ロゴ・配色は入れない（README参照）。
+-->
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Composer" />
+<meta name="color-scheme" content="dark" />
+<title>Composer</title>
+<link rel="apple-touch-icon" href="icon.png" />
+<link rel="stylesheet" href="host.css" />
+</head>
+<body>
+
+<div class="nav">
+  <button class="nav-action leading" type="button" data-back>
+    <span class="ja">戻る</span><span class="en">Back</span>
+  </button>
+  <span class="nav-title">
+    <span class="ja">アシスタント</span><span class="en">Assistant</span>
+  </span>
+  <span></span>
+</div>
+
+<div class="body">
+  <div class="thread">
+    <div class="bubble them">
+      <span class="ja">何をお手伝いしましょうか。</span>
+      <span class="en">What can I help you with?</span>
+    </div>
+  </div>
+
+  <div class="chat-bar">
+    <!-- ここへ ClipTap キーボードからプロンプトを挿入して撮る -->
+    <div class="textarea editable" contenteditable="true" role="textbox" aria-multiline="true" data-autofocus data-ja="メッセージを入力" data-en="Message"></div>
+    <button class="send" type="button" aria-label="Send"></button>
+  </div>
+</div>
+
+<script src="host.js"></script>
+</body>
+</html>

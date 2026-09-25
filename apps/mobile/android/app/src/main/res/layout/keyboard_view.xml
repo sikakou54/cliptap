@@ -6,15 +6,27 @@
     android:minHeight="360dp"
     android:maxHeight="360dp">
 
-    <!-- メインビュー（リスト表示） -->
+    <!-- メインビュー（フィルター行 + 一覧）
+
+         【ショートカット画面をこの中に入れている理由】
+         定型文とショートカットはフィルター行のトグルで行き来する。
+         トグル（shortcutButton）はフィルター行の中にあるため、ショートカットを表示している間も
+         フィルター行が見えていないと元へ戻れなくなる。
+         そのため入れ替えるのは一覧の中身だけにして、フィルター行は出したままにする。
+
+         【上の余白を置かない理由】
+         キーボードの上端からフィルター行を始める（iOSと同じ）。行の高さが44dpあるため、
+         余白を足さなくても中のボタンは上端から離れて見える。左右と下は8dpのまま。 -->
 <LinearLayout
     android:id="@+id/mainView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="8dp">
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp"
+    android:paddingBottom="8dp">
 
-    <!-- 統合フィルターエリア（環境ドロップダウン + カテゴリドロップダウン + ソートボタン） -->
+    <!-- 統合フィルターエリア（環境ドロップダウン + カテゴリドロップダウン + 表示切替トグル + ソートボタン） -->
     <LinearLayout
         android:id="@+id/filterContainer"
         android:layout_width="match_parent"
@@ -23,18 +35,24 @@
         android:gravity="center_vertical"
         android:background="@android:color/transparent">
 
-        <!-- 環境選択ドロップダウンボタン（左端、固定幅100dp） -->
+        <!-- 環境選択ドロップダウンボタン（左端、固定幅92dp）
+             ショートカット表示のときも出したままにする。
+             ショートカットはプロファイル（環境）に属するため、どの環境の一覧を見ているのかと、
+             別の環境へ切り替える手段が必要になるため -->
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/profileChipGroup"
-            android:layout_width="100dp"
+            android:layout_width="92dp"
             android:layout_height="match_parent"
             app:singleSelection="true"
             app:chipSpacing="0dp" />
 
-        <!-- カテゴリ選択ドロップダウンボタン（固定幅100dp） -->
+        <!-- カテゴリ選択ドロップダウンボタン（固定幅92dp）
+             ショートカット表示のときも出したままにする。
+             ショートカットは定型文と同じカテゴリを持つため、どのカテゴリで絞った一覧を見ているのかと、
+             別のカテゴリへ切り替える手段が必要になるため -->
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/categoryChipGroup"
-            android:layout_width="100dp"
+            android:layout_width="92dp"
             android:layout_height="match_parent"
             android:layout_marginStart="8dp"
             app:singleSelection="true"
@@ -46,8 +64,72 @@
             android:layout_height="match_parent"
             android:layout_weight="1" />
 
-        <!-- ソートボタン + バッジコンテナ（右端固定） -->
+        <!-- 定型文／ショートカットの表示切替トグル（ソートボタンの左隣）
+
+             【切替スイッチの形にする理由】
+             アイコン1つの差し替えだと、今どちらを見ているのかと、押すとどうなるのかが
+             同じ絵に重なって分かりにくい。トラックの中をノブが左右に動く形にすると、
+             ノブの位置・アイコンの形・ノブの色で現在の状態を示し、反対側へ移せることも同時に伝えられる。
+             左（紺のノブに書類）が定型文、右（黄色のノブに稲妻）がショートカット。
+             見た目はアプリのホームの切替トグル（ListModeToggle.tsx）に揃え、
+             枠線だけのトラックに、表示対象で塗りを変えるノブを置く。
+
+             【横幅が足りなくなる場合の検討】
+             この行の固定幅の合計は 92(環境) + 8 + 92(カテゴリ) + 4 + 52(表示切替) + 4 + 36(ソート) = 288dp。
+             表示切替をアイコン1つ（36dp）からトグル（52dp）へ広げた分は、
+             2つのチップを100dpから92dpへ詰めて相殺しており、行の合計は変えていない。
+             mainViewのpadding 8dp×2を引くと、288dpを収めるには画面幅304dpが必要になる。
+             対応する最小画面幅は320dpのため、既定の表示サイズであればすべての対応端末で収まる
+             （360dp端末ならスペーサーに56dpの余りが出る）。
+             幅が足りなくなった場合は、重み付き（weight=1）のスペーサーが先に0まで縮み、
+             チップとボタンはどれも縮まない。
+             環境・カテゴリのチップを可変幅（0dp + weight）にする案も検討したが、
+             画面幅に応じてチップの幅が変わり既存の見た目が変わるため採らなかった。
+             これ以上ボタンや固定幅を増やすときは、チップの100dpを見直すこと。 -->
         <FrameLayout
+            android:id="@+id/shortcutToggle"
+            android:layout_width="52dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="4dp"
+            android:background="@drawable/list_mode_toggle_track"
+            android:contentDescription="@string/accessibility_show_shortcuts_button"
+            android:clickable="true"
+            android:focusable="true">
+
+            <!-- ノブ（トラックの中を左右に動く円。定型文は紺、ショートカットは黄色）
+                 左右の余白2dpを引いた28dpの円。位置はコードから translationX で動かす。
+                 layout_gravity を start にしておき、ショートカット表示では 20dp ずらす。
+                 塗りはコードから表示対象に合わせて付け替える。初期値は定型文の紺 -->
+            <FrameLayout
+                android:id="@+id/shortcutToggleKnob"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_gravity="start|center_vertical"
+                android:layout_marginStart="2dp"
+                android:background="@drawable/list_mode_toggle_knob_snippet">
+
+                <!-- ノブの中のアイコン。絵と色はコードから表示対象に合わせて差し替える（紺の上は白、黄色の上は紺）。
+                     初期値は定型文。行そのものが読み上げ対象のため、この装飾は読み上げから除く -->
+                <ImageView
+                    android:id="@+id/shortcutToggleIcon"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_snippet"
+                    android:tint="@color/keyboardToggleIconSnippet"
+                    android:importantForAccessibility="no" />
+
+            </FrameLayout>
+
+        </FrameLayout>
+
+        <!-- ソートボタン + バッジコンテナ（右端固定）
+
+             【常に表示する理由】
+             定型文とショートカットのどちらの一覧にも並べ替えがあり、基準は別々に保存している。
+             ボタンは出したまま、既定以外を選んでいるかどうかをバッジで示す -->
+        <FrameLayout
+            android:id="@+id/sortButtonContainer"
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:layout_marginStart="4dp">
@@ -78,36 +160,52 @@
 
     </LinearLayout>
 
-    <!-- スニペット一覧とEmptyビューのコンテナ（固定高さ：親の高さ360dp - padding 16dp - filter 44dp - marginTop 8dp = 292dp） -->
+    <!-- 一覧エリア（固定高さ：親の高さ360dp - padding 16dp - filter 44dp - marginTop 8dp = 292dp）
+         定型文一覧（snippetListContainer）とショートカット画面（shortcutView）を重ねて置き、
+         トグルでどちらか一方だけを表示する -->
     <FrameLayout
+        android:id="@+id/listContainer"
         android:layout_width="match_parent"
         android:layout_height="292dp"
         android:layout_marginTop="8dp">
 
-        <!-- スニペット一覧 -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/snippetRecyclerView"
+        <!-- 定型文一覧（一覧本体 + 空の状態表示） -->
+        <FrameLayout
+            android:id="@+id/snippetListContainer"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:scrollbars="vertical" />
+            android:layout_height="match_parent">
 
-        <!-- 空の状態表示 -->
-        <TextView
-            android:id="@+id/emptyStateTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:text="@string/snippet_empty"
-            android:textSize="16sp"
-            android:textColor="?android:attr/textColorSecondary"
-            android:visibility="gone" />
+            <!-- スニペット一覧 -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/snippetRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:scrollbars="vertical" />
+
+            <!-- 空の状態表示 -->
+            <TextView
+                android:id="@+id/emptyStateTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="@string/snippet_empty"
+                android:textSize="16sp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:visibility="gone" />
+
+        </FrameLayout>
+
+        <!-- ショートカット画面（初期状態は非表示）
+             一覧エリアの中に入れることで、表示中もフィルター行のトグルが押せる -->
+        <include layout="@layout/shortcut_view" />
 
     </FrameLayout>
 
 </LinearLayout>
 
-    <!-- 詳細ビュー（全画面表示、初期状態は非表示） -->
+    <!-- 詳細ビュー（全画面表示、初期状態は非表示）
+         フィルター行ごと覆うため、詳細を開いている間はトグルもソートも押せない -->
     <include layout="@layout/snippet_detail_view" />
 
 </FrameLayout>

@@ -56,10 +56,19 @@ export function TextInputScreen({ type, initialValue, hasOnSave }: TextInputScre
     handleInsertVariable,
     handleSave,
   } = useTextInputScreen({ type, initialValue, hasOnSave });
+
+  /* 翻訳キーは文字列リテラルで書く。組み立てると、キーの追加漏れをテストも検索も検出できず、
+     画面にキー名がそのまま出るまで気付けない */
+  const isContent = type === 'content';
+  const screenTitle = isContent ? t('snippet.content_input') : t('snippet.title_input');
+  const placeholder = isContent
+    ? t('snippet.content_input_placeholder')
+    : t('snippet.title_input_placeholder');
+
   /* テキスト入力画面 */
   return (
     <ScreenContainer
-      title={t(`snippet.${type}_input`)}
+      title={screenTitle}
       isModal={!isTablet}
       rightAction={
         <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
@@ -103,7 +112,7 @@ export function TextInputScreen({ type, initialValue, hasOnSave }: TextInputScre
             onSelectionChange={(e) => {
               handleSelectionChange(e.nativeEvent.selection.start);
             }}
-            placeholder={t(`snippet.${type}_input_placeholder`)}
+            placeholder={placeholder}
             placeholderTextColor={colors.textSecondary}
             style={[
               /* 単一行のタイトルは伸縮させない（伸ばすと垂直中央に描画されるため） */

@@ -30,20 +30,42 @@ export class EmptyContentError extends ValidationError {
 }
 
 /**
+ * 名前の重複を検出する対象
+ *
+ * @remarks
+ * 翻訳キーを1対1で持たせるため、文字列ではなく閉じたunionにしている。
+ */
+export type DuplicateNameEntityType = 'category' | 'profile' | 'variable' | 'shortcut';
+
+/**
+ * 対象ごとの重複エラーの翻訳キー
+ *
+ * @remarks
+ * `error.duplicate_${entityType}_name` のように組み立てない。
+ * 組み立てると、キーの追加漏れを未定義キー検出テストも全文検索も捕まえられず、
+ * 画面にキー名がそのまま出るまで気付けない。
+ */
+const DUPLICATE_NAME_ERROR_CODES: Record<DuplicateNameEntityType, string> = {
+  category: 'error.duplicate_category_name',
+  profile: 'error.duplicate_profile_name',
+  variable: 'error.duplicate_variable_name',
+  shortcut: 'error.duplicate_shortcut_name',
+};
+
+/**
  * 名前重複エラー
  *
  * カテゴリ、プロファイル、変数などで同じ名前が既に存在する場合にスローされます。
  */
 export class DuplicateNameError extends ValidationError {
   /** エンティティタイプ（category, profile, variable等） */
-  readonly entityType: string;
+  readonly entityType: DuplicateNameEntityType;
 
   /** 重複している名前 */
   readonly duplicateName: string;
 
-  constructor(entityType: string, name: string) {
-    const code = `error.duplicate_${entityType}_name`;
-    super(`${entityType} with name "${name}" already exists`, code);
+  constructor(entityType: DuplicateNameEntityType, name: string) {
+    super(`${entityType} with name "${name}" already exists`, DUPLICATE_NAME_ERROR_CODES[entityType]);
     this.name = 'DuplicateNameError';
     this.entityType = entityType;
     this.duplicateName = name;
@@ -158,6 +180,19 @@ export class VariableNameReservedError extends ValidationError {
     );
     this.name = 'VariableNameReservedError';
     this.reservedName = name;
+  }
+}
+
+/**
+ * ショートカット値必須エラー
+ *
+ * ショートカットに値が1件も残らない状態で保存しようとした場合にスローされます。
+ * 値を持たないショートカットは拡張キーボードから何も挿入できないため許可しません。
+ */
+export class ShortcutValueRequiredError extends ValidationError {
+  constructor(message: string = 'A shortcut requires at least one value') {
+    super(message, 'error.shortcut_value_required');
+    this.name = 'ShortcutValueRequiredError';
   }
 }
 

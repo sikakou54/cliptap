@@ -2,8 +2,9 @@
  * サイドメニューヘッダーコンポーネント
  *
  * @description
- * アプリ名、サブスクリプションプラン（Pro/Free）、ユーザー情報を表示
+ * アプリ名、サブスクリプションプラン（Pro/Free）、ユーザー情報、開閉ボタンを表示
  */
+import { useTranslation } from '@cliptap/shared';
 import type { SharedUser } from '@cliptap/shared';
 
 interface SideMenuHeaderProps {
@@ -13,7 +14,9 @@ interface SideMenuHeaderProps {
 }
 
 export function SideMenuHeader({ isSubscribed, user, onClose }: SideMenuHeaderProps) {
-  /* サイドメニューヘッダー（アプリ名、プラン表示、ユーザー情報、閉じるボタン） */
+  const { t } = useTranslation();
+
+  /* サイドメニューヘッダー（アプリ名、プラン表示、ユーザー情報、開閉ボタン） */
   return (
     <div className="p-4 border-b border-gray-200 dark:border-[#2A2A2A] flex justify-between items-center">
       <div className="flex flex-col gap-1">
@@ -39,13 +42,16 @@ export function SideMenuHeader({ isSubscribed, user, onClose }: SideMenuHeaderPr
         )}
       </div>
 
-      {/* 閉じるボタン（モバイル表示時のみ表示） */}
+      {/* 開閉ボタン。開いている間はここが閉じる手段になる（ページ側のヘッダーには出さない） */}
       <button
+        type="button"
         onClick={onClose}
-        className="md:hidden p-1 text-gray-500 dark:text-[#A0A0A0]"
+        className="p-2 -mr-2 rounded-lg text-gray-600 hover:bg-gray-100 dark:text-[#A0A0A0] dark:hover:bg-[#2A2A2A]"
+        aria-label={t('common.close_menu')}
+        aria-expanded={true}
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
     </div>

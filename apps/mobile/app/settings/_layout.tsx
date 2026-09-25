@@ -11,8 +11,6 @@
  * - variables: カスタム変数管理
  * - system-variable-formats: システム変数書式管理
  * - export-import: バックアップ・復元
- * - select-export-data: エクスポートデータ選択（モーダル）
- * - select-import-data: インポートデータ選択（モーダル）
  *
  * @see docs/機能仕様書.md §9.1 モバイル画面
  */
@@ -32,18 +30,8 @@ export default function SettingsLayout() {
       <Stack.Screen name="variables" />
       {/* システム変数書式管理画面 */}
       <Stack.Screen name="system-variable-formats" />
-      {/* エクスポート・インポート画面 */}
+      {/* バックアップ・復元画面 */}
       <Stack.Screen name="export-import" />
-      {/* エクスポートデータ選択モーダル */}
-      <Stack.Screen
-        name="select-export-data"
-        options={{ presentation: 'modal' }}
-      />
-      {/* インポートデータ選択モーダル */}
-      <Stack.Screen
-        name="select-import-data"
-        options={{ presentation: 'modal' }}
-      />
     </Stack>
   );
 }

@@ -24,6 +24,9 @@ export type { CategoryContextValue } from './CategoryProvider';
 export { SnippetProvider, useSnippets } from './SnippetProvider';
 export type { SnippetContextValue } from './SnippetProvider';
 
+export { ShortcutProvider, useShortcuts } from './ShortcutProvider';
+export type { ShortcutContextValue } from './ShortcutProvider';
+
 export {
   type ThemeMode,
   type BaseThemeContextType,

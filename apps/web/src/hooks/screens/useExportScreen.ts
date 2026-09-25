@@ -1,11 +1,12 @@
 /**
- * エクスポート画面のビジネスロジックフック
+ * バックアップ画面のビジネスロジックフック
  *
  * @description
- * データエクスポート処理の状態管理とロジックを提供。
- * Dashboard画面から分離された専用フック。
+ * バックアップ（全データのエクスポート）処理の状態管理とロジックを提供。
+ * Dashboard画面と共通ページレイアウトで使用する専用フック。
  *
  * @see pages/Dashboard.tsx - 使用元
+ * @see components/layout/PageLayout.tsx - 使用元
  */
 
 import { useState, useCallback } from 'react';
@@ -14,28 +15,22 @@ import { showErrorAlert } from '@utils/alerts';
 
 export interface UseExportScreenReturn {
   /* 状態 */
-  /** エクスポートモーダル表示中か */
+  /** バックアップ用パスワードモーダル表示中か */
   showExportModal: boolean;
-  /** エクスポート処理中か */
+  /** バックアップ処理中か */
   isExporting: boolean;
 
   /* ハンドラ */
-  /** エクスポートモーダルを開く */
+  /** バックアップ用パスワードモーダルを開く */
   openExportModal: () => void;
-  /** エクスポートモーダルを閉じる */
+  /** バックアップ用パスワードモーダルを閉じる */
   closeExportModal: () => void;
-  /** 選択されたデータをエクスポート */
-  handleExportSelected: (
-    password: string,
-    snippetIds: string[],
-    profileIds: string[],
-    variableIds: string[],
-    categoryIds: string[]
-  ) => Promise<void>;
+  /** 全データをバックアップファイルとして出力する */
+  handleExport: (password: string) => Promise<void>;
 }
 
 /**
- * エクスポート画面のビジネスロジックフック
+ * バックアップ画面のビジネスロジックフック
  */
 export function useExportScreen(): UseExportScreenReturn {
   /* ======================================== */
@@ -48,45 +43,36 @@ export function useExportScreen(): UseExportScreenReturn {
   /* ハンドラ */
   /* ======================================== */
 
-  /** エクスポートモーダルを開く */
+  /** バックアップ用パスワードモーダルを開く */
   const openExportModal = useCallback(() => {
     setShowExportModal(true);
   }, []);
 
-  /** エクスポートモーダルを閉じる */
+  /** バックアップ用パスワードモーダルを閉じる */
   const closeExportModal = useCallback(() => {
     setShowExportModal(false);
   }, []);
 
-  /** 選択されたデータをエクスポート */
-  const handleExportSelected = useCallback(
-    async (
-      password: string,
-      snippetIds: string[],
-      profileIds: string[],
-      variableIds: string[],
-      categoryIds: string[]
-    ) => {
-      setIsExporting(true);
-      try {
-        const { ExportService } = await import('@cliptap/shared');
-        await ExportService.exportSelectedData(password, {
-          snippetIds,
-          profileIds,
-          variableIds,
-          categoryIds,
-        });
-        setShowExportModal(false);
-      } catch (err) {
-        Logger.error('Failed to export:', err);
-        const translatedMessage = translateError(err);
-        showErrorAlert(translatedMessage);
-      } finally {
-        setIsExporting(false);
-      }
-    },
-    []
-  );
+  /**
+   * 全データをバックアップファイルとして出力する
+   *
+   * @remarks
+   * 成功時だけモーダルを閉じる。失敗時はエラーを表示し、同じモーダルから再試行できるよう開いたままにする。
+   */
+  const handleExport = useCallback(async (password: string) => {
+    setIsExporting(true);
+    try {
+      const { ExportService } = await import('@cliptap/shared');
+      await ExportService.exportAllData(password);
+      setShowExportModal(false);
+    } catch (err) {
+      Logger.error('Failed to back up:', err);
+      const translatedMessage = translateError(err);
+      showErrorAlert(translatedMessage);
+    } finally {
+      setIsExporting(false);
+    }
+  }, []);
 
   return {
     /* 状態 */
@@ -96,7 +82,7 @@ export function useExportScreen(): UseExportScreenReturn {
     /* ハンドラ */
     openExportModal,
     closeExportModal,
-    handleExportSelected,
+    handleExport,
   };
 }
 

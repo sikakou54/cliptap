@@ -59,7 +59,9 @@ export default function SettingsScreen() {
     handleSubscriptionPress,
 
     handleDevSubscriptionToggle,
+    handleDevAdsToggle,
     handleResetDatabase,
+    handleOpenCaptureHost,
   } = useSettingsScreen();
 
   /* 設定画面 */
@@ -125,7 +127,9 @@ export default function SettingsScreen() {
         {__DEV__ && (
           <DeveloperMenu
             onSubscriptionToggle={handleDevSubscriptionToggle}
+            onAdsToggle={handleDevAdsToggle}
             onResetDatabase={handleResetDatabase}
+            onOpenCaptureHost={handleOpenCaptureHost}
           />
         )}
       </ScrollView>

@@ -15,6 +15,9 @@
  *
  * @see app/snippet/title-input.tsx - タイトル入力モーダル
  * @see app/snippet/content-input.tsx - 本文入力モーダル
+ * @see app/profile/select.tsx - プロファイル選択モーダル（定型文フォーム・ショートカット編集で共有）
+ * @see app/shortcut/value-edit.tsx - ショートカット値編集モーダル
+ * @see app/shortcut/value-edit.tsx - ショートカットの値入力モーダル
  */
 
 declare global {
@@ -39,9 +42,23 @@ declare global {
 
   /**
    * プロファイル選択のコールバック
-   * プロファイルピッカーから親画面に選択されたプロファイルIDの配列を返す
+   * プロファイル選択画面から親画面（定型文フォーム・ショートカット編集）に選択されたプロファイルIDの配列を返す
+   * 空配列は「全てのプロファイル」（0件＝全プロファイル向け）を表す
    */
   var profileSelectCallback: ((selectedIds: string[]) => void) | undefined;
+
+  /**
+   * ショートカットの「挿入する値」の編集データ
+   *
+   * 値入力モーダルから親画面（ショートカット作成・編集）へ編集後の値を返す。
+   * keyは編集対象を指す画面内のキーで、空文字は新規追加を表す。
+   */
+  var shortcutValueCallbackData: {
+    /** 編集対象の画面内キー（空文字は新規追加） */
+    key: string;
+    /** 編集後の値（変数トークンは未展開） */
+    value: string;
+  } | undefined;
 
   /**
    * 変数値編集のデータ

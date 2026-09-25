@@ -1,33 +1,40 @@
 <!doctype html>
 <!--
   スライド 00 — アイキャッチ。
-  LP のヒーロー（apps/web/index.html:180-187 / en:180-187）をそのまま持ち込む。
-  見出し・リード・注記はいずれも逐語。端末も LP のヒーローと同じ2台組
-  （左=ホーム一覧、右=キーボード挿入）で、重なり方も lp.css の .hero-shots に従う。
+  LP のヒーロー（apps/web/index.html の #top / en/index.html の #top）を持ち込む。
+  見出しは逐語。リードは ja が逐語、en だけ末尾の「in your text field, and tap to
+  insert it」を「and tap」へ縮めている（LP の原文は138字で4行に伸び、iPad 面の
+  余白計算が hero 3行を前提にしているため）。端末も LP のヒーローと同じ2台組
+  （左=ホーム一覧、右=キーボードから挿入する直前）で、重なり方も lp.css の .hero-shots に従う。
+  左が「登録してある文章」、右が「そこから選んだ1件がこれから入るところ」という対になる。
   デッキの先頭に置くアイキャッチなので、見出しだけ他の面より大きく組む
   （lp.css の .hero h1 が .section-title より大きいのと同じ）。
+
+  端末キャプチャはファイル名に -{{LANG}} を持ち、ja / en で中身が入れ替わる
+  （日本語UIのキャプチャを英語面へ出さないため）。両言語ぶんが揃っていないと
+  build.mjs の assertImagesExist で止まる。
 -->
 <meta charset="utf-8" />
 <template id="slide">
   <div class="head">
     <h1 class="ja">
-      <span class="line">何度も打つ文章は、</span>
-      <span class="line accent">もう打たない。</span>
+      <span class="line">いつもの文章を、</span>
+      <span class="line accent">ワンタップで。</span>
     </h1>
     <h1 class="en">
-      <span class="line">Never type the same</span>
-      <span class="line accent">text twice.</span>
+      <span class="line">Your usual text,</span>
+      <span class="line accent">one tap away.</span>
     </h1>
 
-    <p class="sub ja">メール、SNS、チャット。文字を打てるアプリなら、ClipTapのキーボードからいつもの文章をそのまま入力できます。</p>
-    <p class="sub en">Mail, social, chat. If you can type in it, the ClipTap keyboard can drop your usual text straight into it.</p>
+    <p class="sub ja">メールの返信、SNSのタグ、AIへの指示。よく使う文章を登録したら、使いたい入力欄でClipTapキーボードに切り替えてタップ。</p>
+    <p class="sub en">Email replies, hashtags, AI prompts. Save the text you use often, switch to the ClipTap keyboard and tap.</p>
   </div>
 
   <div class="stage" data-shots="2">
     <figure class="shot">
       <div class="phone">
         <div class="phone-inner">
-          <img src="{{IMG}}/01-hero-left-home.png" width="1170" height="2532" alt="" />
+          <img src="{{IMG}}/01-hero-left-home-{{LANG}}.png" width="1206" height="2622" alt="" />
         </div>
       </div>
       <figcaption class="cap"></figcaption>
@@ -35,7 +42,7 @@
     <figure class="shot">
       <div class="phone">
         <div class="phone-inner">
-          <img src="{{IMG}}/01-hero-right-insert.png" width="1170" height="2532" alt="" />
+          <img src="{{IMG}}/01-hero-right-insert-{{LANG}}.png" width="1206" height="2622" alt="" />
         </div>
       </div>
       <figcaption class="cap"></figcaption>

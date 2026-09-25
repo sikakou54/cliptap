@@ -1,21 +1,21 @@
 <!doctype html>
 <!--
   スライド 04 — カスタム変数とプロファイル。
-  見出しとリードは LP の custom variables セクション（apps/web/index.html:290-）から逐語流用。
-  左が設定、右が結果。右の 05-howto-2-keyboard.png では Gmail の本文欄が
-  「メールを作成」プレースホルダのままで、展開済みテキストはキーボードパネル内にある。
-  よってキャプションは「キーボードで展開される」であり、「そのまま入る」ではない。
+  見出しは LP の custom variables セクション（#profiles）から逐語流用。
+  リードは同じ節を版面向けに縮めたもの（LP は「同じ文章を相手ごとに複製する手間が省けます」まで言う）。
+  左が設定、右が使う側。左はカスタム変数の編集画面で、プロファイルごとに値を持つ表が写る。
+  右は {{client_name}} などのカスタム変数を本文に使った定型文の編集画面。
 -->
 <meta charset="utf-8" />
 <template id="slide">
   <div class="head">
     <h1 class="ja">
-      <span class="line">会社名や宛名も、</span>
-      <span class="line accent">一度登録するだけ。</span>
+      <span class="line">同じ文章を、</span>
+      <span class="line accent">相手に合わせて。</span>
     </h1>
     <h1 class="en">
-      <span class="line">Names and companies,</span>
-      <span class="line accent">registered once.</span>
+      <span class="line">One template.</span>
+      <span class="line accent">The right details.</span>
     </h1>
 
     <p class="sub ja">会社名・担当者名・署名はカスタム変数に。プロファイルを切り替えれば別の相手向けになります。</p>
@@ -28,7 +28,7 @@
     <figure class="shot">
       <div class="phone">
         <div class="phone-inner">
-          <img src="{{IMG}}/04-profile-left-edit.png" width="1170" height="2532" alt="" />
+          <img src="{{IMG}}/04-profile-left-edit-{{LANG}}.png" width="1206" height="2622" alt="" />
         </div>
       </div>
       <figcaption class="cap"></figcaption>
@@ -36,7 +36,7 @@
     <figure class="shot">
       <div class="phone">
         <div class="phone-inner">
-          <img src="{{IMG}}/04-profile-right-snippet.png" width="1170" height="2532" alt="" />
+          <img src="{{IMG}}/04-profile-right-snippet-{{LANG}}.png" width="1206" height="2622" alt="" />
         </div>
       </div>
       <figcaption class="cap"></figcaption>

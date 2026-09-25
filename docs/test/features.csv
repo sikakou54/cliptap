@@ -11,8 +11,8 @@ F-09,並べ替え,§8.9,mobile;web;keyboard,in-scope
 F-10,プレビュー,§8.10,mobile;web;keyboard,in-scope
 F-11,コピー・キーボード入力,§8.11,mobile;web;keyboard,in-scope
 F-12,使用回数記録,§8.12,mobile;web;keyboard,in-scope
-F-13,全件・選択エクスポート,§8.13,mobile;web,in-scope
-F-14,全復元・選択インポート,§8.14,mobile;web,in-scope
+F-13,バックアップ（全件エクスポート）,§8.13,mobile;web,in-scope
+F-14,復元（全件置換）,§8.14,mobile;web,in-scope
 F-15,Webワークスペース・キャッシュ,§8.15,web,out-of-scope
 F-16,アカウント連携・解除,§8.16,mobile;web,in-scope
 F-17,購入・復元・管理,§8.17,mobile;web,in-scope
@@ -22,3 +22,4 @@ F-20,テーマ・言語,§8.20,mobile;web;keyboard,in-scope
 F-21,法的文書・アプリ情報,§8.21,mobile;web,in-scope
 F-22,キーボード設定・状態案内,§8.22,mobile;keyboard,in-scope
 F-23,システム変数書式設定,§8.23,mobile;web;keyboard,in-scope
+F-24,ショートカット管理,§8.24,mobile;web;keyboard,in-scope

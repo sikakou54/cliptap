@@ -7,7 +7,7 @@
 /**
  * データベーススキーマバージョン
  */
-export const SCHEMA_VERSION = 7;
+export const SCHEMA_VERSION = 8;
 
 /** インポートで受け付ける最古のスキーマバージョン */
 export const MIN_SUPPORTED_SCHEMA_VERSION = 3;
@@ -119,6 +119,80 @@ export const CREATE_TABLES = {
       updatedAt TEXT NOT NULL
     );
   `,
+
+  /**
+   * ショートカットテーブル
+   *
+   * @remarks
+   * 挿入する値は shortcut_values に持つ。1件のショートカットにつき1件以上で、
+   * IDとパスワードのようにまとめて扱いたい値を1件に収められるようにしてある。
+   *
+   * 紐づくプロファイルは shortcut_profiles で表す。定型文と同じ中間テーブルの形にしてある。
+   * 1件のショートカットにつき紐づけは0件以上。0件は全プロファイル向け（snippet_profiles と同じ）。
+   *
+   * 名前の一意性は紐づくプロファイル内に限るが、紐づけがこのテーブルに無いため複合UNIQUEでは表せない。
+   * 重複の判定は ShortcutService が、保存先のいずれかのプロファイルで同名が見えるか
+   * （0件のものは全プロファイルから見える）で行う。
+   *
+   * カテゴリは定型文と同じcategoriesテーブルを共用し、未選択（未分類）を許すためNULL可とする。
+   * カテゴリ削除時のNULL化は外部キー宣言では効かないため、CategoryMapperが明示的に行う。
+   */
+  shortcuts: `
+    CREATE TABLE IF NOT EXISTS shortcuts (
+      id TEXT PRIMARY KEY,
+      categoryId TEXT,
+      name TEXT NOT NULL,
+      sortOrder INTEGER DEFAULT 0,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL,
+      FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE SET NULL
+    );
+  `,
+
+  /**
+   * ショートカットとプロファイルの関連テーブル
+   *
+   * @remarks
+   * 定型文の snippet_profiles と同じ形にしている。
+   * 1件のショートカットにつき0件以上。0件は全プロファイル向け（snippet_profiles と同じ）。
+   * 実行時に外部キーを強制していないため、削除時のカスケードは各Mapperが明示的に行う。
+   */
+  shortcutProfiles: `
+    CREATE TABLE IF NOT EXISTS shortcut_profiles (
+      shortcutId TEXT NOT NULL,
+      profileId TEXT NOT NULL,
+      PRIMARY KEY (shortcutId, profileId),
+      FOREIGN KEY (shortcutId) REFERENCES shortcuts(id) ON DELETE CASCADE,
+      FOREIGN KEY (profileId) REFERENCES profiles(id) ON DELETE CASCADE
+    );
+  `,
+
+  /**
+   * ショートカット値テーブル
+   *
+   * @remarks
+   * valueは挿入する文字列で、変数トークン（{{name}}）を未展開のまま持つ。
+   * 展開は表示・コピー・キーボードからの挿入のそれぞれが、その時点のプロファイルと日時で行う（定型文の本文と同じ）。
+   *
+   * 値に名前は持たせない。ショートカット名が何の値かを表し、値はその中で順に並ぶだけとする。
+   *
+   * isMaskedは表示だけを伏せる指定で、1が伏せる。一覧・プレビュー・キーボードは記号に置き換えて出すが、
+   * コピーと挿入は常にvalueをそのまま使う。人に見られたくない値を画面に出さずに扱うためのもので、
+   * 保存内容は平文であり暗号化ではない。
+   */
+  shortcutValues: `
+    CREATE TABLE IF NOT EXISTS shortcut_values (
+      id TEXT PRIMARY KEY,
+      shortcutId TEXT NOT NULL,
+      value TEXT NOT NULL,
+      isMasked INTEGER DEFAULT 0,
+      useCount INTEGER DEFAULT 0,
+      sortOrder INTEGER DEFAULT 0,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL,
+      FOREIGN KEY (shortcutId) REFERENCES shortcuts(id) ON DELETE CASCADE
+    );
+  `,
 };
 
 /**
@@ -157,12 +231,83 @@ export const CREATE_INDEXES = {
     CREATE INDEX IF NOT EXISTS idx_snippet_profiles_profile
     ON snippet_profiles(profileId);
   `,
+  /**
+   * ショートカットに紐づくプロファイルのindex
+   *
+   * @remarks
+   * 一覧はプロファイルで絞って取得するため実際に使われる。
+   * 併せて、移行・取込の後に `shortcut_profiles` の列が存在することを確かめる経路でもある。
+   * `finalizeLatestSchema` はテーブル名しか確認しないため、列が欠けたまま
+   * 最新スキーマとして通ってしまうのを防いでいる。参照するクエリが無いと誤解して消さないこと。
+   */
+  shortcutProfilesProfile: `
+    CREATE INDEX IF NOT EXISTS idx_shortcut_profiles_profile
+    ON shortcut_profiles(profileId);
+  `,
+  shortcutProfilesShortcut: `
+    CREATE INDEX IF NOT EXISTS idx_shortcut_profiles_shortcut
+    ON shortcut_profiles(shortcutId);
+  `,
+  /**
+   * ショートカットの所属カテゴリのindex
+   *
+   * @remarks
+   * 一覧はカテゴリで絞り込めるため実際に使われる。
+   * shortcutProfilesProfileと同じく、移行・取込の後に `categoryId` 列が存在することを
+   * 確かめる経路でもある。参照するクエリが無いと誤解して消さないこと。
+   */
+  shortcutsCategory: `
+    CREATE INDEX IF NOT EXISTS idx_shortcuts_category
+    ON shortcuts(categoryId);
+  `,
+  shortcutValuesShortcut: `
+    CREATE INDEX IF NOT EXISTS idx_shortcut_values_shortcut
+    ON shortcut_values(shortcutId);
+  `,
+  /**
+   * 使用回数のindex
+   *
+   * @remarks
+   * useCount順の並べ替えは取得後のメモリ上で行うため、このindexで速くなるクエリは無い。
+   * それでも置いているのは、移行・取込の後に `useCount` 列が存在することを確かめる唯一の経路だから。
+   * `finalizeLatestSchema` はテーブル名しか確認せず、Mapperは `useCount ?? 0` で読むため、
+   * 列が欠けても例外にならず全件0として静かに壊れる（migrations.tsの「派生indexが参照する列は
+   * createIndexesWithDbの作成時に検知される」に対応）。参照するクエリが無いことを理由に消さないこと。
+   *
+   * 値を shortcut_values へ戻したため、1値だったV8のDBが残っていることを起動時に検知する経路も兼ねる。
+   * 1値のDBには shortcut_values が無く、ここで必ず失敗する。
+   */
+  shortcutValuesUseCount: `
+    CREATE INDEX IF NOT EXISTS idx_shortcut_values_use_count
+    ON shortcut_values(useCount DESC);
+  `,
+  /**
+   * 表示を伏せる指定のindex
+   *
+   * @remarks
+   * isMaskedで絞り込むクエリは無く、このindexで速くなるものも無い。
+   * それでも置いているのは、移行・取込の後に `isMasked` 列が存在することを確かめる唯一の経路だから
+   * （役割は上の idx_shortcut_values_use_count と同じ）。
+   *
+   * この列を後から足したため、値の名前を持っていた頃の `shortcut_values` が残っているDBでは
+   * テーブル名も useCount 列も揃ってしまい、起動時の確認をすべて通り抜ける。
+   * 実際に壊れるのはショートカット画面を開いて `SELECT ... v.isMasked` を投げた時点で、
+   * 起動からは離れた場所で落ちるため原因を追いにくい。ここで起動時に落とす。
+   * 参照するクエリが無いことを理由に消さないこと。
+   */
+  shortcutValuesMasked: `
+    CREATE INDEX IF NOT EXISTS idx_shortcut_values_masked
+    ON shortcut_values(isMasked);
+  `,
 };
 
 /**
  * テーブル削除SQL定義（外部キー制約のため削除順序重要）
  */
 export const DROP_TABLES = {
+  shortcutValues: 'DROP TABLE IF EXISTS shortcut_values;',
+  shortcutProfiles: 'DROP TABLE IF EXISTS shortcut_profiles;',
+  shortcuts: 'DROP TABLE IF EXISTS shortcuts;',
   systemVariableFormats: 'DROP TABLE IF EXISTS system_variable_formats;',
   snippetProfiles: 'DROP TABLE IF EXISTS snippet_profiles;',
   profileVariables: 'DROP TABLE IF EXISTS profile_variables;',

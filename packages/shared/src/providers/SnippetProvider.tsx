@@ -10,15 +10,10 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 import { SnippetService } from '../services/SnippetService';
-import { ProfileService } from '../services/ProfileService';
-import { VariableService, type VariableResolverContext } from '../services/VariableService';
-import { SubscriptionService } from '../services/SubscriptionService';
 import { Logger } from '../utils/logger';
-import { FEATURE_LIMITS } from '../constants/inputLimits';
 import { getClipboardAdapter, hasClipboardAdapter } from '../adapters/ClipboardAdapter';
-import { getLocaleAdapter, hasLocaleAdapter } from '../adapters/LocaleAdapter';
 import { useDatabase } from './DatabaseProvider';
-import type { VariableResolver } from '../variables/parser';
+import { createCustomResolver, getCurrentLocale } from './variableCopyContext';
 import type { Snippet, SnippetProfile, CreateSnippetInput, UpdateSnippetInput, SnippetSortBy } from '../schema';
 import { hasSortPreferenceAdapter, getSortPreferenceAdapter } from '../adapters/SortPreferenceAdapter';
 
@@ -71,41 +66,6 @@ interface SnippetProviderProps {
 /* ======================================== */
 
 const SnippetContext = createContext<SnippetContextValue | null>(null);
-
-/* ======================================== */
-/* ユーティリティ関数 */
-/* ======================================== */
-
-/**
- * カスタム変数リゾルバーを作成
- */
-function createCustomResolver(profileId?: string): VariableResolver {
-  const isSubscribed = SubscriptionService.isSubscribed();
-  const profileVariablesMap = profileId
-    ? ProfileService.getProfileVariablesMap(profileId)
-    : ProfileService.getActiveProfileVariablesMap();
-  const defaultProfileVariablesMap = ProfileService.getDefaultProfileVariablesMap();
-
-  const context: VariableResolverContext = {
-    isSubscribed,
-    profileVariablesMap,
-    defaultProfileVariablesMap,
-  };
-
-  return VariableService.createCustomVariableResolver(context, {
-    freeTierLimit: FEATURE_LIMITS.FREE_TIER_VARIABLES,
-  });
-}
-
-/**
- * 現在のロケールを取得
- */
-function getCurrentLocale(): string {
-  if (hasLocaleAdapter()) {
-    return getLocaleAdapter().getLanguage();
-  }
-  return 'en';
-}
 
 /* ======================================== */
 /* Provider */

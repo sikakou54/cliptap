@@ -36,6 +36,18 @@ export class SnippetService {
   }
 
   /**
+   * 保存済みのスニペット総数を取得
+   *
+   * @returns 全プロファイル合計のスニペット数
+   * @remarks
+   * 無料プランの登録上限の判定に使う。画面の一覧はプロファイル・カテゴリで絞り込まれているため、
+   * その件数では他のプロファイルの分を取りこぼす。
+   */
+  static count(): number {
+    return SnippetMapper.count();
+  }
+
+  /**
    * スニペットを作成
    *
    * @param data - 作成するスニペットの情報
@@ -82,17 +94,6 @@ export class SnippetService {
     }
     /* Mapper層に処理を委譲（カスケード削除が実行される：snippet_profilesも削除） */
     SnippetMapper.delete(id);
-  }
-
-  /**
-   * スニペットを検索
-   *
-   * @param query - 検索クエリ（タイトルまたはコンテンツに部分一致）
-   * @param categoryId - カテゴリIDでフィルタリング（オプション）
-   * @returns 検索にマッチしたスニペットの配列
-   */
-  static search(query: string, categoryId?: string): Snippet[] {
-    return SnippetMapper.search(query, categoryId);
   }
 
   /**

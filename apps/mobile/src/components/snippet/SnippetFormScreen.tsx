@@ -29,7 +29,7 @@ import {
   ActivityIndicator,
   Switch,
 } from 'react-native';
-import { useTranslation } from '@cliptap/shared';
+import { getProfileSelectPlaceholder, useTranslation } from '@cliptap/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@lib/themeSystem';
 import { useSnippetFormScreen } from '@hooks/screens/useSnippetFormScreen';
@@ -163,12 +163,12 @@ export function SnippetFormScreen({ mode, snippetId }: SnippetFormScreenProps) {
               {/* 選択されたプロファイル数と名前の表示 */}
               {selectedProfileIds.length === 0 ? (
                 <Text style={{ color: colors.textSecondary, fontSize: responsiveFontSizes.base, lineHeight: responsiveLineHeights.base }}>
-                  {t('snippet.select_profile')}
+                  {getProfileSelectPlaceholder('snippet', t)}
                 </Text>
               ) : (
                 <View>
                   <Text style={{ color: colors.text, fontSize: responsiveFontSizes.base, lineHeight: responsiveLineHeights.base, fontWeight: '500' }}>
-                    {t('snippet.profiles_selected', { count: selectedProfileIds.length })}
+                    {t('profile.profiles_selected', { count: selectedProfileIds.length })}
                   </Text>
                   <Text style={{ color: colors.textSecondary, fontSize: responsiveFontSizes.sm, marginTop: 2 }}>
                     {profiles

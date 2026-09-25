@@ -2,14 +2,15 @@
  * スニペットカードコンポーネント
  *
  * 一覧画面で表示される個別のスニペットカード。
- * タップでコピー、長押しで展開、アクションボタンで編集・削除。
+ * 右下のコピーボタンで本文を、タイトルのタップでタイトルだけをコピーする。
+ * 本文のタップと左下の展開ボタンで展開し、右上の「・・・」メニューから編集・削除する。
  *
  * 主な機能:
  * - ワンタップコピー（触覚フィードバック付き）
  * - コンテンツの展開/折りたたみ
  * - 変数の自動解決（{{変数名}} → 実際の値）
  * - カテゴリバッジ表示
- * - 編集・削除ボタン
+ * - 右上の「・・・」メニューからの編集・削除
  *
  * パフォーマンス最適化:
  * - React.memoによるメモ化
@@ -30,6 +31,7 @@ import { useTheme } from '@lib/themeSystem';
 import { useTranslation } from '@cliptap/shared';
 import { SnippetWithDisplay, Category } from '@cliptap/shared';
 import { CategoryBadge } from '@components/category/CategoryBadge';
+import { ItemActionMenu } from '@components/common/ItemActionMenu';
 import { UI_CONSTANTS } from '@constants/ui';
 import { useSnippetCard } from '@hooks/components/useSnippetCard';
 
@@ -37,8 +39,8 @@ import { useSnippetCard } from '@hooks/components/useSnippetCard';
  * SnippetCardのProps
  * @property snippet - 表示するスニペットデータ
  * @property onPress - タップ時のコールバック（コピー処理）
- * @property onEdit - 編集ボタンタップ時のコールバック
- * @property onDelete - 削除ボタンタップ時のコールバック
+ * @property onEdit - メニューで「編集」が選ばれたときのコールバック
+ * @property onDelete - メニューで「削除」が選ばれ、確認ダイアログでOKされたときのコールバック
  * @property onPressTitle - タイトルタップ時のコールバック（タイトルのみコピー、省略可）
  * @property disableCopy - コピー機能を無効化（省略可、デフォルト: false）
  * @property category - カテゴリオブジェクト（省略可：親から渡される場合、パフォーマンス最適化のため）
@@ -51,6 +53,8 @@ interface SnippetCardProps {
   onPressTitle?: (snippet: SnippetWithDisplay) => void | Promise<void>;
   disableCopy?: boolean;
   category?: Category | null;
+  /** 一覧の最後の項目か（区切り線を引くかの判定に使う） */
+  isLast: boolean;
 }
 
 const SnippetCardComponent = ({
@@ -61,6 +65,7 @@ const SnippetCardComponent = ({
   onPressTitle,
   disableCopy = false,
   category: categoryProp,
+  isLast,
 }: SnippetCardProps) => {
   const { colors, isTablet, responsive, responsiveFontSizes, responsiveLineHeights } = useTheme();
   const { t } = useTranslation();
@@ -97,10 +102,9 @@ const SnippetCardComponent = ({
     <View
       style={[
         styles.card,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-        },
+        /* 区切り線は項目と項目の間にだけ引く。最後にも引くと一覧の終わりに線が残り、
+           下の余白や広告と切り離されて見える */
+        !isLast && { borderBottomWidth: UI_CONSTANTS.BORDER_WIDTH.THIN, borderBottomColor: colors.border },
       ]}
     >
       {/* メインコンテンツエリア */}
@@ -111,50 +115,53 @@ const SnippetCardComponent = ({
           paddingBottom: 60,
         }
       ]}>
-        {/* タイトル（タップでタイトルのみをコピー） */}
-        <TouchableOpacity
-          style={styles.titleContainer}
-          onPress={handleCopyTitle}
-          disabled={!isTitleCopyEnabled || isCopyingTitle}
-          activeOpacity={isTitleCopyEnabled ? 0.7 : 1}
-          hitSlop={UI_CONSTANTS.HIT_SLOP.SMALL}
-          /* TouchableOpacityはラベルを与えると子のテキストを読み上げなくなるため、
-             ラベルはタイトル本文のままにし、コピー操作はヒントで補足する */
-          accessibilityRole={isTitleCopyEnabled ? 'button' : undefined}
-          accessibilityLabel={displayTitle ?? undefined}
-          accessibilityHint={isTitleCopyEnabled ? t('snippet.copy_title') : undefined}
-        >
-          <Text
-            style={[
-              styles.title,
-              {
-                color: colors.text,
-                fontSize: responsiveFontSizes.base,
-              }
-            ]}
-            numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.SINGLE}
-            ellipsizeMode="tail"
+        {/* タイトル行。タイトルと、右端の「・・・」メニュー */}
+        <View style={styles.titleRow}>
+          {/* タイトル（タップでタイトルのみをコピー） */}
+          <TouchableOpacity
+            style={styles.titleContainer}
+            onPress={handleCopyTitle}
+            disabled={!isTitleCopyEnabled || isCopyingTitle}
+            activeOpacity={isTitleCopyEnabled ? 0.7 : 1}
+            hitSlop={UI_CONSTANTS.HIT_SLOP.SMALL}
+            /* TouchableOpacityはラベルを与えると子のテキストを読み上げなくなるため、
+               ラベルはタイトル本文のままにし、コピー操作はヒントで補足する */
+            accessibilityRole={isTitleCopyEnabled ? 'button' : undefined}
+            accessibilityLabel={displayTitle}
+            accessibilityHint={isTitleCopyEnabled ? t('snippet.copy_title') : undefined}
           >
-            {displayTitle}
-          </Text>
+            <Text
+              style={[
+                styles.title,
+                {
+                  color: colors.text,
+                  fontSize: responsiveFontSizes.base,
+                }
+              ]}
+              numberOfLines={UI_CONSTANTS.NUMBER_OF_LINES.SINGLE}
+              ellipsizeMode="tail"
+            >
+              {displayTitle}
+            </Text>
 
-          {/* コピーアイコン（タップでコピーできることを示す。コピー完了時は2秒間チェックマーク） */}
-          {isTitleCopyEnabled && (
-            <Ionicons
-              name={isTitleCopied ? 'checkmark' : 'copy-outline'}
-              size={isTablet ? 18 : 14}
-              color={isTitleCopied ? colors.success : colors.textSecondary}
-              style={styles.titleCopyIcon}
-            />
-          )}
-        </TouchableOpacity>
+            {/* コピーアイコン（タップでコピーできることを示す。コピー完了時は2秒間チェックマーク） */}
+            {isTitleCopyEnabled && (
+              <Ionicons
+                name={isTitleCopied ? 'checkmark' : 'copy-outline'}
+                size={isTablet ? 18 : 14}
+                color={isTitleCopied ? colors.success : colors.textSecondary}
+                style={styles.titleCopyIcon}
+              />
+            )}
+          </TouchableOpacity>
 
-        {/* カテゴリバッジ */}
-        {category && (
-          <View style={styles.categoryBadgeContainer}>
-            <CategoryBadge category={category} size="small" />
-          </View>
-        )}
+          {/* 「・・・」メニュー（編集・削除）。タイトルのコピー操作と混ざらないよう、タイトルのタップ領域の外に置く */}
+          <ItemActionMenu itemName={displayTitle} onEdit={handleEdit} onDelete={handleDelete} />
+        </View>
+
+        {/* カテゴリバッジ。上下の余白は親の gap だけが持つ。
+            片側にだけ余白を足すとバッジの上下が揃わなくなる */}
+        {category && <CategoryBadge category={category} size="small" />}
 
         <TouchableOpacity
           onPress={toggleExpanded}
@@ -192,7 +199,6 @@ const SnippetCardComponent = ({
             left: UI_CONSTANTS.GAP.MD,
             bottom: UI_CONSTANTS.GAP.MD,
             borderColor: colors.border,
-            backgroundColor: colors.surface,
           }
         ]}
         onPress={toggleExpanded}
@@ -205,49 +211,12 @@ const SnippetCardComponent = ({
         />
       </TouchableOpacity>
 
-      {/* アクションボタン */}
+      {/* コピーボタン */}
       <View style={styles.actionButtons}>
         <TouchableOpacity
           style={[
             styles.roundButton,
-            {
-              borderColor: colors.border,
-              backgroundColor: colors.surface,
-            }
-          ]}
-          onPress={handleDelete}
-        >
-          <Ionicons
-            name="trash-outline"
-            size={isTablet ? 22 : 18}
-            color={colors.error}
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.roundButton,
-            {
-              borderColor: colors.border,
-              backgroundColor: colors.surface,
-            }
-          ]}
-          onPress={handleEdit}
-        >
-          <Ionicons
-            name="create-outline"
-            size={isTablet ? 22 : 18}
-            color={colors.text}
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.roundButton,
-            {
-              borderColor: isCopied ? colors.success : colors.primary,
-              backgroundColor: colors.surface,
-            },
+            { borderColor: isCopied ? colors.success : colors.primary },
             /* 無効時は枠線を中立色へ戻す。style配列は後勝ちのため、上の borderColor より後ろに置く */
             disableCopy && [styles.disabledButton, { borderColor: colors.border }]
           ]}
@@ -275,6 +244,7 @@ const SnippetCardComponent = ({
 export const SnippetCard = React.memo(SnippetCardComponent, (prevProps, nextProps) => {
   return (
     prevProps.snippet.id === nextProps.snippet.id &&
+    prevProps.isLast === nextProps.isLast &&
     prevProps.snippet.updatedAt === nextProps.snippet.updatedAt &&
     prevProps.snippet.title === nextProps.snippet.title &&
     prevProps.snippet.content === nextProps.snippet.content &&
@@ -287,29 +257,33 @@ export const SnippetCard = React.memo(SnippetCardComponent, (prevProps, nextProp
 });
 
 const styles = StyleSheet.create({
+  /* フラットデザイン。カードの枠・角丸・下地を持たず、下端の区切り線だけで項目を分ける */
   card: {
-    borderRadius: UI_CONSTANTS.BORDER_RADIUS.LG,
-    marginBottom: UI_CONSTANTS.GAP.LG,
-    borderWidth: UI_CONSTANTS.BORDER_WIDTH.THIN,
     overflow: 'hidden',
   },
   mainContent: {
     gap: UI_CONSTANTS.GAP.SM,
   },
+  /* タイトルと「・・・」メニューを横に並べる。長いタイトルではコピーアイコンが「・・・」に近づくため、間を空けて押し間違えにくくする */
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: UI_CONSTANTS.GAP.LG,
+  },
+  /* タップ領域は行いっぱいのまま（タイトルの右の空いた所を押してもタイトルをコピーする） */
   titleContainer: {
-    width: '100%',
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
   },
+  /* 行いっぱいに伸ばさず文字の幅に留め、コピーアイコンをタイトルの末尾に付ける。
+     長いタイトルは縮めて末尾を省略し、アイコンは残す */
   title: {
-    flex: 1,
+    flexShrink: 1,
     fontWeight: UI_CONSTANTS.FONT_WEIGHT.SEMIBOLD,
   },
   titleCopyIcon: {
     marginLeft: UI_CONSTANTS.GAP.XS,
-  },
-  categoryBadgeContainer: {
-    marginTop: UI_CONSTANTS.GAP.XS,
   },
   contentWrapper: {
     justifyContent: 'space-between',

@@ -14,10 +14,10 @@
   <!-- 見出しと端末 -->
   {{SLIDE_MARKUP}}
 
-  <!-- OGP のみ表示されるタグライン（lp.css のフッターから逐語） -->
+  <!-- OGP のみ表示されるタグライン（LP フッター .footer-about の1行目と一致させる） -->
   <p class="tagline">
-    <span class="ja">いつもの文章を、必要な場所へ。</span>
-    <span class="en">Your usual text, wherever you need it.</span>
+    <span class="ja">いつもの文章を、キーボードから。</span>
+    <span class="en">Your usual text, ready on your keyboard.</span>
   </p>
 </section>
 
@@ -155,7 +155,7 @@
   if (!fails.length) return;
 
   /* パネルは .canvas の中に absolute で置く。.canvas は position: relative なので
-     そのまま包含ブロックになり、面の高さ（2796）を確実に覆いきる。
+     そのまま包含ブロックになり、面の高さ（各 canvas の --ch）を確実に覆いきる。
      position: fixed + body 直下だと覆えるのはビューポート（約900）だけで、
      要素スクリーンショットでは面の上から約3割しか塗られず、
      画像の下側だけを見る確認手順で失敗を見落とす。 */

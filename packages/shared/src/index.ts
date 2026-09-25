@@ -134,9 +134,13 @@ export {
   ProfileService,         /* プロファイル管理サービス */
   SnippetService,         /* スニペット管理サービス */
   VariableService,        /* 変数管理サービス */
+  ShortcutService,        /* ショートカット管理サービス */
   SubscriptionService,    /* 課金管理サービス */
   FREE_PROFILES_LIMIT,    /* 無料プランのプロファイル上限 */
   FREE_VARIABLES_LIMIT,   /* 無料プランの変数上限 */
+  FREE_SNIPPETS_LIMIT,    /* 無料プランの定型文登録上限 */
+  FREE_SHORTCUTS_LIMIT,   /* 無料プランのショートカット登録上限 */
+  FREE_SHORTCUT_VALUES_LIMIT, /* 無料プランのショートカット1件あたりの値の上限 */
   type VariableResolverContext,       /* 変数解決コンテキスト */
   type ValidFlagsUpdater,             /* 有効フラグ更新関数型 */
   createValidFlagsUpdater,            /* ValidFlagsUpdater共通実装ファクトリ */
@@ -192,6 +196,12 @@ export * from './utils/logger';           /* ロガー */
 export * from './utils/pathUtils';        /* パス操作ユーティリティ */
 export * from './utils/categoryUtils';    /* カテゴリ関連ユーティリティ */
 export * from './utils/snippetFilterUtils'; /* スニペットフィルタリングユーティリティ */
+export * from './utils/crossProfileSnippetSearch'; /* 定型文のプロファイル横断検索 */
+export * from './utils/profileSelectLabels'; /* プロファイル選択の説明文・未選択時の表示 */
+export * from './shortcuts/search';       /* ショートカット検索ユーティリティ */
+export * from './shortcuts/crossProfileSearch'; /* ショートカットのプロファイル横断検索 */
+export * from './shortcuts/sort';         /* ショートカット並べ替えユーティリティ */
+export * from './shortcuts/display';      /* ショートカット値の表示用の展開 */
 export * from './utils/errorUtils';      /* エラーメッセージ翻訳ユーティリティ */
 
 /* 認証エラー関連のユーティリティ */
@@ -206,20 +216,11 @@ export {
 /* Reactカスタムフックをエクスポート */
 
 export {
-  /* インポート選択フック */
-  useImportSelection,
-  type ImportTabType,
-
   /* デバウンスフック */
   useDebounce,
   DEFAULT_DEBOUNCE_DELAY,
 
-  /* Selection (汎用版選択フック) */
-  useSelection,
-  type SelectionTabType,
-
   /* Search（検索フック） */
-  useSearch,
 
   /* Subscription Service（Service層直接アクセス版） */
   useSubscriptionService,
@@ -302,4 +303,9 @@ export {
   SnippetProvider,
   useSnippets,
   type SnippetContextValue,
+
+  /* ショートカット管理Provider */
+  ShortcutProvider,
+  useShortcuts,
+  type ShortcutContextValue,
 } from './providers';

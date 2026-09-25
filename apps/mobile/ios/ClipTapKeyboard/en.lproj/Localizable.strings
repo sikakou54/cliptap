@@ -29,6 +29,10 @@
 "snippet.close" = "Close";
 "snippet_no_title" = "(No Title)";
 
+/* Shortcut related */
+"shortcut.empty" = "No shortcuts available";
+"shortcut.empty_hint" = "Create shortcuts in the main app";
+
 /* Search related */
 "search.placeholder" = "Search snippets";
 "search.clear" = "Clear";
@@ -75,12 +79,15 @@
 "accessibility.sort_button" = "Sort button";
 "accessibility.insert_title_button" = "Insert title button";
 "accessibility.insert_newline_button" = "Insert newline button";
+"accessibility.show_shortcuts_button" = "Show shortcuts";
+"accessibility.show_snippets_button" = "Show snippets";
 
 /* Sort related */
 "sort.label" = "Sort";
 "sort.created" = "Created";
 "sort.updated" = "Updated";
 "sort.title" = "Title";
+"sort.name" = "Name";
 "sort.usage" = "Frequency";
 
 /* Settings related */

@@ -8,20 +8,25 @@ import { DEFAULT_CATEGORY_COLOR } from '../constants/designTokens';
 import type { Category, Snippet } from '../schema';
 
 /**
- * 定型文が存在するカテゴリのみをフィルタリング
+ * 実際に使われているカテゴリのみをフィルタリング
  *
- * @param snippets - 全定型文リスト
+ * @param items - カテゴリを持つデータ（定型文またはショートカット）
  * @param categories - 全カテゴリリスト
- * @returns 定型文が存在するカテゴリのみ
+ * @returns いずれかのデータが参照しているカテゴリのみ
+ *
+ * @remarks
+ * 定型文とショートカットはどちらも同じcategoriesテーブルを共用し、
+ * 絞り込みチップも「そのデータが1件以上あるカテゴリだけを出す」という同じ規則で作る。
+ * 引数はcategoryIdだけを見るため、両方をそのまま渡せる。
  */
-export function filterCategoriesWithSnippets(
-  snippets: Pick<Snippet, 'categoryId'>[],
+export function filterCategoriesInUse(
+  items: Pick<Snippet, 'categoryId'>[],
   categories: Category[]
 ): Category[] {
-  /* スニペットが使用しているカテゴリIDのセットを作成（nullを除外） */
+  /* データが使用しているカテゴリIDのセットを作成（nullを除外） */
   const usedCategoryIds = new Set(
-    snippets
-      .map(s => s.categoryId)
+    items
+      .map(item => item.categoryId)
       .filter((id): id is string => id !== null && id !== undefined)
   );
   /* 使用されているカテゴリのみをフィルタリング */

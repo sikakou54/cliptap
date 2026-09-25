@@ -1,0 +1,405 @@
+/**
+ * 撮影用ホストの共通スタイル。
+ *
+ * 目的は「他のアプリの入力欄」に見えること。特定のサービスに似せないため、
+ * iOS標準のダークUIの範囲（システムフォント・システムブルー・グレーの階調）だけで組み、
+ * ブランド配色やロゴにあたる形は一切置かない。
+ *
+ * 撮影はダークのみ。他の端末キャプチャが全てダークで、明暗が混ざるとデッキが揃わない。
+ */
+
+:root {
+  /* iOSのダークUIに合わせた無彩色の階調。どのサービスの配色でもない */
+  --bg: #000000;
+  --surface: #1c1c1e;
+  --surface-2: #2c2c2e;
+  --separator: #38383a;
+  --text: #ffffff;
+  --text-2: #ebebf5;
+  --muted: #8e8e93;
+  /* iOSのシステムブルー。送信・投稿の既定色 */
+  --accent: #0a84ff;
+
+  --pad: 16px;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.45;
+  /* 入力中にページごと弾むと撮影のたびに構図が変わる。
+     本文が伸びたときのスクロールは入力欄の中だけで起こす（.textarea の overflow-y）。
+     html/body に overflow: hidden は置かない。一度ページがスクロールした状態で
+     復元されると、指でも戻せない位置に固定されてしまうため。 */
+  overscroll-behavior: none;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  /* 状態バーは本文へ重なる（status-bar-style=black-translucent）。
+     その分を上へ空ける。env(safe-area-inset-top) はホーム画面へ追加した
+     スタンドアロン起動だと 0 を返すことがあり、それだけに頼るとナビが時刻に重なる。
+     max() で下限を置いて、どちらの挙動でも重ならないようにする
+     （54px はDynamic Island世代の状態バーの高さ。撮影は iPhone 17 に固定している）。 */
+  padding: max(env(safe-area-inset-top), 54px) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* =========================================================================
+   ナビゲーションバー
+   ========================================================================= */
+.nav {
+  flex: none;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 10px var(--pad);
+  border-bottom: 0.5px solid var(--separator);
+}
+
+/* メニューは中央にタイトルを置く相手がいないので、左寄せの2列にする */
+.nav--menu {
+  grid-template-columns: auto 1fr;
+}
+
+.nav--menu .nav-title {
+  text-align: left;
+}
+
+.nav--menu .lang-switch {
+  justify-self: end;
+}
+
+.nav-title {
+  font-size: 17px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* 子要素まで指定しているのは、WebKit がリンクの下線を
+   -webkit-text-decorations-in-effect として子へ引き継ぎ、
+   a 自身への text-decoration: none だけでは消えないため */
+.nav-action,
+.nav-action * {
+  -webkit-text-decoration: none;
+  text-decoration: none;
+}
+
+.nav-action {
+  font-size: 17px;
+  color: var(--accent);
+  background: none;
+  border: 0;
+  padding: 0;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.nav-action.leading {
+  justify-self: start;
+}
+
+.nav-action.trailing {
+  justify-self: end;
+  font-weight: 600;
+}
+
+/* 送信・投稿は塗りのピル。iOSの標準的な強調ボタンの形 */
+.nav-action.filled {
+  background: var(--accent);
+  color: #ffffff;
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: 15px;
+}
+
+/* =========================================================================
+   本文
+   ========================================================================= */
+.body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 宛先・件名のような1行のフィールド */
+.field {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px var(--pad);
+  border-bottom: 0.5px solid var(--separator);
+}
+
+.field-label {
+  flex: none;
+  width: 4.5em;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+/* 入力要素はブラウザ既定の見た目を消して、周りの面と地続きにする */
+.input,
+.textarea {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  outline: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 17px;
+  line-height: 1.45;
+  padding: 0;
+  resize: none;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--muted);
+}
+
+.textarea {
+  flex: 1;
+  min-height: 0;
+  padding: 14px var(--pad);
+  /* 本文が伸びてもページではなくここがスクロールする */
+  overflow-y: auto;
+}
+
+/* ラベルを上に置き、値を全幅で受ける欄。入力フォームの各欄で使う。
+   中の入力欄は自然高にする（.textarea の flex: 1 のままだと残りの高さを全部取る）。
+   1行ぶんの高さを確保しているのは当たり判定のため。空の contenteditable を
+   .field の flex 行へ置くとタップが通らず、キーボードが出なかった（実測）。 */
+.field--stacked {
+  display: block;
+}
+
+.field--stacked .field-label {
+  display: block;
+  width: auto;
+  margin-bottom: 6px;
+}
+
+.field--stacked .textarea {
+  flex: none;
+  padding: 0;
+  min-height: 25px;
+}
+
+/* 本文の入力欄は contenteditable にしてある。textarea や input だと iOS が
+   フォーム移動用のアクセサリバー（∧ ∨ 完了）をキーボードの上へ足し、
+   撮影した画像にブラウザの部品が写り込むため。contenteditable にはそれが出ない。
+   プレースホルダは自前で描く。 */
+.editable:empty::before {
+  content: attr(data-placeholder);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+/* =========================================================================
+   メニュー（index.html）
+   ========================================================================= */
+.menu {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 24px var(--pad) 40px;
+}
+
+.menu h1 {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.menu p {
+  margin: 0 0 24px;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.menu-list li + li {
+  border-top: 0.5px solid var(--separator);
+}
+
+.menu-list a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px var(--pad);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.menu-list .sub {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.lang-switch {
+  display: flex;
+  gap: 8px;
+}
+
+.lang-switch button {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 0.5px solid var(--separator);
+  background: var(--surface-2);
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.lang-switch button[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+/* =========================================================================
+   投稿コンポーザ
+   ========================================================================= */
+.composer {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 12px;
+  padding: 14px var(--pad);
+}
+
+/* 無地の丸。実在のサービスのアバターを模さない */
+.avatar {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.composer .textarea {
+  padding: 4px 0;
+}
+
+.composer-foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px var(--pad);
+  border-top: 0.5px solid var(--separator);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* =========================================================================
+   チャット
+   ========================================================================= */
+.thread {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px var(--pad);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bubble {
+  max-width: 78%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 16px;
+}
+
+.bubble.them {
+  align-self: flex-start;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.bubble.me {
+  align-self: flex-end;
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.chat-bar {
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 10px var(--pad);
+  border-top: 0.5px solid var(--separator);
+}
+
+.chat-bar .textarea {
+  flex: 1;
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 9px 14px;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+/* 送信の丸ボタン。矢印はCSSだけで描く（アイコン素材を持ち込まない） */
+.send {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  cursor: pointer;
+  position: relative;
+}
+
+.send::before {
+  content: "";
+  position: absolute;
+  top: 13px;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  border-top: 2.5px solid #ffffff;
+  border-right: 2.5px solid #ffffff;
+  transform: translateX(-50%) rotate(-45deg);
+}
+
+/* =========================================================================
+   言語の出し分け。1つのDOMに ja / en を併記し、html[lang] で切り替える
+   （store/screen/_shared.css と同じ考え方）
+   ========================================================================= */
+html[lang="ja"] .en,
+html[lang="en"] .ja {
+  display: none;
+}

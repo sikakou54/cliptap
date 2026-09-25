@@ -2,7 +2,7 @@
  * エクスポートサービス
  *
  * @description
- * プラットフォーム共通のエクスポートロジックを提供する。
+ * バックアップ（全データの.cliptapファイル出力）のプラットフォーム共通ロジックを提供する。
  * プラットフォーム固有の処理はExportAdapter経由で注入。
  *
  * @module ExportService
@@ -10,8 +10,7 @@
 
 import { getExportAdapter, hasExportAdapter } from '../adapters/ExportAdapter';
 import { getCryptoAdapter, type CryptoAdapter } from '../adapters/CryptoAdapter';
-import { getFileIOAdapter } from '../adapters/FileIOAdapter';
-import { getTempDbAdapter, hasTempDbAdapter } from '../adapters/DbAdapter';
+import { getMainDbAdapter, hasMainDbAdapter } from '../adapters/DbAdapter';
 import {
   buildPasswordHashInput,
   buildChecksumPayload,
@@ -20,7 +19,6 @@ import {
 import { SCHEMA_VERSION } from '../database/schema';
 import { Logger } from '../utils/logger';
 import { ExportFailedError } from '../errors';
-import { ExportMapper, type ExportSelection } from '../mappers/ExportMapper';
 
 /**
  * エクスポート実行結果（内部型）
@@ -105,9 +103,9 @@ export class ExportService {
   }
 
   /**
-   * タイムスタンプ付きのエクスポートファイル名を生成
+   * タイムスタンプ付きのバックアップファイル名を生成
    *
-   * @returns ファイル名（例: export_20251210143025.cliptap）
+   * @returns ファイル名（例: ClipTap_backup_20251210143025.cliptap）
    */
   static generateFilename(): string {
     const now = new Date();
@@ -120,76 +118,54 @@ export class ExportService {
       String(now.getSeconds()).padStart(2, '0'),
     ].join('');
 
-    return `export_${timestamp}.cliptap`;
+    return `ClipTap_backup_${timestamp}.cliptap`;
   }
 
   /**
-   * 選択されたデータのみをエクスポート（部分エクスポート）
+   * 全データをバックアップファイルとして出力
    *
-   * @param password - エクスポートに使用するパスワード
-   * @param selection - エクスポートするデータのID選択
+   * @param password - 復元時の同一ファイル確認に使うパスワード
    * @returns エクスポート結果（ファイルパス）
-   * @throws ExportFailedError エクスポートに失敗した場合
+   * @throws ExportFailedError 出力に失敗した場合
    *
    * @remarks
-   * 「全データのエクスポート」は選択画面が全候補を選択済みで開くことで実現しており、
-   * 全件専用の経路は持たない。
+   * メインDBをそのまま直列化するため、一時DBは作らない。
+   * 復元は行を逐語で戻すため、端末のDBと同じ内容がそのまま復元される。
    */
-  static async exportSelectedData(
-    password: string,
-    selection: ExportSelection
-  ): Promise<ExportExecutionResult> {
+  static async exportAllData(password: string): Promise<ExportExecutionResult> {
     if (!hasExportAdapter()) {
-      throw new Error('ExportAdapter is required for exportSelectedData. Call setExportAdapter() first.');
+      throw new Error('ExportAdapter is required for exportAllData. Call setExportAdapter() first.');
     }
-    if (!hasTempDbAdapter()) {
-      throw new Error('TempDbAdapter is required for exportSelectedData. Call setTempDbAdapter() first.');
+    if (!hasMainDbAdapter()) {
+      throw new Error('MainDbAdapter is required for exportAllData. Call setMainDbAdapter() first.');
     }
 
     const adapter = getExportAdapter();
-    const fileIO = getFileIOAdapter();
-    const tempDbAdapter = getTempDbAdapter();
-
-    let tempDbPath: string | null = null;
+    const mainDbAdapter = getMainDbAdapter();
 
     try {
-      Logger.info('[ExportService] Starting partial export');
+      Logger.info('[ExportService] Starting backup');
 
-      tempDbPath = await adapter.createTempDbFile();
-      await tempDbAdapter.open?.(tempDbPath);
-
-      /* 選択されていないデータを削除してフィルタリング */
-      const exportMapper = new ExportMapper(tempDbAdapter);
-      exportMapper.deleteUnselectedData(selection);
-
-      if (!tempDbAdapter.exportAsBase64) {
-        throw new Error('TempDbAdapter.exportAsBase64 is required for exportSelectedData.');
+      if (!mainDbAdapter.exportAsBase64) {
+        throw new Error('MainDbAdapter.exportAsBase64 is required for exportAllData.');
       }
-      const filteredDbBase64 = await tempDbAdapter.exportAsBase64();
-      Logger.info(`[ExportService] Filtered DB loaded (${filteredDbBase64.length} chars)`);
+      const dbBase64 = await mainDbAdapter.exportAsBase64();
+      Logger.info(`[ExportService] Main DB serialized (${dbBase64.length} chars)`);
 
-      tempDbAdapter.close?.();
-
-      const json = await this.createExportDataFromBase64(filteredDbBase64, password);
+      const json = await this.createExportDataFromBase64(dbBase64, password);
       const exportFileName = this.generateFilename();
-
-      Logger.info(`[ExportService] Export data created, filename: ${exportFileName}`);
 
       const exportFileUri = await adapter.saveExportFile(exportFileName, json);
 
-      Logger.info(`[ExportService] Export file created: ${exportFileUri}`);
+      Logger.info(`[ExportService] Backup file created: ${exportFileUri}`);
 
       return { filePath: exportFileUri };
     } catch (error) {
-      Logger.error('[ExportService] Partial export failed:', error);
+      Logger.error('[ExportService] Backup failed:', error);
       throw new ExportFailedError(
         error instanceof Error ? error.message : 'Unknown error',
         error
       );
-    } finally {
-      if (tempDbPath) {
-        fileIO.deleteFile(tempDbPath).catch(() => { });
-      }
     }
   }
 }

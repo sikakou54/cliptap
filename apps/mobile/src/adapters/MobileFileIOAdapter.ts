@@ -58,22 +58,11 @@ export class MobileFileIOAdapter implements FileIOAdapter {
   ): Promise<string> {
     try {
       const file = new File(Paths.cache, filename);
-      /* expo-file-systemのwrite/deleteは同期API。copyはSDK 56以降Promiseを返す */
+      /* expo-file-systemのwrite/deleteは同期API */
       file.write(content, { encoding: options?.encoding === 'base64' ? 'base64' : 'utf8' });
       return file.uri;
     } catch (error) {
       Logger.error('[MobileFileIOAdapter] Write failed:', error);
-      throw error;
-    }
-  }
-
-  async copyFile(sourceUri: string, targetUri: string): Promise<void> {
-    try {
-      const source = new File(this.normalizeUri(sourceUri));
-      const target = new File(this.normalizeUri(targetUri));
-      await source.copy(target);
-    } catch (error) {
-      Logger.error('[MobileFileIOAdapter] Copy failed:', error);
       throw error;
     }
   }
@@ -135,10 +124,6 @@ export class MobileFileIOAdapter implements FileIOAdapter {
   /* ======================================== */
   /* ディレクトリパス取得 */
   /* ======================================== */
-
-  getCacheDirectory(): string {
-    return Paths.cache.uri.replace('file://', '');
-  }
 
   getDocumentDirectory(): string {
     return Paths.document.uri.replace('file://', '');

@@ -214,7 +214,7 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
    * 標準の切替は「isDefaultの一括リセット」と「対象のみ有効化」の2文で構成されるため、
    * 途中で失敗すると標準0件になり変数値のフォールバック先が失われる。
    * また有効判定は標準を最優先に表示順で行うため、切替でFreeの有効な集合が変わりうる。
-   * Mapper側でトランザクションを張らないのは、インポートの全復元・選択インポートが
+   * Mapper側でトランザクションを張らないのは、復元（全件置換）が
    * 既にトランザクション内からsetDefaultを呼んでおり、アダプタがネストに対応しないため。
    */
   const setDefaultProfile = useCallback(

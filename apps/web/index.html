@@ -3,9 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ClipTap - どのアプリにも定型文をワンタップ入力 | 無料の定型文アプリ</title>
-    <meta name="description" content="ClipTapは、拡張キーボードから、どのアプリの入力欄にも定型文をそのまま入力できる無料アプリ。日付や会社名は変数で自動挿入。データは端末内に保存し、オフラインで動作。iOS・Android・Web対応。" />
-    <meta name="keywords" content="定型文アプリ,拡張キーボード,定型文入力,テキスト展開,メール定型文,プロンプト,クリップボード,業務効率化,iOS,Android" />
+    <title>ClipTap - いつもの文章を、ワンタップで。 | 定型文キーボードアプリ</title>
+    <meta name="description" content="メールの返信、SNSのタグ、AIへの指示を、キーボードから直接入力。ClipTapは、よく使う文章を登録して繰り返し使える定型文アプリです。日付や会社名の差し替えにも対応。定型文50件まで無料、アカウント登録不要。iOS・Android対応、PCで編集できるWeb版も。" />
+    <meta name="keywords" content="定型文アプリ,拡張キーボード,定型文入力,テキスト展開,メール定型文,プロンプト,クリップボード,ショートカット,業務効率化,iOS,Android" />
     <meta name="author" content="ClipTap" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="theme-color" content="#212b3c" />
@@ -17,22 +17,22 @@
     <link rel="alternate" hreflang="x-default" href="https://cliptap.net/" />
 
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="ClipTap - どのアプリにも定型文をワンタップ入力" />
-    <meta property="og:description" content="拡張キーボードから、いつもの文章をどのアプリにも直接入力。変数対応、ローカル保存、オフライン動作。" />
+    <meta property="og:title" content="ClipTap - いつもの文章を、ワンタップで。" />
+    <meta property="og:description" content="メールの返信、SNSのタグ、AIへの指示を、キーボードからすぐ入力。定型文50件まで無料、アカウント登録不要。" />
     <meta property="og:url" content="https://cliptap.net/" />
     <meta property="og:site_name" content="ClipTap" />
     <meta property="og:image" content="https://cliptap.net/ogp/og-ja.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="ClipTap — どのアプリにも定型文をワンタップ" />
+    <meta property="og:image:alt" content="ClipTap — 定型文をキーボードから直接入力" />
     <meta property="og:locale" content="ja_JP" />
     <meta property="og:locale:alternate" content="en_US" />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="ClipTap - どのアプリにも定型文をワンタップ入力" />
-    <meta name="twitter:description" content="拡張キーボードから、いつもの文章をどのアプリにも直接入力。" />
+    <meta name="twitter:title" content="ClipTap - いつもの文章を、ワンタップで。" />
+    <meta name="twitter:description" content="メールの返信、SNSのタグ、AIへの指示を、キーボードからすぐ入力。定型文50件まで無料、アカウント登録不要。" />
     <meta name="twitter:image" content="https://cliptap.net/ogp/og-ja.png" />
-    <meta name="twitter:image:alt" content="ClipTap — どのアプリにも定型文をワンタップ" />
+    <meta name="twitter:image:alt" content="ClipTap — 定型文をキーボードから直接入力" />
 
     <link rel="shortcut icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" href="/image/app-icon.png" />
@@ -49,10 +49,9 @@
         "name": "ClipTap",
         "url": "https://cliptap.net/",
         "applicationCategory": "ProductivityApplication",
-        "operatingSystem": "iOS 15.1 or later, Android 7.0 or later, Web",
-        "softwareVersion": "1.3.0",
+        "operatingSystem": "iOS 17.0 or later, Android 7.0 or later, Web",
         "inLanguage": ["ja", "en"],
-        "description": "拡張キーボードから、どのアプリの入力欄にも定型文を直接入力できるローカルファーストの定型文アプリ。",
+        "description": "よく使う返信やプロンプトを登録し、キーボードから直接入力できる定型文アプリ。定型文50件まで無料、アカウント登録不要。",
         "offers": {
           "@type": "Offer",
           "price": "0",
@@ -71,12 +70,14 @@
           "7種類のシステム変数と94種類の書式プリセット",
           "プロファイル別のカスタム変数",
           "ローカル保存とオフライン動作",
+          "ショートカットによる値の挿入",
           ".cliptapファイルによる入出力"
         ],
         "screenshot": [
-          "https://cliptap.net/image/05-howto-2-keyboard.png",
-          "https://cliptap.net/image/01-hero-left-home.png",
-          "https://cliptap.net/image/03-variables-left-list.png"
+          "https://cliptap.net/image/01-hero-right-insert-ja.png",
+          "https://cliptap.net/image/01-hero-left-home-ja.png",
+          "https://cliptap.net/image/03-variables-left-list-ja.png",
+          "https://cliptap.net/image/05-shortcuts-right-keyboard-ja.png"
         ]
       }
     </script>
@@ -107,7 +108,15 @@
             "name": "無料でどこまで使えますか？",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "定型文とカテゴリは無制限、拡張キーボードは件数上限なし、システム変数7種と94書式もすべて無料です。プロファイルは3件、カスタム変数は5件まで無料で使えます。"
+              "text": "定型文50件、ショートカット50件（1つにつき値5件）、プロファイル3件、カスタム変数5件まで無料です。キーボードからの入力と、7種類のシステム変数・94種類の書式も使えます。カテゴリの登録数に制限はありません。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "ショートカットは定型文と何が違いますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "定型文は文章、ショートカットは値です。氏名・電話番号・住所のような短い値を登録しておくと、キーボードから値だけを入力欄に入れられます。1件のショートカットに複数の値を持たせられ、値を入れても一覧は開いたままなので、フォームの項目を上から順に埋めるときに向いています。値は画面上で伏せて表示できますが、これは表示を隠すだけで、端末内での保存のしかたは他のデータと同じです。"
             }
           },
           {
@@ -115,7 +124,7 @@
             "name": "データはどこに保存されますか？",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "定型文・カテゴリ・プロファイル・変数はすべて端末内に保存されます。クラウドには保存されず、定型文の中身が外部へ送られることもありません。"
+              "text": "登録した定型文・ショートカット・カテゴリ・プロファイル・変数は、モバイルでは端末内、Web版ではブラウザ内に保存されます。これらの内容をClipTapのサーバーへ保存・同期することはありません。"
             }
           },
           {
@@ -123,7 +132,7 @@
             "name": "オフラインでも使えますか？",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "定型文の作成・検索・変数展開・コピー・キーボード入力はオフラインで完結します。アカウント連携・Pro権利の確認・広告・ストア遷移だけネットワークが必要です。"
+              "text": "定型文の作成・検索・変数展開・コピー・キーボード入力はオフラインで完結します。アカウント連携・Pro権利の確認・広告・ストア遷移だけネットワークが必要です。Web版はページの読み込みにネットワークが必要です。"
             }
           },
           {
@@ -132,6 +141,22 @@
             "acceptedAnswer": {
               "@type": "Answer",
               "text": "「設定」からClipTapキーボードの追加が必要です。使用回数の記録にはフルアクセスの許可が必要ですが、定型文の入力そのものはフルアクセスなしでも行えます。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "ClipTapのキーボードで普通の文字も打てますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "打てません。ClipTapのキーボードは、登録した定型文とショートカットを選んで入れることに特化しています。文字を打つときは、お使いのキーボードへ切り替えてください。キーボードの中では、カテゴリでの絞り込み、4種類の並べ替え、プロファイルの一時的な切り替え、プレビューができます。文字での検索と、定型文の作成・編集・削除はアプリ側で行います。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Web版でもキーボードから入力できますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "できません。キーボードからの入力はiOS・Androidアプリの機能です。Web版はブラウザで定型文とショートカットを整理・編集し、コピーするための画面で、はじめに.cliptapファイルの読み込みが必要です。モバイルとの自動同期はなく、編集した内容は書き出して保存します。"
             }
           },
           {
@@ -147,7 +172,7 @@
             "name": "Proを解約するとどうなりますか？",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "契約期間の終わりまでProを使えます。上限を超えたプロファイル・カスタム変数は削除されず無効になるだけで、Proに戻せば再び使えます。"
+              "text": "契約期間の終わりまでProを使えます。上限を超えたプロファイル・カスタム変数は削除されず無効になるだけです。他を削除して枠に空きを作るか、Proに戻せば再び使えます。定型文・ショートカットは無料プランの上限を超えていても無効にならずそのまま使え、上限を超える新規追加だけができなくなります。"
             }
           }
         ]
@@ -168,7 +193,7 @@
           <a href="./" lang="ja" aria-current="page">JA</a>
           <a href="en/" lang="en">EN</a>
         </span>
-        <a class="btn btn-primary" href="app.html">Web版を開く</a>
+        <a class="btn btn-primary" href="app.html">Web版で編集</a>
       </nav>
     </header>
 
@@ -177,24 +202,24 @@
 
         <section class="hero" id="top">
           <div>
-            <h1><span>何度も打つ文章は、</span><span class="accent">もう打たない。</span></h1>
-            <p class="hero-lead">メール、SNS、チャット。文字を打てるアプリなら、ClipTapのキーボードからいつもの文章をそのまま入力できます。</p>
+            <h1><span>いつもの文章を、</span><span class="accent">ワンタップで。</span></h1>
+            <p class="hero-lead">メールの返信、SNSのタグ、AIへの指示。よく使う文章を登録したら、使いたい入力欄でClipTapキーボードに切り替えてタップ。</p>
             <div class="actions" id="download">
               <a href="https://apps.apple.com/app/id6754281185" target="_blank" rel="noopener noreferrer"><img src="/image/badge-appstore.svg" width="120" height="44" alt="App Storeからダウンロード" /></a>
           <a href="https://play.google.com/store/apps/details?id=com.sikakou.cliptap&amp;hl=ja" target="_blank" rel="noopener noreferrer"><img src="/image/badge-googleplay.svg" width="148" height="44" alt="Google Playで手に入れよう" /></a>
-              <a class="btn btn-ghost" href="app.html">Web版を開く</a>
+              <a class="btn btn-ghost" href="app.html">Web版で編集</a>
             </div>
-            <p class="hero-note">無料・登録不要。データは端末内に保存、オフラインで動作。</p>
+            <p class="hero-note">定型文50件まで無料・アカウント登録不要。iOS・Androidのキーボードに追加して使えます。</p>
           </div>
           <div class="hero-shots">
             <div class="phone">
             <div class="phone-inner">
-              <img src="/image/01-hero-left-home.png" width="1170" height="2532" alt="ClipTapのホーム画面。定型文が一覧表示されている" />
+              <img src="/image/01-hero-left-home-ja.png" width="1206" height="2622" alt="ClipTapのホーム画面。定型文が一覧表示されている" />
             </div>
           </div>
             <div class="phone">
             <div class="phone-inner">
-              <img src="/image/01-hero-right-insert.png" width="1170" height="2532" alt="チャットの入力欄に定型文がそのまま入力された画面" />
+              <img src="/image/01-hero-right-insert-ja.png" width="1206" height="2622" alt="メッセージの入力欄へ、ClipTapのキーボードから定型文を挿入しようとしている画面" />
             </div>
           </div>
           </div>
@@ -202,48 +227,49 @@
 
         <hr class="rule" />
 
-        <section class="stats" aria-label="ClipTapの数字">
-          <div><p class="stat-num">無制限</p><p class="stat-label">定型文とカテゴリ。無料のまま</p></div>
-          <div><p class="stat-num">7 + 94</p><p class="stat-label">システム変数7種と書式プリセット94種</p></div>
-          <div><p class="stat-num">0円</p><p class="stat-label">基本機能はずっと無料</p></div>
-          <div><p class="stat-num">端末内</p><p class="stat-label">データはクラウドに送らない</p></div>
+        <section class="stats" aria-label="ClipTapの特長">
+          <div><p class="stat-num">50件</p><p class="stat-label">定型文を無料で登録</p></div>
+          <div><p class="stat-num">どこでも</p><p class="stat-label">キーボードから定型文を入力</p></div>
+          <div><p class="stat-num">登録不要</p><p class="stat-label">アカウントなしで使い始められる</p></div>
+          <div><p class="stat-num">端末内</p><p class="stat-label">登録した文章をローカルに保存</p></div>
         </section>
 
         <hr class="rule" />
 
         <section class="scenes" id="scenes">
           <span class="kicker">SCENES — 使う場面</span>
-          <h2 class="section-title">朝の報告、毎日のタグ、いつもの返信。<br>打っていた時間が、タップになる。</h2>
+          <h2 class="section-title">毎日の入力に、<br>何度も使う文章はありませんか。</h2>
+          <p class="lead">過去のメールやメモから探していた文章を、キーボードから呼び出せるように。繰り返す部分を登録しておけば、その日の内容を書き足すだけで済みます。</p>
           <div class="scene">
             <div>
-              <h3>AIチャット</h3>
-              <p>長い記事も、いつもの要約プロンプト。使い回すプロンプトを登録しておけば、AIチャットの入力欄にワンタップで入ります。</p>
+              <h3>AIへの指示を、毎回書かない。</h3>
+              <p>要約の条件、文章のトーン、回答の形式。使い慣れたプロンプトを登録して、AIチャットへすぐ入力。長い指示を過去の会話から探す手間が減ります。</p>
             </div>
             <div class="phone phone--sm">
             <div class="phone-inner">
-              <img src="/image/02-scene-1-ai.png" width="1170" height="2532" loading="lazy" decoding="async" alt="AIチャットの入力欄に、ClipTapの定型文プロンプトを入力した画面" />
+              <img src="/image/02-scene-1-ai-ja.png" width="1206" height="2622" loading="lazy" decoding="async" alt="AIとの対話の入力欄へ、ClipTapのプロンプトを挿入しようとしている画面" />
             </div>
           </div>
           </div>
           <div class="scene scene--reverse">
             <div>
-              <h3>SNS</h3>
-              <p>毎日の「#今日の積み上げ」も、定型文をタップするだけ。ハッシュタグごと、そのまま投稿欄に入ります。</p>
+              <h3>投稿の型もタグも、まとめて。</h3>
+              <p>活動報告の見出しや、よく使うハッシュタグをひとつの定型文に。投稿欄へ入れたら、今日の出来事を書き足すだけ。毎回ゼロから組み立てずに投稿できます。</p>
             </div>
             <div class="phone phone--sm">
             <div class="phone-inner">
-              <img src="/image/02-scene-2-sns.png" width="1170" height="2532" loading="lazy" decoding="async" alt="SNSの投稿欄に「今日の積み上げ」の定型文を入力した画面" />
+              <img src="/image/02-scene-2-sns-ja.png" width="1206" height="2622" loading="lazy" decoding="async" alt="SNSの投稿欄へ「今日の積み上げ」の定型文を挿入しようとしている画面" />
             </div>
           </div>
           </div>
           <div class="scene">
             <div>
-              <h3>メール</h3>
-              <p>あいさつ文・署名・よく送る返信を、メールの本文にそのまま挿入。書き出しで手が止まる時間がなくなります。</p>
+              <h3>いつもの返信を、すぐに。</h3>
+              <p>日程調整、お礼、資料送付のご連絡。あいさつから署名まで登録しておけば、メールの本文へまとめて入力できます。用件に合わせて少し直すだけで、返信の準備が整います。</p>
             </div>
             <div class="phone phone--sm">
             <div class="phone-inner">
-              <img src="/image/02-scene-3-mail.png" width="1170" height="2532" loading="lazy" decoding="async" alt="メールの本文に、ClipTapの定型文を挿入した画面" />
+              <img src="/image/02-scene-3-mail-ja.png" width="1206" height="2622" loading="lazy" decoding="async" alt="メールの本文へ、ClipTapの定型文を挿入しようとしている画面" />
             </div>
           </div>
           </div>
@@ -254,18 +280,18 @@
         <section class="split" id="variables">
           <div>
             <span class="kicker">SYSTEM VARIABLES</span>
-            <h2>日付や時刻は、<br>自動で入る。</h2>
-            <p class="lead">毎回変わるところはシステム変数にしておくだけ。入力したその瞬間の日付・時刻・曜日に置き換わります。変数は7種、書式は94種から選べます。</p>
+            <h2>日付の書き直しも、<br>まとめて省く。</h2>
+            <p class="lead">日報や作業記録の日付は、入力するたびに自動で更新。文章に「変数」を入れておくと、その時点の日付や時刻に置き換わります。7種類の変数と94種類の書式から、用途に合う表示を選べます。</p>
           </div>
           <div class="split-shots">
             <div class="phone">
             <div class="phone-inner">
-              <img src="/image/03-variables-left-list.png" width="1170" height="2532" loading="lazy" decoding="async" alt="システム変数の一覧画面" />
+              <img src="/image/03-variables-left-list-ja.png" width="1206" height="2622" loading="lazy" decoding="async" alt="システム変数の一覧画面" />
             </div>
           </div>
             <div class="phone">
             <div class="phone-inner">
-              <img src="/image/03-variables-right-format.png" width="1170" height="2532" loading="lazy" decoding="async" alt="日付や時刻の書式を一覧から選択する画面" />
+              <img src="/image/03-variables-right-format-ja.png" width="1206" height="2622" loading="lazy" decoding="async" alt="{{today}} を使った定型文の編集画面。プレビューで今日の日付に展開されている" />
             </div>
           </div>
           </div>
@@ -277,19 +303,41 @@
           <div class="split-shots">
             <div class="phone">
             <div class="phone-inner">
-              <img src="/image/04-profile-left-edit.png" width="1170" height="2532" loading="lazy" decoding="async" alt="カスタム変数の編集画面" />
+              <img src="/image/04-profile-left-edit-ja.png" width="1206" height="2622" loading="lazy" decoding="async" alt="カスタム変数の編集画面" />
             </div>
           </div>
             <div class="phone">
             <div class="phone-inner">
-              <img src="/image/04-profile-right-snippet.png" width="1170" height="2532" loading="lazy" decoding="async" alt="カスタム変数を使った定型文の画面" />
+              <img src="/image/04-profile-right-snippet-ja.png" width="1206" height="2622" loading="lazy" decoding="async" alt="カスタム変数を使った定型文の画面" />
             </div>
           </div>
           </div>
           <div>
             <span class="kicker">CUSTOM VARIABLES</span>
-            <h2>会社名や宛名も、<br>一度登録するだけ。</h2>
-            <p class="lead">会社名・担当者名・署名はカスタム変数に。相手や仕事ごとに「プロファイル」を切り替えれば、同じ定型文がそのまま別の相手向けになります。</p>
+            <h2>同じ文章を、<br>相手に合わせて。</h2>
+            <p class="lead">取引先ごとに会社名や担当者名を登録し、文章には共通の変数を入れておきます。「プロファイル」を切り替えると、名前や署名をまとめて差し替え。同じ文章を相手ごとに複製する手間が省けます。</p>
+          </div>
+        </section>
+
+        <hr class="rule" />
+
+        <section class="split" id="shortcuts">
+          <div>
+            <span class="kicker">SHORTCUTS</span>
+            <h2>電話番号も住所も、<br>打たずに選ぶ。</h2>
+            <p class="lead">申し込みのたびに入力する氏名・電話番号・住所を、ショートカットに登録。入力したい欄を選び、キーボードから必要な項目をタップ。長い住所を打ち直す手間が省けます。</p>
+          </div>
+          <div class="split-shots">
+            <div class="phone">
+            <div class="phone-inner">
+              <img src="/image/05-shortcuts-left-list-ja.png" width="1206" height="2622" loading="lazy" decoding="async" alt="ショートカットの一覧画面。携帯番号、請求先、氏名、自宅の住所が並んでいる" />
+            </div>
+          </div>
+            <div class="phone">
+            <div class="phone-inner">
+              <img src="/image/05-shortcuts-right-keyboard-ja.png" width="1206" height="2622" loading="lazy" decoding="async" alt="お届け先の入力フォームへ、ClipTapのキーボードから住所のショートカットを挿入しようとしている画面" />
+            </div>
+          </div>
           </div>
         </section>
 
@@ -297,17 +345,17 @@
 
         <section class="howto" id="flow">
           <span class="kicker">HOW IT WORKS</span>
-          <h2 class="section-title">登録して、使うだけ。</h2>
+          <h2 class="section-title">まずは、よく使う一文から。</h2>
           <ol class="howto-grid">
             <li class="howto-step">
               <div>
                 <p class="num">1</p>
                 <h3>定型文を登録</h3>
-                <p>タイトルと本文を入力して保存。日付や会社名は、変数としてワンタップで挿入できます。</p>
+                <p>よく送る返信や署名を、タイトルと本文に分けて保存。日付などの自動差し替えは、必要になったら追加できます。</p>
               </div>
               <div class="phone phone--xs">
             <div class="phone-inner">
-              <img src="/image/05-howto-1-register.png" width="1170" height="2532" loading="lazy" decoding="async" alt="定型文の登録画面" />
+              <img src="/image/05-howto-1-register-ja.png" width="1206" height="2622" loading="lazy" decoding="async" alt="定型文の登録画面" />
             </div>
           </div>
             </li>
@@ -315,11 +363,11 @@
               <div>
                 <p class="num">2</p>
                 <h3>キーボードで挿入</h3>
-                <p>他のアプリでClipTapキーボードに切り替えて、定型文をタップするだけです。</p>
+                <p>初回に、端末の設定でClipTapキーボードを追加します。あとは使いたい入力欄で切り替えて、定型文をタップ。設定手順はアプリ内で確認できます。</p>
               </div>
               <div class="phone phone--xs">
             <div class="phone-inner">
-              <img src="/image/05-howto-2-keyboard.png" width="1170" height="2532" loading="lazy" decoding="async" alt="拡張キーボードで定型文を挿入する画面" />
+              <img src="/image/01-hero-right-insert-ja.png" width="1206" height="2622" loading="lazy" decoding="async" alt="拡張キーボードで定型文を挿入する画面" />
             </div>
           </div>
             </li>
@@ -330,19 +378,22 @@
 
         <section class="pricing" id="pricing">
           <span class="kicker">PRICING</span>
-          <h2 class="section-title">ほとんどの機能は、無料のままで。</h2>
-          <p class="lead">定型文・カテゴリ・拡張キーボード・7変数と94書式は、すべて無料プランに含まれます。</p>
+          <h2 class="section-title">毎日の入力を、無料でもっと楽に。</h2>
+          <p class="lead">キーボード入力も、日付の自動差し替えも無料プランで使えます。登録数を増やしたいときや、広告なしで使いたいときはProへ。</p>
           <table class="plan-table">
             <caption class="sr-only">FreeプランとProプランの機能比較</caption>
             <thead><tr><th scope="col">機能</th><th scope="col">Free</th><th scope="col" class="pro">Pro</th></tr></thead>
             <tbody>
-              <tr><th scope="row">定型文・カテゴリ</th><td>無制限</td><td class="pro">無制限</td></tr>
+              <tr><th scope="row">定型文</th><td>50件まで</td><td class="pro">無制限</td></tr>
+              <tr><th scope="row">カテゴリ</th><td>無制限</td><td class="pro">無制限</td></tr>
+              <tr><th scope="row">ショートカット</th><td>50件まで（値5件）</td><td class="pro">無制限</td></tr>
               <tr><th scope="row">プロファイル</th><td>3件まで</td><td class="pro">無制限</td></tr>
               <tr><th scope="row">カスタム変数</th><td>5件まで</td><td class="pro">無制限</td></tr>
               <tr><th scope="row">広告</th><td>あり</td><td class="pro">なし</td></tr>
             </tbody>
           </table>
-          <p class="plan-price">Freeはずっと0円。Proは月額250円（年額3,000円）。</p>
+          <p class="plan-price">Freeは0円。Proは月額250円（年額3,000円）。</p>
+          <p class="lead">Proでは、定型文・ショートカット・プロファイル・カスタム変数の登録数が無制限に。広告も非表示になります。無料プランへ戻したときの扱いは、下のFAQで確認できます。</p>
           <ul class="pricing-notes">
             <li>表示価格は基準価格です。実際の価格・通貨は、各国のApp Store / Google Playの表示が優先されます。</li>
             <li>購入・購入復元・解約はモバイルアプリから行います。Web版では購入できません。</li>
@@ -355,24 +406,27 @@
           <span class="kicker">FAQ</span>
           <h2 class="section-title">よくある質問。</h2>
           <div class="faq-list">
-            <details><summary>無料でどこまで使えますか？</summary><p>定型文とカテゴリは無制限、拡張キーボードは件数上限なし、システム変数7種と94書式もすべて無料です。プロファイルは3件、カスタム変数は5件まで無料で使えます。</p></details>
-            <details><summary>データはどこに保存されますか？</summary><p>定型文・カテゴリ・プロファイル・変数はすべて端末内に保存されます。クラウドには保存されず、定型文の中身が外部へ送られることもありません。</p></details>
-            <details><summary>オフラインでも使えますか？</summary><p>定型文の作成・検索・変数展開・コピー・キーボード入力はオフラインで完結します。アカウント連携・Pro権利の確認・広告・ストア遷移だけネットワークが必要です。</p></details>
+            <details><summary>無料でどこまで使えますか？</summary><p>定型文50件、ショートカット50件（1つにつき値5件）、プロファイル3件、カスタム変数5件まで無料です。キーボードからの入力と、7種類のシステム変数・94種類の書式も使えます。カテゴリの登録数に制限はありません。</p></details>
+            <details><summary>ショートカットは定型文と何が違いますか？</summary><p>定型文は文章、ショートカットは値です。氏名・電話番号・住所のような短い値を登録しておくと、キーボードから値だけを入力欄に入れられます。1件のショートカットに複数の値を持たせられ、値を入れても一覧は開いたままなので、フォームの項目を上から順に埋めるときに向いています。値は画面上で伏せて表示できますが、これは表示を隠すだけで、端末内での保存のしかたは他のデータと同じです。</p></details>
+            <details><summary>データはどこに保存されますか？</summary><p>登録した定型文・ショートカット・カテゴリ・プロファイル・変数は、モバイルでは端末内、Web版ではブラウザ内に保存されます。これらの内容をClipTapのサーバーへ保存・同期することはありません。</p></details>
+            <details><summary>オフラインでも使えますか？</summary><p>定型文の作成・検索・変数展開・コピー・キーボード入力はオフラインで完結します。アカウント連携・Pro権利の確認・広告・ストア遷移だけネットワークが必要です。Web版はページの読み込みにネットワークが必要です。</p></details>
             <details><summary>iPhoneで使うには設定が必要ですか？</summary><p>「設定」からClipTapキーボードの追加が必要です。使用回数の記録にはフルアクセスの許可が必要ですが、定型文の入力そのものはフルアクセスなしでも行えます。</p></details>
+            <details><summary>ClipTapのキーボードで普通の文字も打てますか？</summary><p>打てません。ClipTapのキーボードは、登録した定型文とショートカットを選んで入れることに特化しています。文字を打つときは、お使いのキーボードへ切り替えてください。キーボードの中では、カテゴリでの絞り込み、4種類の並べ替え、プロファイルの一時的な切り替え、プレビューができます。文字での検索と、定型文の作成・編集・削除はアプリ側で行います。</p></details>
+            <details><summary>Web版でもキーボードから入力できますか？</summary><p>できません。キーボードからの入力はiOS・Androidアプリの機能です。Web版はブラウザで定型文とショートカットを整理・編集し、コピーするための画面で、はじめに.cliptapファイルの読み込みが必要です。モバイルとの自動同期はなく、編集した内容は書き出して保存します。</p></details>
             <details><summary>機種変更のときデータを移せますか？</summary><p>.cliptapファイルで書き出して、新しい端末で読み込めます。パスワードの一致確認とチェックサム検証を行いますが、ファイルの内容は暗号化されません。</p></details>
-            <details><summary>Proを解約するとどうなりますか？</summary><p>契約期間の終わりまでProを使えます。上限を超えたプロファイル・カスタム変数は削除されず無効になるだけで、Proに戻せば再び使えます。</p></details>
+            <details><summary>Proを解約するとどうなりますか？</summary><p>契約期間の終わりまでProを使えます。上限を超えたプロファイル・カスタム変数は削除されず無効になるだけです。他を削除して枠に空きを作るか、Proに戻せば再び使えます。定型文・ショートカットは無料プランの上限を超えていても無効にならずそのまま使え、上限を超える新規追加だけができなくなります。</p></details>
           </div>
         </section>
       </div>
 
       <section class="close" id="cta">
         <div class="container">
-          <h2><span>今日から、同じ文章を</span><span>打つのをやめる。</span></h2>
-          <p>無料・登録不要。まずは、いちばんよく使う一文から。</p>
+          <h2><span>次の返信から、</span><span>ワンタップで。</span></h2>
+          <p>いつものあいさつや署名を、ひとつ登録してみませんか。定型文50件まで無料、アカウント登録は不要です。</p>
           <div class="actions">
             <a href="https://apps.apple.com/app/id6754281185" target="_blank" rel="noopener noreferrer"><img src="/image/badge-appstore.svg" width="120" height="44" alt="App Storeからダウンロード" /></a>
           <a href="https://play.google.com/store/apps/details?id=com.sikakou.cliptap&amp;hl=ja" target="_blank" rel="noopener noreferrer"><img src="/image/badge-googleplay.svg" width="148" height="44" alt="Google Playで手に入れよう" /></a>
-            <a class="btn btn-ghost" href="app.html">Web版を開く</a>
+            <a class="btn btn-ghost" href="app.html">Web版で編集</a>
           </div>
         </div>
       </section>
@@ -383,15 +437,15 @@
         <div class="footer">
           <div>
             <a class="brand" href="#top"><img src="/image/app-icon.png" width="28" height="28" alt="" /><span>ClipTap</span></a>
-            <p class="footer-about">いつもの文章を、必要な場所へ。<br>ローカルファーストの定型文アプリ。</p>
+            <p class="footer-about">いつもの文章を、キーボードから。<br>繰り返す入力を減らす定型文アプリ。</p>
           </div>
           <div>
             <p class="footer-head">プロダクト</p>
-            <ul><li><a href="#scenes">使う場面</a></li><li><a href="#variables">システム変数</a></li><li><a href="#profiles">カスタム変数</a></li><li><a href="#pricing">料金</a></li><li><a href="app.html">Web版</a></li></ul>
+            <ul><li><a href="#scenes">使う場面</a></li><li><a href="#variables">システム変数</a></li><li><a href="#profiles">カスタム変数</a></li><li><a href="#shortcuts">ショートカット</a></li><li><a href="#pricing">料金</a></li><li><a href="app.html">Web版</a></li></ul>
           </div>
           <div>
             <p class="footer-head">サポート</p>
-            <ul><li><a href="#faq">よくある質問</a></li><li><a href="terms.html">利用規約</a></li><li><a href="privacy.html">プライバシーポリシー</a></li><li><a href="mailto:cliptap.developer@gmail.com">お問い合わせ</a></li></ul>
+            <ul><li><a href="#faq">よくある質問</a></li><li><a href="terms.html">利用規約</a></li><li><a href="privacy.html">プライバシーポリシー</a></li><li><a href="mailto:support@sikalab.app?subject=ClipTap%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E5%95%8F%E3%81%84%E5%90%88%E3%82%8F%E3%81%9B">お問い合わせ</a></li></ul>
           </div>
           <div>
             <p class="footer-head">ダウンロード</p>

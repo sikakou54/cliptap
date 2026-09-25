@@ -3,13 +3,13 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DatabaseSync, type SQLInputValue } from 'node:sqlite';
+import { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import type { DbAdapter, DbRunResult } from '../../src/adapters/DbAdapter';
 import { setTempDbAdapter } from '../../src/adapters/DbAdapter';
 import { setCryptoAdapter } from '../../src/adapters/CryptoAdapter';
 import { setImportAdapter } from '../../src/adapters/ImportAdapter';
 import { ImportService } from '../../src/services/ImportService';
+import { FileDbAdapter } from '../helpers/fileDbAdapter';
 
 const PASSWORD = 'cliptap';
 
@@ -18,13 +18,15 @@ const TESTS_ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 
 /**
  * 実配布物と実旧版ファイルの両方を対象にする。
- * V6はもう配布していないため、回帰用のfixtureとしてtests配下に保持している。
+ * V6・V7はもう配布していないため、回帰用のfixtureとしてtests配下に保持している。
  */
 const STARTER_FILES = [
   join(TESTS_ROOT, 'fixtures/starter/starter_v6_en.cliptap'),
   join(TESTS_ROOT, 'fixtures/starter/starter_v6_ja.cliptap'),
-  resolve(TESTS_ROOT, '../../../apps/web/public/starter_v7_en.cliptap'),
-  resolve(TESTS_ROOT, '../../../apps/web/public/starter_v7_ja.cliptap'),
+  join(TESTS_ROOT, 'fixtures/starter/starter_v7_en.cliptap'),
+  join(TESTS_ROOT, 'fixtures/starter/starter_v7_ja.cliptap'),
+  resolve(TESTS_ROOT, '../../../apps/web/public/starter_v8_en.cliptap'),
+  resolve(TESTS_ROOT, '../../../apps/web/public/starter_v8_ja.cliptap'),
 ] as const;
 
 /** node:sqliteで実ファイルを開く一時DBアダプター */
@@ -160,6 +162,11 @@ describe('distributed starter database migration', () => {
         .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'system_variable_formats'")
         .get()
     ).toEqual({ name: 'system_variable_formats' });
+    expect(
+      preparedDatabase
+        .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('shortcuts', 'shortcut_values') ORDER BY name")
+        .all()
+    ).toEqual([{ name: 'shortcut_values' }, { name: 'shortcuts' }]);
     preparedDatabase.close();
   });
 });

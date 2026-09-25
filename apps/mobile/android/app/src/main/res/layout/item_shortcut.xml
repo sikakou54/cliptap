@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ショートカット一覧の1行（ショートカット名 + 開閉の印）
+     minHeight 44dpは、行全体をタッチ対象にするためiOS HIGの最小タップ領域に合わせたもの
+
+     値を出さないのは、1件のショートカットが値を複数持つため。
+     代表の1件だけを出すと「出ていない値がある」ことが伝わらないため、名前だけを出して
+     タップで開いた先に全部を見せる -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="44dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:background="?attr/selectableItemBackground"
+    android:padding="12dp">
+
+    <!-- ショートカット名 -->
+    <TextView
+        android:id="@+id/shortcutName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textSize="15sp"
+        android:textColor="?android:attr/textColorPrimary"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <!-- 開閉の印（閉じていれば「∨」、開いていれば「∧」）。
+         値の件数にかかわらずどの行も開閉するため、どの行にも常に表示する。
+         大きさはiOS（12pt）と同じ12dpにする。
+         行そのものが読み上げ対象なので、装飾のこのアイコンは読み上げから除く -->
+    <ImageView
+        android:id="@+id/shortcutChevron"
+        android:layout_width="12dp"
+        android:layout_height="12dp"
+        android:layout_marginStart="8dp"
+        android:src="@drawable/ic_chevron_down"
+        android:importantForAccessibility="no" />
+
+</LinearLayout>

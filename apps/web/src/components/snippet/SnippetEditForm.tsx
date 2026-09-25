@@ -8,6 +8,7 @@ import { useRef, forwardRef, useImperativeHandle } from 'react';
 import { useTranslation, INPUT_LIMITS } from '@cliptap/shared';
 import type { Category, Profile } from '@cliptap/shared';
 import { ProfileMultiSelect } from '@components/profile/ProfileMultiSelect';
+import { QuickCategoryCreateButton } from '@components/category/QuickCategoryCreateButton';
 
 export interface SnippetEditFormRef {
   titleInputRef: React.RefObject<HTMLInputElement | null>;
@@ -109,21 +110,38 @@ export const SnippetEditForm = forwardRef<SnippetEditFormRef, SnippetEditFormPro
           スニペットを分類するカテゴリを選択。
           空文字列（未分類）を選択可能。categories配列から動的に生成。 */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-[#A0A0A0] mb-2">{t('snippet.category')}</label>
-        <select
-          value={categoryId || ''}
-          onChange={(e) => onCategoryChange(e.target.value || null)}
-          className="w-full px-4 py-3 border border-gray-300 dark:border-[#2A2A2A] rounded-xl focus:outline-none bg-white dark:bg-[#1A1A1A] text-gray-900 dark:text-white"
-        >
-          {/* 未分類オプション（空文字列でnullを表現） */}
-          <option value="">{t('category.uncategorized')}</option>
-          {/* カテゴリリスト（動的に生成） */}
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
+        <div className="mb-2 flex items-center justify-between">
+          <label className="text-sm font-medium text-gray-700 dark:text-[#A0A0A0]">{t('snippet.category')}</label>
+          <QuickCategoryCreateButton onCreated={onCategoryChange} />
+        </div>
+        {/* 矢印を自前で置くための基準 */}
+        <div className="relative">
+          <select
+            value={categoryId || ''}
+            onChange={(e) => onCategoryChange(e.target.value || null)}
+            className="w-full appearance-none px-4 py-3 pr-11 border border-gray-300 dark:border-[#2A2A2A] rounded-xl focus:outline-none bg-white dark:bg-[#1A1A1A] text-gray-900 dark:text-white"
+          >
+            {/* 未分類オプション（空文字列でnullを表現） */}
+            <option value="">{t('category.uncategorized')}</option>
+            {/* カテゴリリスト（動的に生成） */}
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+          {/* 開閉の矢印。ブラウザ標準の矢印は枠の右端に張り付いて余白を指定できないため、
+              appearance-noneで消し、入力欄の左右余白（px-4）と同じ位置へ自前で置く */}
+          <svg
+            className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-[#707070]"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
       </div>
 
       {/* プロファイル複数選択（スニペットを表示する環境を選択）
@@ -164,4 +182,3 @@ export const SnippetEditForm = forwardRef<SnippetEditFormRef, SnippetEditFormPro
     </div>
   );
 });
-

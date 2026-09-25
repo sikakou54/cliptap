@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { SubscriptionAdapter } from '../../src/adapters/SubscriptionAdapter';
 import {
   FREE_PROFILES_LIMIT,
+  FREE_SHORTCUTS_LIMIT,
+  FREE_SNIPPETS_LIMIT,
   FREE_VARIABLES_LIMIT,
   SubscriptionService,
 } from '../../src/services/SubscriptionService';
@@ -38,6 +40,24 @@ describe('add limit judgement', () => {
       expect(SubscriptionService.canAddProfile(FREE_PROFILES_LIMIT)).toBe(true);
       expect(SubscriptionService.canAddVariable(FREE_VARIABLES_LIMIT)).toBe(true);
     });
+
+    it('stops new snippets and shortcuts from 50 for a free user, including totals kept beyond them', () => {
+      expect(FREE_SNIPPETS_LIMIT).toBe(50);
+      expect(FREE_SHORTCUTS_LIMIT).toBe(50);
+
+      SubscriptionService.setAdapter(adapterFor(false));
+      expect(SubscriptionService.canAddSnippet(FREE_SNIPPETS_LIMIT - 1)).toBe(true);
+      expect(SubscriptionService.canAddSnippet(FREE_SNIPPETS_LIMIT)).toBe(false);
+      expect(SubscriptionService.canAddShortcut(FREE_SHORTCUTS_LIMIT - 1)).toBe(true);
+      expect(SubscriptionService.canAddShortcut(FREE_SHORTCUTS_LIMIT)).toBe(false);
+      /* 復元やProからの切替で上限を超えて保持している場合も、追加だけを止める */
+      expect(SubscriptionService.canAddSnippet(FREE_SNIPPETS_LIMIT + 10)).toBe(false);
+      expect(SubscriptionService.canAddShortcut(FREE_SHORTCUTS_LIMIT + 10)).toBe(false);
+
+      SubscriptionService.setAdapter(adapterFor(true));
+      expect(SubscriptionService.canAddSnippet(FREE_SNIPPETS_LIMIT + 10)).toBe(true);
+      expect(SubscriptionService.canAddShortcut(FREE_SHORTCUTS_LIMIT + 10)).toBe(true);
+    });
   });
 
   /**
@@ -53,6 +73,12 @@ describe('add limit judgement', () => {
     let mobileVariables = '';
     let webProfiles = '';
     let webVariables = '';
+    let mobileItemLimitGuard = '';
+    let mobileHome = '';
+    let mobileHomeShortcuts = '';
+    let mobileSnippetForm = '';
+    let mobileShortcutEdit = '';
+    let webSnippetModal = '';
 
     beforeEach(() => {
       mobileProfiles = read('apps/mobile/src/hooks/screens/useProfilesScreen.ts');
@@ -60,6 +86,12 @@ describe('add limit judgement', () => {
       mobileVariables = read('apps/mobile/src/hooks/screens/useVariablesScreen.ts');
       webProfiles = read('apps/web/src/hooks/screens/useProfilesScreen.ts');
       webVariables = read('apps/web/src/hooks/screens/useVariablesScreen.ts');
+      mobileItemLimitGuard = read('apps/mobile/src/hooks/useItemLimitGuard.ts');
+      mobileHome = read('apps/mobile/src/hooks/screens/useHomeScreen.ts');
+      mobileHomeShortcuts = read('apps/mobile/src/hooks/screens/useHomeShortcuts.ts');
+      mobileSnippetForm = read('apps/mobile/src/hooks/screens/useSnippetFormScreen.ts');
+      mobileShortcutEdit = read('apps/mobile/src/hooks/screens/useShortcutEditScreen.ts');
+      webSnippetModal = read('apps/web/src/hooks/screens/useSnippetModal.ts');
     });
 
     it('counts every saved profile, including disabled ones', () => {
@@ -77,12 +109,56 @@ describe('add limit judgement', () => {
       expect(webVariables).toContain('canAddCustomVariable(customVariables.length)');
     });
 
+    /**
+     * 定型文・ショートカットの一覧はアクティブなプロファイルで絞り込まれているため、
+     * 件数はDBの総数から取る。一覧の件数で数えると他のプロファイルの分を取りこぼす。
+     */
+    it('counts every saved snippet and shortcut from the database, not from the filtered lists', () => {
+      expect(mobileItemLimitGuard).toContain('countSavedItems(() => SnippetService.count())');
+      expect(mobileItemLimitGuard).toContain('countSavedItems(() => ShortcutService.count())');
+      expect(webSnippetModal).toContain('canAddSnippet(SnippetService.count())');
+
+      for (const source of [mobileItemLimitGuard, mobileHome, mobileHomeShortcuts, webSnippetModal]) {
+        expect(source).not.toContain('allSnippets.length');
+        expect(source).not.toContain('snippets.length');
+        expect(source).not.toContain('Shortcuts.length');
+        expect(source).not.toContain('shortcuts.length');
+      }
+    });
+
+    /**
+     * 追加ボタンは権利確認中に判定を保留する（起動直後にPro利用者へ誤って案内しないため）。
+     * 保存は保留せず必ず判定する。ディープリンクなど追加ボタンを経由しない開き方があり、
+     * 確認が終わらない間に何件でも保存できてしまうのを防ぐためである。
+     */
+    it('checks the limit on every create path and defers only the add buttons while the entitlement loads', () => {
+      expect(mobileHome).toContain('!isSubscriptionLoading && !ensureCanAddSnippet()');
+      expect(mobileHomeShortcuts).toContain('!isSubscriptionLoading && !ensureCanAddShortcut()');
+      expect(webSnippetModal).toContain('!isSubscriptionLoading && !ensureCanAddSnippet()');
+
+      /* 保存時の判定は作成の分岐と同じ条件で行う */
+      expect(mobileSnippetForm).toContain('!(isEditMode && snippetId) && !ensureCanAddSnippet()');
+      expect(mobileShortcutEdit).toContain('!(isEdit && editingShortcut) && !ensureCanAddShortcut()');
+      expect(webSnippetModal).toContain('if (!ensureCanAddSnippet()) {');
+
+      /* ショートカット作成・編集画面は値の追加ボタンで保留に使うため対象外。保存時の判定式は上で固定している */
+      for (const source of [mobileItemLimitGuard, mobileSnippetForm]) {
+        expect(source).not.toContain('isLoading');
+      }
+    });
+
     it('delegates the limit comparison instead of restating it per screen', () => {
       for (const source of [webProfiles, mobileProfiles, mobileProfileEdit]) {
         expect(source).not.toContain('< FREE_PROFILES_LIMIT');
       }
       for (const source of [webVariables, mobileVariables]) {
         expect(source).not.toContain('< FREE_VARIABLES_LIMIT');
+      }
+      for (const source of [mobileItemLimitGuard, mobileHome, mobileSnippetForm, webSnippetModal]) {
+        expect(source).not.toContain('< FREE_SNIPPETS_LIMIT');
+      }
+      for (const source of [mobileItemLimitGuard, mobileHomeShortcuts, mobileShortcutEdit]) {
+        expect(source).not.toContain('< FREE_SHORTCUTS_LIMIT');
       }
     });
   });

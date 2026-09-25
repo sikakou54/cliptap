@@ -1,0 +1,60 @@
+<!doctype html>
+<!--
+  撮影用ホスト — 人とのメッセージのやりとり。01-hero-right-insert-<lang>.png 用。
+  往復の吹き出しと1行の入力欄という、チャットに共通する最小の構成だけを置く。
+  特定のメッセージサービスの配色・ロゴ・固有の文言は入れない（README参照）。
+
+  compose-chat.html（アシスタント）と骨格は同じなので、見分けがつくよう
+  タイトルを人名にし、相手と自分の吹き出しを往復で置いている。
+  アシスタント面は吹き出し1つ＋長いプロンプト、こちらは往復＋短い返信で差がつく。
+-->
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Composer" />
+<meta name="color-scheme" content="dark" />
+<title>Composer</title>
+<link rel="apple-touch-icon" href="icon.png" />
+<link rel="stylesheet" href="host.css" />
+</head>
+<body>
+
+<div class="nav">
+  <button class="nav-action leading" type="button" data-back>
+    <span class="ja">戻る</span><span class="en">Back</span>
+  </button>
+  <span class="nav-title">
+    <span class="ja">田村さん</span><span class="en">Riley</span>
+  </span>
+  <span></span>
+</div>
+
+<div class="body">
+  <!-- 挿入する定型文「日程調整のお願い」への受け答えになるやりとり。
+       日付を含まない定型文を選んでいるのは、{{today}} が撮影当日へ展開され、
+       別の日に撮った他のキャプチャと日付が食い違うため。 -->
+  <div class="thread">
+    <div class="bubble them">
+      <span class="ja">来週、お打ち合わせのお時間をいただけますか。</span>
+      <span class="en">Could we find time for a call next week?</span>
+    </div>
+    <div class="bubble me">
+      <span class="ja">ありがとうございます。候補をお送りします。</span>
+      <span class="en">Of course — sending over some times.</span>
+    </div>
+  </div>
+
+  <div class="chat-bar">
+    <!-- ここへ ClipTap キーボードから定型文を挿入して撮る -->
+    <div class="textarea editable" contenteditable="true" role="textbox" aria-multiline="true" data-autofocus data-ja="メッセージを入力" data-en="Message"></div>
+    <button class="send" type="button" aria-label="Send"></button>
+  </div>
+</div>
+
+<script src="host.js"></script>
+</body>
+</html>

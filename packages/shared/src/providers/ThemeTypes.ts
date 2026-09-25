@@ -97,6 +97,25 @@ export interface SemanticColors {
    * 各コンポーネントに散っていた '#000' のハードコードを1か所へ集めるために用意している。
    */
   shadow: string;
+
+  /**
+   * 定型文／ショートカットの表示切替トグルのノブの塗り（定型文を表示中。紺）
+   *
+   * @remarks
+   * トグルはノブの位置・アイコンの形・ノブの色の3つで表示対象を示す（紺＝定型文、黄＝ショートカット）。
+   * どちらの一覧かを表す識別色のため、onPrimary と同じくライト・ダークで同じ値に固定する。
+   * Web・拡張キーボード（iOS・Android）も同値で持つため、変えるときは揃えること。
+   */
+  listModeSnippet: string;
+
+  /** listModeSnippet の塗りの上に置くアイコンの色 */
+  onListModeSnippet: string;
+
+  /** 表示切替トグルのノブの塗り（ショートカットを表示中。黄）。扱いは listModeSnippet と同じ */
+  listModeShortcut: string;
+
+  /** listModeShortcut の塗りの上に置くアイコンの色 */
+  onListModeShortcut: string;
 }
 
 /**
@@ -145,6 +164,12 @@ export const LIGHT_THEME_COLORS: SemanticColors = {
 
   /* Shadow（濃さは shadowOpacity 側で調整するため色は固定） */
   shadow: '#000000',
+
+  /* 表示切替トグルのノブ（識別色のためライト・ダーク共通で固定。紺＝定型文、黄＝ショートカット） */
+  listModeSnippet: '#212B3C',
+  onListModeSnippet: '#FFFFFF',
+  listModeShortcut: '#FBBF24',
+  onListModeShortcut: '#212B3C',
 };
 
 /**
@@ -193,6 +218,12 @@ export const DARK_THEME_COLORS: SemanticColors = {
 
   /* Shadow（濃さは shadowOpacity 側で調整するため色は固定） */
   shadow: '#000000',
+
+  /* 表示切替トグルのノブ（識別色のためライトと同じ値。紺＝定型文、黄＝ショートカット） */
+  listModeSnippet: '#212B3C',
+  onListModeSnippet: '#FFFFFF',
+  listModeShortcut: '#FBBF24',
+  onListModeShortcut: '#212B3C',
 };
 
 /**

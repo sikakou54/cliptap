@@ -10,7 +10,7 @@
  * - オプションのカウントバッジ表示
  * - カスタマイズ可能なパディング
  *
- * @see app/search.tsx - 検索画面での使用（現在の唯一の使用箇所）
+ * @see app/search.tsx - 検索画面での使用（表示対象の絞り込み）
  */
 
 import React from 'react';
@@ -35,10 +35,14 @@ import { UI_CONSTANTS } from '@constants/ui';
 export interface ProfileChipSelectorProps {
   /** 表示するプロファイルの配列 */
   profiles: Profile[];
-  /** 現在選択されているプロファイルのID（未選択時はnull） */
+  /** 現在選択されているプロファイルのID（nullは「すべて」を選んでいる状態） */
   selectedProfileId: string | null;
-  /** プロファイルがタップされた時に呼ばれるコールバック関数 */
-  onSelectProfile: (profileId: string) => void;
+  /** チップがタップされた時に呼ばれるコールバック関数（「すべて」はnullを渡す） */
+  onSelectProfile: (profileId: string | null) => void;
+  /** 「すべて」チップの文言。渡したときだけ先頭に「すべて」を並べる */
+  allLabel?: string;
+  /** 「すべて」チップに添える件数 */
+  allCount?: number;
   /** カウントバッジを表示するかどうか（デフォルト: false） */
   showCount?: boolean;
   /** 各プロファイルに紐づくアイテム数を取得する関数 */
@@ -51,6 +55,8 @@ export const ProfileChipSelector: React.FC<ProfileChipSelectorProps> = ({
   profiles,
   selectedProfileId,
   onSelectProfile,
+  allLabel,
+  allCount = 0,
   showCount = false,
   getCount,
   containerPadding,
@@ -70,7 +76,8 @@ export const ProfileChipSelector: React.FC<ProfileChipSelectorProps> = ({
      早期リターン
      ======================================== */
 
-  if (profiles.length === 0) {
+  /* 「すべて」を出す場合は、プロファイルが0件でもチップ行そのものは出す */
+  if (profiles.length === 0 && allLabel === undefined) {
     return null;
   }
 
@@ -83,12 +90,61 @@ export const ProfileChipSelector: React.FC<ProfileChipSelectorProps> = ({
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
+      /* 検索画面はキーボードが出たまま使う。既定のままだと最初のタップがキーボードを
+         閉じるだけで消費され、チップを押したのに切り替わらないように見える */
+      keyboardShouldPersistTaps="handled"
       style={styles.container}
       contentContainerStyle={[
         styles.contentContainer,
         { paddingHorizontal: horizontalPadding }
       ]}
     >
+      {/* 「すべて」チップ。横断検索を既定にするため先頭へ置く（§8.7） */}
+      {allLabel !== undefined && (
+        <TouchableOpacity
+          style={[
+            styles.chip,
+            {
+              borderColor: selectedProfileId === null ? colors.primary : colors.border,
+              backgroundColor: selectedProfileId === null ? colors.primary : colors.surface,
+            }
+          ]}
+          onPress={() => onSelectProfile(null)}
+        >
+          <Text
+            style={[
+              styles.chipText,
+              {
+                color: selectedProfileId === null ? colors.onPrimary : colors.text,
+                fontSize: responsiveFontSizes.sm,
+              }
+            ]}
+          >
+            {allLabel}
+          </Text>
+          {showCount && allCount > 0 && (
+            <View
+              style={[
+                styles.countBadge,
+                { backgroundColor: selectedProfileId === null ? colors.onPrimaryMuted : colors.border }
+              ]}
+            >
+              <Text
+                style={[
+                  styles.countBadgeText,
+                  {
+                    color: selectedProfileId === null ? colors.onPrimary : colors.textSecondary,
+                    fontSize: responsiveFontSizes.xs,
+                  }
+                ]}
+              >
+                {allCount}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      )}
+
       {profiles.map((profile) => {
         const isSelected = selectedProfileId === profile.id;
         const count = showCount && getCount ? getCount(profile.id) : 0;
@@ -156,10 +212,14 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 0,
   },
-  /** コンテンツコンテナ（横並び） */
+  /**
+   * コンテンツコンテナ（横並び）
+   *
+   * 上下の余白はホームのカテゴリフィルター（CategoryFilter）と同じにしている。
+   * 上は0でヘッダー側の下余白が受け持ち、下だけをここで持つ。
+   */
   contentContainer: {
     gap: UI_CONSTANTS.GAP.SM,
-    paddingTop: 0,
     paddingBottom: UI_CONSTANTS.GAP.BASE,
   },
   /**

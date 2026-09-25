@@ -46,24 +46,4 @@ describe('ImportService transactions', () => {
     expect(main.all('SELECT id FROM categories ORDER BY id')).toEqual([{ id: 'old' }]);
     expect(main.all('SELECT id FROM snippets')).toEqual([]);
   });
-
-  it('rolls back a partial import when a later entity fails validation', async () => {
-    const main = createDatabase();
-    const backup = createDatabase();
-    setMainDbAdapter(main);
-    setTempDbAdapter(backup);
-
-    main.run("INSERT INTO categories VALUES ('old', 'old', NULL, 0, 'old-time')");
-    backup.run("INSERT INTO categories VALUES ('new', 'new', NULL, 0, 'new-time')");
-    backup.run(
-      "INSERT INTO variables VALUES ('reserved', 'today', 'custom', NULL, NULL, 1, 0, 'new-time', 'new-time')"
-    );
-
-    await expect(
-      ImportService.importPartial('memory', [], [], ['reserved'], ['new'])
-    ).rejects.toThrow();
-
-    expect(main.all('SELECT id FROM categories ORDER BY id')).toEqual([{ id: 'old' }]);
-    expect(main.all("SELECT id FROM variables WHERE type = 'custom'")).toEqual([]);
-  });
 });

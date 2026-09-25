@@ -72,25 +72,28 @@ export {
   UI_SYSTEM_VARIABLES,
 } from './variable';
 
+/* ==================== Shortcut ==================== */
+export {
+  ShortcutSchema,
+  ShortcutValueSchema,
+  ShortcutValueInputSchema,
+  ShortcutRowSchema,
+  ShortcutProfileSchema,
+  CreateShortcutInputSchema,
+  UpdateShortcutInputSchema,
+  type Shortcut,
+  type ShortcutValue,
+  type ShortcutValueInput,
+  type ShortcutRow,
+  type ShortcutProfile,
+  type CreateShortcutInput,
+  type UpdateShortcutInput,
+} from './shortcut';
+
 /* ==================== Export/Import ==================== */
 export {
-  ImportCandidatesSchema,
   ClipTapExportDataSchema,
-  SelectionCandidatesSchema,
-  type ImportCandidateSnippetProfile,
-  type ImportCandidateSnippet,
-  type ImportCandidateProfile,
-  type ImportCandidateVariableProfileValue,
-  type ImportCandidateVariable,
-  type ImportCandidateCategory,
-  type ImportCandidates,
   type ClipTapExportData,
-  type SelectionSnippetData,
-  type SelectionProfileData,
-  type SelectionVariableProfileValue,
-  type SelectionVariableData,
-  type SelectionCategoryData,
-  type SelectionCandidates,
 } from './export';
 
 /* ==================== Subscription ==================== */

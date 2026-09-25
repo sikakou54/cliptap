@@ -30,10 +30,12 @@ export interface SortOption {
  * useSortMenuのProps
  * @property currentSort - 現在のソート順
  * @property onSortChange - ソート順変更時のコールバック
+ * @property nameSortLabel - 名前で並べ替える選択肢のラベル（省略時は定型文の「タイトル」）
  */
 export interface UseSortMenuProps {
   currentSort: SnippetSortBy;
   onSortChange: (sort: SnippetSortBy) => void;
+  nameSortLabel?: string;
 }
 
 /**
@@ -65,6 +67,7 @@ const DEFAULT_SORT: SnippetSortBy = 'created';
 export function useSortMenu({
   currentSort,
   onSortChange,
+  nameSortLabel,
 }: UseSortMenuProps): UseSortMenuReturn {
   const { t } = useTranslation();
 
@@ -74,14 +77,16 @@ export function useSortMenu({
     () => [
       { value: 'created', label: t('sort.created'), icon: 'create-outline' },
       { value: 'updated', label: t('sort.updated'), icon: 'time-outline' },
-      { value: 'title', label: t('sort.title_sort'), icon: 'text-outline' },
+      /* 並べ替えの基準は定型文とショートカットで共通だが、名前の呼び方だけが違う
+         （定型文はタイトル、ショートカットは名前）。呼び出し側が差し替えられるようにする */
+      { value: 'title', label: nameSortLabel ?? t('sort.title_sort'), icon: 'text-outline' },
       {
         value: 'usage',
         label: t('sort.usage'),
         icon: 'stats-chart-outline',
       },
     ],
-    [t],
+    [t, nameSortLabel],
   );
 
   /**

@@ -26,7 +26,7 @@ import { useDevMenu, type UseDevMenuReturn } from './useDevMenu';
 /** メニュー項目の型定義 */
 export interface MenuItem {
   id: string;
-  icon: 'options-outline' | 'code-outline' | 'calendar-outline' | 'folder-outline' | 'keypad-outline' | 'sync-outline' | 'document-text-outline' | 'shield-checkmark-outline';
+  icon: 'options-outline' | 'code-outline' | 'calendar-outline' | 'folder-outline' | 'keypad-outline' | 'swap-horizontal-outline' | 'document-text-outline' | 'shield-checkmark-outline';
   label: string;
   onPress: () => void;
   isPro: boolean;
@@ -245,6 +245,14 @@ export function useSettingsScreen(): UseSettingsScreenReturn {
       icon: 'keypad-outline',
       label: t('settings.keyboard_setup'),
       onPress: () => setShowKeyboardGuide(true),
+      isPro: false,
+    },
+    {
+      /* ホームヘッダーのアイコン枠をショートカットへ譲ったため、入出力はここから開く */
+      id: 'export-import',
+      icon: 'swap-horizontal-outline',
+      label: t('export_import.title'),
+      onPress: () => router.push('/settings/export-import'),
       isPro: false,
     },
     {

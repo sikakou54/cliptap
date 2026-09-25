@@ -2,58 +2,75 @@
  * @module HomeScreen
  * @description メイン画面（ホーム画面）
  *
- * 登録された定型文の一覧表示とワンタップコピー機能を提供。
+ * 定型文とショートカットの一覧を、切替トグルで入れ替えて表示する。
+ * 定型文はワンタップコピー。ショートカットは値の行をタップするとその値だけをコピーし、
+ * 編集・削除は行タップではなく、カード右上の「・・・」メニューから選ぶ（§8.24）。
  *
  * @features
  * - 定型文一覧の表示（FlashListによる高速レンダリング）
  * - ワンタップでクリップボードにコピー
- * - カテゴリによるフィルタリング
+ * - ショートカット一覧の表示と作成・編集・削除
+ * - フィルター行の切替トグルによる表示対象の入れ替え
+ * - カテゴリによるフィルタリング（定型文・ショートカットの両方に効く）
  * - プロファイル（環境）の切り替え
- * - スワイプによる編集・削除操作
+ * - カード右上の「・・・」メニューからの編集・削除
  *
  * @navigation
- * - 検索アイコン → /search（モーダル）
- * - 追加アイコン → /snippet/create（モーダル）
  * - 設定アイコン → /settings
+ * - 検索アイコン → /search（モーダル）
+ * - 追加アイコン → /snippet/create または /shortcut/edit（表示対象で分岐、モーダル）
  *
  * @see src/hooks/screens/useHomeScreen.ts - ビジネスロジック
- * @see src/components/snippet/SnippetList.tsx - 一覧表示コンポーネント
+ * @see src/components/snippet/SnippetList.tsx - 定型文の一覧表示コンポーネント
+ * @see src/components/shortcut/ShortcutList.tsx - ショートカットの一覧表示コンポーネント
  */
 
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from '@cliptap/shared';
 import { useTheme } from '@lib/themeSystem';
 import { useHomeScreen } from '@hooks/screens/useHomeScreen';
 import { ScreenContainer } from '@components/common/ScreenContainer';
 import { SnippetList } from '@components/snippet/SnippetList';
+import { ShortcutList } from '@components/shortcut/ShortcutList';
 import { CategoryFilter } from '@components/category/CategoryFilter';
 import { ProfileSelector } from '@components/profile/ProfileSelector';
 import { SortMenu } from '@components/snippet/SortMenu';
+import { ListModeToggle } from '@components/common/ListModeToggle';
 import { AdBanner } from '@components/ads/AdBanner';
 
 export default function HomeScreen() {
+  const { t } = useTranslation();
   const { colors, isTablet, responsive, responsiveSpacing, maxContentWidth } = useTheme();
 
   const {
+    listMode,
     selectedCategoryId,
     activeProfileId,
     snippets,
+    shortcuts,
     categories,
     filteredCategories,
+    handleToggleListMode,
     handleCategorySelect,
     handleRefresh,
     handleCopySnippet,
     handleCopySnippetTitle,
     handleEditSnippet,
     handleDeleteSnippet,
+    handleCopyShortcutValue,
+    handleEditShortcut,
+    handleDeleteShortcut,
     handleNavigateToSettings,
-    handleNavigateToExportImport,
     handleNavigateToSearch,
     handleNavigateToCreate,
     handleProfileChange,
     currentSort,
     handleSortChange,
   } = useHomeScreen();
+
+  /* ショートカットを表示中か。一覧・並べ替えの出し分けに使う */
+  const isShowingShortcuts = listMode === 'shortcut';
 
   /* ヘッダー（プロファイル選択・アクションボタン）。上部インセットはScreenContainerが確保するため内部余白のみ持つ */
   const header = (
@@ -75,21 +92,22 @@ export default function HomeScreen() {
           <ProfileSelector onProfileChange={handleProfileChange} />
         </View>
 
-        {/* アクションボタン（設定・検索・追加） */}
+        {/* 表示切替トグルとアクションボタン（設定・検索・追加）。
+            アイコン群は縮まずプロファイル名だけが縮む配置のため、狭い端末でプロファイル名が
+            読めなくならないよう増やしすぎないこと。入出力（バックアップ）は設定画面から開く */}
         <View style={styles.iconGroup}>
+          {/* 定型文／ショートカットの表示切替。
+              以前ショートカット画面へ遷移していたアイコンと同じ位置に置き、
+              押した先が「別画面」から「同じ位置の別の一覧」へ変わったことを位置で示す */}
+          <ListModeToggle
+            isShowingShortcuts={isShowingShortcuts}
+            onToggle={handleToggleListMode}
+          />
+
           {/* 設定画面への遷移 */}
           <TouchableOpacity onPress={handleNavigateToSettings} style={styles.iconButton}>
             <Ionicons
               name="settings-outline"
-              size={responsive.header.iconSize + 2}
-              color={colors.text}
-            />
-          </TouchableOpacity>
-
-          {/* バックアップ画面への遷移 */}
-          <TouchableOpacity onPress={handleNavigateToExportImport} style={styles.iconButton}>
-            <Ionicons
-              name="swap-horizontal-outline"
               size={responsive.header.iconSize + 2}
               color={colors.text}
             />
@@ -126,29 +144,45 @@ export default function HomeScreen() {
           maxContentWidth !== undefined && { maxWidth: maxContentWidth, alignSelf: 'center', width: '100%' },
         ]}
       >
-        {/* カテゴリフィルター（横スクロール可能なカテゴリ一覧）+ ソートメニュー */}
+        {/* カテゴリフィルター（横スクロール可能なカテゴリ一覧）+ ソートメニュー。
+            並べ替えは定型文とショートカットの両方に効く。名前の呼び方だけ表示対象で変える */}
         <CategoryFilter
           categories={filteredCategories}
           selectedCategoryId={selectedCategoryId}
           onSelectCategory={handleCategorySelect}
           sortMenu={
-            <SortMenu currentSort={currentSort} onSortChange={handleSortChange} />
+            <SortMenu
+              currentSort={currentSort}
+              onSortChange={handleSortChange}
+              nameSortLabel={isShowingShortcuts ? t('sort.name') : undefined}
+            />
           }
         />
 
-        {/* スニペット一覧（FlashListによる高速レンダリング） */}
+        {/* 一覧（FlashListによる高速レンダリング）。表示対象で中身を入れ替える */}
         <View style={styles.listContainer}>
-          <SnippetList
-            snippets={snippets}
-            onPress={handleCopySnippet}
-            onEdit={handleEditSnippet}
-            onDelete={handleDeleteSnippet}
-            onPressTitle={handleCopySnippetTitle}
-            onRefresh={handleRefresh}
-            categories={categories}
-            overrideProfileId={activeProfileId}
-            extraData={currentSort}
-          />
+          {isShowingShortcuts ? (
+            <ShortcutList
+              shortcuts={shortcuts}
+              categories={categories}
+              onCopyValue={handleCopyShortcutValue}
+              onEdit={handleEditShortcut}
+              onDelete={handleDeleteShortcut}
+              onRefresh={handleRefresh}
+            />
+          ) : (
+            <SnippetList
+              snippets={snippets}
+              onPress={handleCopySnippet}
+              onEdit={handleEditSnippet}
+              onDelete={handleDeleteSnippet}
+              onPressTitle={handleCopySnippetTitle}
+              onRefresh={handleRefresh}
+              categories={categories}
+              overrideProfileId={activeProfileId}
+              extraData={currentSort}
+            />
+          )}
         </View>
       </View>
 

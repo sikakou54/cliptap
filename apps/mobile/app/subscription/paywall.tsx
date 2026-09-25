@@ -81,6 +81,11 @@ export default function PaywallScreen() {
             description={t('subscription.feature_no_ads_desc')}
           />
           <FeatureItem
+            icon="documents-outline"
+            title={t('subscription.feature_unlimited_items')}
+            description={t('subscription.feature_unlimited_items_desc')}
+          />
+          <FeatureItem
             icon="options-outline"
             title={t('subscription.feature_unlimited_profiles')}
             description={t('subscription.feature_unlimited_profiles_desc')}

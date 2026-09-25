@@ -6,21 +6,23 @@ SC-WEBVIEW-PRIVACY,プライバシーポリシー,/webview,apps/mobile/app/webvi
 SC-SNIPPET-CREATE,定型文作成,/snippet/create,apps/mobile/app/snippet/create.tsx,modal|card,label=定型文作成,§9.1
 SC-SNIPPET-EDIT,定型文編集,/snippet/edit,apps/mobile/app/snippet/edit.tsx,modal|card,label=定型文編集,§9.1
 SC-SNIPPET-TITLE-INPUT,タイトル入力,/snippet/title-input,apps/mobile/app/snippet/title-input.tsx,modal|card,label=タイトルを入力,§9.1
-SC-SNIPPET-CONTENT-INPUT,内容入力,/snippet/content-input,apps/mobile/app/snippet/content-input.tsx,modal|card,label=内容を入力,§9.1
-SC-SNIPPET-PROFILE-SELECT,定型文のプロファイル選択,/snippet/profile-select,apps/mobile/app/snippet/profile-select.tsx,modal,text~=この定型文を使用するプロファイルを選択してください,§9.1
+SC-SNIPPET-CONTENT-INPUT,内容入力,/snippet/content-input,apps/mobile/app/snippet/content-input.tsx,modal|card,label=本文を入力,§9.1
+SC-SNIPPET-PROFILE-SELECT,定型文のプロファイル選択,/profile/select,apps/mobile/app/profile/select.tsx,modal,text~=この定型文を使用するプロファイルを選択してください,§9.1
 SC-CATEGORY-SELECT,カテゴリ選択,/category/select,apps/mobile/app/category/select.tsx,modal,label=カテゴリを選択,§9.1
 SC-CATEGORY-EDIT,カテゴリ作成・編集,/category/edit,apps/mobile/app/category/edit.tsx,modal,label=カスタムRGB,§9.1
 SC-PROFILE-EDIT,プロファイル作成・編集,/profile/edit,apps/mobile/app/profile/edit.tsx,modal,label=プロファイル名,§9.1
 SC-VARIABLE-EDIT,カスタム変数作成・編集,/variable/edit,apps/mobile/app/variable/edit.tsx,modal,label=ツールバーに表示される名前,§9.1
-SC-VARIABLE-PROFILE-VALUE-EDIT,プロファイル別変数値編集,/variable/profile-value-edit,apps/mobile/app/variable/profile-value-edit.tsx,modal,label=完了 + -label=タイトルを入力 + -label=内容を入力,§9.1
+SC-VARIABLE-PROFILE-VALUE-EDIT,プロファイル別変数値編集,/variable/profile-value-edit,apps/mobile/app/variable/profile-value-edit.tsx,modal,label=完了 + -label=タイトルを入力 + -label=本文を入力,§9.1
 SC-VARIABLE-FORMAT-EDIT,システム変数書式選択,/variable/format-edit,apps/mobile/app/variable/format-edit.tsx,modal,label~=既定 + -label=すべて既定に戻す,§9.1
+SC-SHORTCUT-EDIT,ショートカット作成・編集,/shortcut/edit,apps/mobile/app/shortcut/edit.tsx,modal,role=AXStaticText&label=ショートカット名,§9.1
+SC-SHORTCUT-PROFILE-SELECT,ショートカットのプロファイル選択,/profile/select,apps/mobile/app/profile/select.tsx,modal,text~=このショートカットを使用するプロファイルを選択してください,§9.1
+SC-SHORTCUT-VALUE-EDIT,ショートカット値編集,/shortcut/value-edit,apps/mobile/app/shortcut/value-edit.tsx,modal,role=AXStaticText&label=値名,§9.1
+SC-SHORTCUT-VALUE-TEXT-EDIT,ショートカットの値入力,/shortcut/value-text-edit,apps/mobile/app/shortcut/value-text-edit.tsx,modal,role=AXStaticText&label=値 + label=完了 + -label=値名,§9.1
 SC-SETTINGS,設定,/settings,apps/mobile/app/settings/index.tsx,stack,label=設定,§9.1
 SC-SETTINGS-CATEGORIES,カテゴリ管理,/settings/categories,apps/mobile/app/settings/categories.tsx,stack,role=AXStaticText&label=カテゴリ + -label=カテゴリ作成 + -label=カテゴリ編集,§9.1
 SC-SETTINGS-PROFILES,プロファイル管理,/settings/profiles,apps/mobile/app/settings/profiles.tsx,stack,role=AXStaticText&label=プロファイル + -label=変数を編集 + -label=変数を追加,§9.1
 SC-SETTINGS-VARIABLES,変数管理,/settings/variables,apps/mobile/app/settings/variables.tsx,stack,role=AXStaticText&label=カスタム変数,§9.1
 SC-SETTINGS-SYSTEM-VARIABLE-FORMATS,システム変数書式,/settings/system-variable-formats,apps/mobile/app/settings/system-variable-formats.tsx,stack,label=すべて既定に戻す,§9.1
-SC-SETTINGS-EXPORT-IMPORT,エクスポート・インポート,/settings/export-import,apps/mobile/app/settings/export-import.tsx,stack,label=インポート・エクスポート,§9.1
-SC-SETTINGS-SELECT-EXPORT-DATA,選択エクスポート,/settings/select-export-data,apps/mobile/app/settings/select-export-data.tsx,modal,role=AXStaticText&label=エクスポート,§9.1
-SC-SETTINGS-SELECT-IMPORT-DATA,選択インポート,/settings/select-import-data,apps/mobile/app/settings/select-import-data.tsx,modal,label=インポートするデータを選択,§9.1
+SC-SETTINGS-EXPORT-IMPORT,バックアップ・復元,/settings/export-import,apps/mobile/app/settings/export-import.tsx,stack,label=バックアップ・復元,§9.1
 SC-SUBSCRIPTION-MANAGE,サブスクリプション管理,/subscription/manage,apps/mobile/app/subscription/manage.tsx,stack,label=サブスクリプションを管理,§9.1
 SC-SUBSCRIPTION-PAYWALL,Paywall,/subscription/paywall,apps/mobile/app/subscription/paywall.tsx,fullScreenModal,label=ClipTap Pro + label=Proプランの特典,§9.1

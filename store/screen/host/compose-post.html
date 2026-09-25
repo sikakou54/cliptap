@@ -1,0 +1,50 @@
+<!doctype html>
+<!--
+  撮影用ホスト — 投稿コンポーザ。02-scene-2-sns-<lang>.png 用。
+  アバターの丸・本文・文字数という、投稿欄に共通する最小の構成だけを置く。
+  特定のSNSのロゴ・配色・ボタン名称は入れない（README参照）。
+-->
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Composer" />
+<meta name="color-scheme" content="dark" />
+<title>Composer</title>
+<link rel="apple-touch-icon" href="icon.png" />
+<link rel="stylesheet" href="host.css" />
+</head>
+<body>
+
+<div class="nav">
+  <button class="nav-action leading" type="button" data-back>
+    <span class="ja">キャンセル</span><span class="en">Cancel</span>
+  </button>
+  <span class="nav-title">
+    <span class="ja">新しい投稿</span><span class="en">New post</span>
+  </span>
+  <button class="nav-action trailing filled" type="button">
+    <span class="ja">投稿</span><span class="en">Post</span>
+  </button>
+</div>
+
+<div class="body">
+  <div class="composer">
+    <!-- 無地の丸。実在のサービスのアバターを模さない -->
+    <span class="avatar"></span>
+    <!-- ここへ ClipTap キーボードから定型文を挿入して撮る -->
+    <div class="textarea editable" contenteditable="true" role="textbox" aria-multiline="true" data-autofocus data-ja="いま伝えたいことを書く" data-en="Share what's on your mind"></div>
+  </div>
+
+  <div class="composer-foot">
+    <span class="ja">公開</span><span class="en">Public</span>
+    <span data-count-for=".editable">0 / 280</span>
+  </div>
+</div>
+
+<script src="host.js"></script>
+</body>
+</html>

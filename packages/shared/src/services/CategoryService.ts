@@ -137,38 +137,4 @@ export class CategoryService {
   static reorder(orderedIds: string[]): void {
     CategoryMapper.updateOrder(orderedIds);
   }
-
-  /**
-   * カテゴリを作成または更新（upsert）
-   *
-   * @param data - カテゴリの情報（nameで既存を検索、あれば更新、なければ新規作成）
-   * @returns 作成/更新されたカテゴリ
-   * @throws {EmptyContentError} カテゴリ名が空の場合
-   * @throws {DuplicateNameError} 同名のカテゴリが既に存在する場合（自分以外）
-   * @remarks
-   * 既存カテゴリの表示順は変更しない。表示順は利用者が決めたものであり、
-   * インポートなどの外部由来の操作で並びが入れ替わらないようにする。
-   */
-  static upsert(data: CreateCategoryInput): Category {
-    const trimmedName = data.name.trim();
-    if (!trimmedName) {
-      throw new EmptyContentError();
-    }
-
-    const existing = CategoryMapper.getByName(trimmedName);
-    if (existing) {
-      /* 既存カテゴリを更新（表示順は据え置く） */
-      return this.update({
-        id: existing.id,
-        name: trimmedName,
-        color: data.color,
-      });
-    } else {
-      /* 新規作成（sortOrderは自動採番） */
-      return this.create({
-        name: trimmedName,
-        color: data.color,
-      });
-    }
-  }
 }

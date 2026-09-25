@@ -148,6 +148,17 @@ enum L10n {
         static let noTitle = localized("snippet_no_title")
     }
 
+    // MARK: - Shortcut (ショートカット関連)
+
+    /// ショートカット関連の翻訳
+    enum Shortcut {
+        /// "ショートカットがありません" / "No shortcuts available"
+        static let empty = localized("shortcut.empty")
+
+        /// "メインアプリでショートカットを作成してください" / "Create shortcuts in the main app"
+        static let emptyHint = localized("shortcut.empty_hint")
+    }
+
     // MARK: - Search (検索関連)
 
     /// 検索関連の翻訳
@@ -280,6 +291,17 @@ enum L10n {
 
         /// "改行ボタン" / "Insert newline button"
         static let insertNewlineButton = localized("accessibility.insert_newline_button")
+
+        /// "ショートカットを表示" / "Show shortcuts"
+        ///
+        /// 定型文／ショートカットのトグルが定型文を表示しているときのラベル。
+        /// トグルは押した先を示すため、ボタン名ではなく「押すと何が起きるか」で表す。
+        static let showShortcutsButton = localized("accessibility.show_shortcuts_button")
+
+        /// "定型文を表示" / "Show snippets"
+        ///
+        /// 定型文／ショートカットのトグルがショートカットを表示しているときのラベル。
+        static let showSnippetsButton = localized("accessibility.show_snippets_button")
     }
 
     // MARK: - Sort (ソート関連)
@@ -297,6 +319,9 @@ enum L10n {
 
         /// "タイトル" / "Title"
         static let title = localized("sort.title")
+
+        /// "名前" / "Name"（ショートカットの並べ替えで使う。定型文はタイトル、ショートカットは名前）
+        static let name = localized("sort.name")
 
         /// "使用頻度" / "Frequency"
         static let usage = localized("sort.usage")
@@ -385,6 +410,10 @@ enum L10n {
         case "snippet.detail": return isJapanese ? "詳細" : "Details"
         case "snippet.close": return isJapanese ? "閉じる" : "Close"
 
+        // Shortcut
+        case "shortcut.empty": return isJapanese ? "ショートカットがありません" : "No shortcuts available"
+        case "shortcut.empty_hint": return isJapanese ? "メインアプリでショートカットを作成してください" : "Create shortcuts in the main app"
+
         // Search
         case "search.placeholder": return isJapanese ? "スニペットを検索" : "Search snippets"
         case "search.clear": return isJapanese ? "クリア" : "Clear"
@@ -430,12 +459,15 @@ enum L10n {
         case "accessibility.copy_button": return isJapanese ? "コピーボタン" : "Copy button"
         case "accessibility.sort_button": return isJapanese ? "並び替えボタン" : "Sort button"
         case "accessibility.insert_title_button": return isJapanese ? "タイトル挿入ボタン" : "Insert title button"
+        case "accessibility.show_shortcuts_button": return isJapanese ? "ショートカットを表示" : "Show shortcuts"
+        case "accessibility.show_snippets_button": return isJapanese ? "定型文を表示" : "Show snippets"
 
         // Sort
         case "sort.label": return isJapanese ? "並順" : "Sort"
         case "sort.created": return isJapanese ? "作成日時" : "Created"
         case "sort.updated": return isJapanese ? "更新日時" : "Updated"
         case "sort.title": return isJapanese ? "タイトル" : "Title"
+        case "sort.name": return isJapanese ? "名前" : "Name"
         case "sort.usage": return isJapanese ? "使用頻度" : "Frequency"
 
         // Settings

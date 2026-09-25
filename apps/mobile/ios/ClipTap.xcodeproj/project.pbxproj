@@ -24,6 +24,8 @@
 		72146C91E7DBAFE02335129A /* VariableReplacer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBF35E69B20BB301E0C68A83 /* VariableReplacer.swift */; };
 		8FD61BE1C02B7A0D2B144189 /* Pods_ClipTapKeyboard.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2997D757D2C1C3B61F7BEC2D /* Pods_ClipTapKeyboard.framework */; };
 		9ED9CD021CFC0C26F98238A8 /* VariableMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89C0725F05BA12D69B304472 /* VariableMapper.swift */; };
+		A3F1C0D24E7B5189AC3E0012 /* ShortcutMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3F1C0D24E7B5189AC3E0011 /* ShortcutMapper.swift */; };
+		A3F1C0D24E7B5189AC3E0022 /* ShortcutService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3F1C0D24E7B5189AC3E0021 /* ShortcutService.swift */; };
 		B047AD0224144F3EB66E3BE7 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 04AD9B227CB0416686B3283D /* InfoPlist.strings */; };
 		B216BCAD31787BB9A9197584 /* LocalizationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B07CE46E48AEA0D25A6FAC3B /* LocalizationHelper.swift */; };
 		B8F2301B4D8E9C0011223344 /* PatternFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7F2301B4D8E9C0011223344 /* PatternFormatter.swift */; };
@@ -89,6 +91,8 @@
 		9B9C41A4D69717B71D14456A /* CategoryMapper.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CategoryMapper.swift; path = Mappers/CategoryMapper.swift; sourceTree = "<group>"; };
 		9E4AE7048C3902855C348340 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = ClipTap/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		A1A4E265BB7EF49ED8764E12 /* Database.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Database.swift; path = Database/Database.swift; sourceTree = "<group>"; };
+		A3F1C0D24E7B5189AC3E0011 /* ShortcutMapper.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ShortcutMapper.swift; path = Mappers/ShortcutMapper.swift; sourceTree = "<group>"; };
+		A3F1C0D24E7B5189AC3E0021 /* ShortcutService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ShortcutService.swift; path = Services/ShortcutService.swift; sourceTree = "<group>"; };
 		A7F2301B4D8E9C0011223344 /* PatternFormatter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PatternFormatter.swift; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = ClipTap/SplashScreen.storyboard; sourceTree = "<group>"; };
 		B07CE46E48AEA0D25A6FAC3B /* LocalizationHelper.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LocalizationHelper.swift; sourceTree = "<group>"; };
@@ -270,12 +274,14 @@
 				9B9C41A4D69717B71D14456A /* CategoryMapper.swift */,
 				F2E86FF12EEFE9769C7153A6 /* ProfileMapper.swift */,
 				79D2234EB63E8A88CCEE5D18 /* ProfileVariableMapper.swift */,
+				A3F1C0D24E7B5189AC3E0011 /* ShortcutMapper.swift */,
 				0CFD4C6660DB9D499AF1E7EA /* SnippetMapper.swift */,
 				89C0725F05BA12D69B304472 /* VariableMapper.swift */,
 				C9F2301B4D8E9C0011223344 /* SystemVariableFormatMapper.swift */,
 				D9FD43FF71C8140A212FA342 /* Models.swift */,
 				9762584F1BC12146FDD04445 /* CategoryService.swift */,
 				08EF4A375DA3B2D63F765AEE /* ProfileService.swift */,
+				A3F1C0D24E7B5189AC3E0021 /* ShortcutService.swift */,
 				4BE9B11A3A3F6B7F6130A128 /* SnippetService.swift */,
 				27B76618D950A9ECF8A3128E /* VariableService.swift */,
 				BBF35E69B20BB301E0C68A83 /* VariableReplacer.swift */,
@@ -647,12 +653,14 @@
 				F6A1D067C26B9C5E0854D7B2 /* CategoryMapper.swift in Sources */,
 				0CFED577DA08539B70DE4BFC /* ProfileMapper.swift in Sources */,
 				C10CF652A33BFEEEFD7EF1B0 /* ProfileVariableMapper.swift in Sources */,
+				A3F1C0D24E7B5189AC3E0012 /* ShortcutMapper.swift in Sources */,
 				57D1A8E49A02D585CE8FA424 /* SnippetMapper.swift in Sources */,
 				9ED9CD021CFC0C26F98238A8 /* VariableMapper.swift in Sources */,
 				DAF2301B4D8E9C0011223344 /* SystemVariableFormatMapper.swift in Sources */,
 				6460794F7AC2D4932A0C6AB3 /* Models.swift in Sources */,
 				51CB67D5C5D49C612A5CE026 /* CategoryService.swift in Sources */,
 				6ACC58012DDAD084DB442ADB /* ProfileService.swift in Sources */,
+				A3F1C0D24E7B5189AC3E0022 /* ShortcutService.swift in Sources */,
 				515D35BB5F4BBDAFE51125B2 /* SnippetService.swift in Sources */,
 				264DB663DF9B64867924ECE5 /* VariableService.swift in Sources */,
 				72146C91E7DBAFE02335129A /* VariableReplacer.swift in Sources */,

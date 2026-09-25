@@ -1,0 +1,51 @@
+<!doctype html>
+<!--
+  撮影用ホスト — メールの作成欄。02-scene-3-mail-<lang>.png 用。
+  宛先・件名・本文という、メール作成に共通する最小の構成だけを置く。
+  特定のメールサービスの配色・ロゴ・固有の文言は入れない（README参照）。
+-->
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Composer" />
+<meta name="color-scheme" content="dark" />
+<title>Composer</title>
+<link rel="apple-touch-icon" href="icon.png" />
+<link rel="stylesheet" href="host.css" />
+</head>
+<body>
+
+<div class="nav">
+  <button class="nav-action leading" type="button" data-back>
+    <span class="ja">キャンセル</span><span class="en">Cancel</span>
+  </button>
+  <span class="nav-title">
+    <span class="ja">新規メール</span><span class="en">New message</span>
+  </span>
+  <button class="nav-action trailing filled" type="button">
+    <span class="ja">送信</span><span class="en">Send</span>
+  </button>
+</div>
+
+<div class="body">
+  <!-- 宛先と件名は撮影のたびに手入力しないで済むよう、既定値を入れておく -->
+  <div class="field">
+    <span class="field-label"><span class="ja">宛先</span><span class="en">To</span></span>
+    <input class="input" type="text" value="sample@example.com" />
+  </div>
+  <div class="field">
+    <span class="field-label"><span class="ja">件名</span><span class="en">Subject</span></span>
+    <input class="input" type="text" data-ja="件名を入力" data-en="Subject" />
+  </div>
+
+  <!-- ここへ ClipTap キーボードから定型文を挿入して撮る -->
+  <div class="textarea editable" contenteditable="true" role="textbox" aria-multiline="true" data-autofocus data-ja="本文を入力" data-en="Write your message"></div>
+</div>
+
+<script src="host.js"></script>
+</body>
+</html>

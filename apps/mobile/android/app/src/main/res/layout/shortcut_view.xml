@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ショートカット画面レイアウト（keyboard_view.xmlの一覧エリアへincludeされる）
+
+     【親の高さに合わせる理由】
+     keyboard_view.xmlの一覧エリア（listContainer、292dp）の中で定型文一覧と入れ替えて表示するため、
+     高さを固定せずmatch_parentにして、一覧エリアと同じ大きさに収まるようにする。
+     こうすることで切り替えても行の位置が動かない。
+
+     【全画面ではなくなった理由】
+     以前は詳細画面と同じ全画面のビューだったが、表示切替がフィルター行のトグルになったため、
+     ショートカットを表示している間もフィルター行（環境チップとトグル）が見えている必要がある。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/shortcutView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:visibility="gone">
+
+    <!-- 一覧とEmptyビューのコンテナ
+         値一覧にも見出しの行と戻るボタンは置かず、一覧と値一覧のどちらもこの領域いっぱいに表示する。
+         ショートカット一覧へは、値を挿入するか、トグルで定型文へ切り替えてから戻すと開き直す -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- ショートカット一覧／値一覧（アダプターを差し替えて共用する） -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/shortcutRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:scrollbars="vertical" />
+
+        <!-- 空の状態表示（ショートカットが0件のとき）
+             案内は「ありません」だけでは次に何をすればよいか分からないため、
+             メインアプリで作成する旨を添える（iOS版の空状態と同じ2行構成） -->
+        <LinearLayout
+            android:id="@+id/shortcutEmptyView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/shortcut_empty"
+                android:textSize="16sp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:gravity="center" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/shortcut_empty_hint"
+                android:textSize="12sp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:gravity="center" />
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+</LinearLayout>

@@ -1,0 +1,18 @@
+TestID,PatternID,Result,FailedStepNo,FailureClass,BugID,StartedAt,EndedAt,Device,OSVersion,Notes
+TC-1211,P-F10-020;P-F10-021;P-F10-022;P-F10-023;P-F10-024,FAIL,3,AUTOMATION_ERROR,,2026-09-15T23:52:02.171Z,2026-09-15T23:52:23.556Z,iPhone 17,iOS-26-5,"Step 3 TAP: 期待「その他の操作メニューが開く」／実際「要素が見つかりません: label=プレビュー確認のその他の操作&visible=true （一致件数 0）
+ERROR: 要素が見つかりません: label=プレビュー確認のその他の操作&visible=true」"
+TC-1212,P-F10-025,FAIL,1,AUTOMATION_ERROR,,2026-09-15T23:52:23.557Z,2026-09-15T23:52:40.651Z,iPhone 17,iOS-26-5,"Step 1 TAP: 期待「ショートカット表示へ切り替わる」／実際「要素が見つかりません: label=ショートカットを表示&visible=true （一致件数 0）
+ERROR: 要素が見つかりません: label=ショートカットを表示&visible=true」"
+TC-1213,P-F10-026,FAIL,1,AUTOMATION_ERROR,,2026-09-15T23:52:40.652Z,2026-09-15T23:52:57.778Z,iPhone 17,iOS-26-5,"Step 1 TAP: 期待「ショートカット表示へ切り替わる」／実際「要素が見つかりません: label=ショートカットを表示&visible=true （一致件数 0）
+ERROR: 要素が見つかりません: label=ショートカットを表示&visible=true」"
+TC-1214,P-F10-027,FAIL,1,AUTOMATION_ERROR,,2026-09-15T23:52:57.779Z,2026-09-15T23:53:14.931Z,iPhone 17,iOS-26-5,"Step 1 TAP: 期待「ショートカット表示へ切り替わる」／実際「要素が見つかりません: label=ショートカットを表示&visible=true （一致件数 0）
+ERROR: 要素が見つかりません: label=ショートカットを表示&visible=true」"
+TC-1215,P-F10-028;P-F10-029,FAIL,1,AUTOMATION_ERROR,,2026-09-15T23:53:14.932Z,2026-09-15T23:53:32.314Z,iPhone 17,iOS-26-5,"Step 1 TAP: 期待「ショートカット表示へ切り替わる」／実際「要素が見つかりません: label=ショートカットを表示&visible=true （一致件数 0）
+ERROR: 要素が見つかりません: label=ショートカットを表示&visible=true」"
+TC-1216,P-F10-030,FAIL,1,AUTOMATION_ERROR,,2026-09-15T23:53:32.316Z,2026-09-15T23:53:49.721Z,iPhone 17,iOS-26-5,"Step 1 TAP: 期待「ショートカット表示へ切り替わる」／実際「要素が見つかりません: label=ショートカットを表示&visible=true （一致件数 0）
+ERROR: 要素が見つかりません: label=ショートカットを表示&visible=true」"
+TC-1217,P-F10-031,FAIL,1,AUTOMATION_ERROR,,2026-09-15T23:53:49.722Z,2026-09-15T23:54:06.668Z,iPhone 17,iOS-26-5,"Step 1 TAP: 期待「ショートカット表示へ切り替わる」／実際「要素が見つかりません: label=ショートカットを表示&visible=true （一致件数 0）
+ERROR: 要素が見つかりません: label=ショートカットを表示&visible=true」"
+TC-1218,P-F10-032,FAIL,1,AUTOMATION_ERROR,,2026-09-15T23:54:06.669Z,2026-09-15T23:54:23.974Z,iPhone 17,iOS-26-5,"Step 1 TAP: 期待「ショートカット表示へ切り替わる」／実際「要素が見つかりません: label=ショートカットを表示&visible=true （一致件数 0）
+ERROR: 要素が見つかりません: label=ショートカットを表示&visible=true」"
+TC-1219,P-F10-033,PASS,,,,2026-09-15T23:54:23.976Z,2026-09-15T23:54:50.224Z,iPhone 17,iOS-26-5,

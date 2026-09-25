@@ -13,10 +13,8 @@ import {
 /**
  * 変数値の前後空白は書き込み境界のService層で除去する。
  *
- * インポート経路（VariableService.upsertValueForProfile）とUI経路
- * （ProfileService.setVariableValuesForVariable）で規則が割れると、同じ入力が
- * 経路によって別の値で保存される。さらに必須判定は全経路が前後空白を除去して行うため、
- * 空白だけの値を保存できると「必須判定では空なのに解決時は非空」という矛盾が起き、
+ * 必須判定は全経路が前後空白を除去して行うため、空白だけの値を保存できると
+ * 「必須判定では空なのに解決時は非空」という矛盾が起き、
  * 標準値へのフォールバックが効かなくなる。
  */
 describe('variable value normalization', () => {
@@ -41,17 +39,6 @@ describe('variable value normalization', () => {
   afterEach(() => {
     db?.dispose();
     db = null;
-  });
-
-  /** 経路が違っても同じ入力は同じ値で保存される */
-  it('stores the same value for the import path and the UI path', () => {
-    VariableService.upsertValueForProfile('standard', 'v1', '  spaced  ');
-    ProfileService.setVariableValuesForVariable('v1', [
-      { profileId: 'work', variableId: 'v1', value: '  spaced  ' },
-    ]);
-
-    expect(ProfileVariableMapper.get('standard', 'v1')?.value).toBe('spaced');
-    expect(ProfileVariableMapper.get('work', 'v1')?.value).toBe('spaced');
   });
 
   /** 標準値・環境値のどちらも同じ規則で正規化する（画面内で規則が割れない） */

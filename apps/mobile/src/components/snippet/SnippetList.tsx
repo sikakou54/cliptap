@@ -25,11 +25,26 @@ import { SnippetWithDisplay } from '@cliptap/shared';
 import { Category } from '@cliptap/shared';
 
 /**
+ * 一覧に並べる項目
+ *
+ * @remarks
+ * 通常の一覧は定型文をそのまま並べるが、検索画面の横断検索では
+ * 同じ定型文がプロファイルごとの展開結果に分かれて複数行になる（§8.7）。
+ * そのためIDだけでは行を区別できず、行を示す値と行のプロファイル名を任意項目として持つ。
+ */
+export type SnippetListItem = SnippetWithDisplay & {
+  /** 行を一意にする値（横断検索のときだけ入る） */
+  rowKey?: string;
+  /** この展開結果になったプロファイル（横断検索のときだけ入る。コピー時の展開の基準に使う） */
+  matchedProfileIds?: string[];
+};
+
+/**
  * SnippetListのProps
  * @property snippets - 表示するスニペット配列
  * @property onPress - スニペットタップ時のコールバック（コピー処理）
- * @property onEdit - 編集ボタンタップ時のコールバック
- * @property onDelete - 削除ボタンタップ時のコールバック
+ * @property onEdit - カードのメニューで「編集」が選ばれたときのコールバック
+ * @property onDelete - カードのメニューで「削除」が選ばれ、確認ダイアログでOKされたときのコールバック
  * @property onPressTitle - タイトルタップ時のコールバック（タイトルのみコピー、省略可）
  * @property refreshing - プルリフレッシュ中フラグ（省略可、デフォルト: false）
  * @property onRefresh - プルリフレッシュ時のコールバック（省略可）
@@ -38,7 +53,7 @@ import { Category } from '@cliptap/shared';
  * @property extraData - FlashListの再描画トリガー用（ソート順変更時など）
  */
 interface SnippetListProps {
-  snippets: SnippetWithDisplay[];
+  snippets: SnippetListItem[];
   onPress: (snippet: SnippetWithDisplay) => void | Promise<void>;
   onEdit: (snippet: SnippetWithDisplay) => void;
   onDelete: (snippet: SnippetWithDisplay) => void;
@@ -49,6 +64,8 @@ interface SnippetListProps {
   overrideProfileId?: string | null;
   categories?: Category[];
   extraData?: unknown;
+  /** 0件のときに追加方法の案内を出すか（追加ボタンが見えている画面だけtrue） */
+  showEmptyHint?: boolean;
 }
 
 export function SnippetList({
@@ -62,6 +79,7 @@ export function SnippetList({
   disableCopy = false,
   categories,
   extraData,
+  showEmptyHint = true,
 }: SnippetListProps) {
   const { t } = useTranslation();
   const { responsiveSpacing, isTablet } = useTheme();
@@ -70,7 +88,7 @@ export function SnippetList({
   const columnGap = responsiveSpacing.cardGap;
 
   /* FlashListへの参照（スクロール制御用） */
-  const listRef = useRef<FlashListRef<SnippetWithDisplay>>(null);
+  const listRef = useRef<FlashListRef<SnippetListItem>>(null);
 
   /**
    * extraData（ソート順）が変更された時にリストをトップにスクロール
@@ -96,7 +114,7 @@ export function SnippetList({
   }, [categories]);
 
   const renderItem = useCallback(
-    ({ item, index }: ListRenderItemInfo<SnippetWithDisplay>) => {
+    ({ item, index }: ListRenderItemInfo<SnippetListItem>) => {
       const category = item.categoryId ? categoryMap.get(item.categoryId) : null;
 
       /* スニペットカードラッパー（タブレットでは2カラム表示） */
@@ -118,11 +136,12 @@ export function SnippetList({
             onPressTitle={onPressTitle}
             disableCopy={disableCopy}
             category={category}
+            isLast={index === snippets.length - 1}
           />
         </View>
       );
     },
-    [categoryMap, isTablet, columnGap, onPress, onEdit, onDelete, onPressTitle, disableCopy]
+    [categoryMap, isTablet, columnGap, snippets.length, onPress, onEdit, onDelete, onPressTitle, disableCopy]
   );
 
   if (snippets.length === 0) {
@@ -132,6 +151,8 @@ export function SnippetList({
         <EmptyState
           icon="document-text-outline"
           message={t('snippet.no_snippets')}
+          /* 追加方法の案内は、追加ボタンが見えている画面でだけ出す（ショートカットと同じ） */
+          description={showEmptyHint ? t('snippet.no_snippets_hint') : undefined}
         />
       </View>
     );
@@ -141,13 +162,17 @@ export function SnippetList({
   return (
     <View style={styles.listStyle}>
       {/* FlashList: FlatListの代替として使用（大量データでも高速） */}
-      <FlashList<SnippetWithDisplay>
+      <FlashList<SnippetListItem>
+        /* 検索画面ではキーボードが出たままカードを操作する。既定のままだと最初のタップが
+           キーボードを閉じるだけで消費され、コピーや「・・・」が1回では効かない */
+        keyboardShouldPersistTaps="handled"
         ref={listRef}
         data={snippets}
         extraData={extraData}
         estimatedItemSize={120}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        /* 横断検索では同じ定型文が複数行に分かれるため、IDだけでは重複する */
+        keyExtractor={(item) => item.rowKey ?? item.id}
         contentContainerStyle={{
           paddingHorizontal: responsiveSpacing.containerPadding,
           paddingBottom: responsiveSpacing.sectionGap,
@@ -171,7 +196,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  /* フラットデザインでは項目を区切り線で分けるため、項目間の余白は持たない */
   cardWrapper: {
-    marginBottom: 12,
+    marginBottom: 0,
   },
 });

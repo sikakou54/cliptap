@@ -11,4 +11,5 @@ export * from './types/snippet';
 export * from './types/category';
 export * from './types/profile';
 export * from './types/variableSchema';
+export * from './types/shortcut';
 export * from './types/export';

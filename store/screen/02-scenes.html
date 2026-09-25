@@ -1,18 +1,34 @@
 <!doctype html>
 <!--
   スライド 02 — 使う場面。
-  見出しとリードは LP の scenes セクション（apps/web/index.html:215-）から逐語流用。
+  見出しは LP の scenes セクション（#scenes）と同じ問いかけだが、版面に合わせて縮めている。
+  LP の原文は ja「毎日の入力に、何度も使う文章はありませんか。」（2行目が15字）、
+  en「Which parts of your day / start with the same text?」（2行目が25字）で、
+  .head h1 .line は nowrap、ios65 の版面は ja 11字 / 欧文 23字が上限のためあふれる。
+  リードは LP と別文。LP の scenes リードは「過去のメールやメモから探していた文章を」と
+  探す手間の話をするが、この面に写っているのは投稿欄とメール作成欄の2枚なので、
+  その2つの場面を名指しする文を置いている。
+
+  左は投稿コンポーザ、右はメールの作成欄。どちらも挿入する直前で、
+  キーボードのプレビューにこれから入る本文と挿入ボタンが出ている。
+  右は件名だけ先にタイトル挿入ボタンで入れてある。
+  どちらも撮影用ホスト（store/screen/host/）を、アプリの
+  設定 > Developer Menu > Capture Host（WebView）で開いて撮っている。
+  ホストは実在するサービスに似せない無印のUIで、リードが言う「SNS」「メール」という
+  場面だけを示す。理由と方針は store/screen/host/README.md を参照。
+  かつては X と Gmail の実機キャプチャを使っていたが、他社のUIを掲載画像へ持ち込むのをやめ、
+  言語別（-ja / -en）に撮り直せる形へ移した。
 -->
 <meta charset="utf-8" />
 <template id="slide">
   <div class="head">
     <h1 class="ja">
-      <span class="line">打っていた時間が、</span>
-      <span class="line accent">タップになる。</span>
+      <span class="line">同じ文章を、</span>
+      <span class="line accent">毎日打っていませんか。</span>
     </h1>
     <h1 class="en">
-      <span class="line">What you used to type</span>
-      <span class="line accent">becomes a tap.</span>
+      <span class="line">Which parts of your day</span>
+      <span class="line accent">start the same way?</span>
     </h1>
 
     <p class="sub ja">朝の報告、毎日のタグ、いつもの返信。SNSにもメールにも、ClipTapのキーボードから入力できます。</p>
@@ -25,7 +41,7 @@
     <figure class="shot">
       <div class="phone">
         <div class="phone-inner">
-          <img src="{{IMG}}/02-scene-2-sns.png" width="1170" height="2532" alt="" />
+          <img src="{{IMG}}/02-scene-2-sns-{{LANG}}.png" width="1206" height="2622" alt="" />
         </div>
       </div>
       <figcaption class="cap"></figcaption>
@@ -33,7 +49,7 @@
     <figure class="shot">
       <div class="phone">
         <div class="phone-inner">
-          <img src="{{IMG}}/02-scene-3-mail.png" width="1170" height="2532" alt="" />
+          <img src="{{IMG}}/02-scene-3-mail-{{LANG}}.png" width="1206" height="2622" alt="" />
         </div>
       </div>
       <figcaption class="cap"></figcaption>

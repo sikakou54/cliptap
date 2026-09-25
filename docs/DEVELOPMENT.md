@@ -635,7 +635,6 @@ src/components/
 ├── category/         # カテゴリ関連コンポーネント
 ├── profile/          # 環境関連コンポーネント
 ├── variable/         # 変数関連コンポーネント
-├── selection/        # 選択関連コンポーネント
 └── settings/         # 設定関連コンポーネント
 ```
 
@@ -690,14 +689,14 @@ packages/shared/src/mappers/
 データベースに新しいテーブルが必要な場合、共通マイグレーションへ次の連続バージョンを追加します。
 
 ```bash
-# 現行の packages/shared/src/database/migrations.ts に V6 → V7 を追加
+# 現行の packages/shared/src/database/migrations.ts に V8 → V9 を追加
 ```
 
 **例**: `packages/shared/src/database/migrations.ts`
 
 ```typescript
-export async function migrateV6ToV7(db: DbAdapter): Promise<void> {
-  // V6のfixtureからV7へ移行できる処理と回帰テストを追加する
+export async function migrateV8ToV9(db: DbAdapter): Promise<void> {
+  // V8のfixtureからV9へ移行できる処理と回帰テストを追加する
 }
 ```
 
@@ -1138,7 +1137,7 @@ npm run android
 
 ```bash
 # プレビュービルド（iOS/Android）
-npm run preview:mobile
+npm run build:mobile:preview
 
 # EAS Buildの進捗はWebで確認
 # https://expo.dev/accounts/sikakou/projects/cliptap/builds

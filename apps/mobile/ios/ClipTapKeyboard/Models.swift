@@ -75,3 +75,35 @@ struct ProfileWithVariables {
     let profile: Profile
     let variables: [String: String]  // variableName: value
 }
+
+// MARK: - Shortcut
+
+struct Shortcut {
+    let id: String
+    let categoryId: String?    /* 所属カテゴリID（定型文と共通のcategories。未分類はnil） */
+    let name: String
+    let sortOrder: Int
+    let createdAt: String
+    let updatedAt: String
+    var values: [ShortcutValue] = []  /* shortcut_valuesから取得（getAllで一括ロード） */
+}
+
+// MARK: - ShortcutValue
+
+struct ShortcutValue {
+    let id: String
+    let shortcutId: String
+    let value: String       /* 保存された文字列（例: 090-0000-0000）。変数トークンは未展開で、表示・挿入の時点で展開する */
+    let isMasked: Bool      /* 表示を伏せるか。伏せていても挿入するのは value そのもの */
+    let useCount: Int       /* コピーと拡張キーボードからの挿入の回数（使用頻度順の根拠） */
+    let sortOrder: Int
+    let createdAt: String
+    let updatedAt: String
+}
+
+/// マスク表示に使う文字列
+///
+/// 値の長さが伝わらないよう、実際の文字数によらず固定長にしてある。
+/// アプリ・Web・Android版と同じ見た目にするため、同じ文字列を持つ
+/// （packages/shared/src/shortcuts/display.ts の MASKED_VALUE_TEXT）。
+let maskedValueText = "••••••••"

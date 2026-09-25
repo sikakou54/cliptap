@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ショートカットを示すアイコン（稲妻＝すばやく入れる、の意）
+     表示切替トグルのノブの中で使う。色はtint（黄色のノブの上の紺。ClipTapKeyboardService が表示対象に合わせて付ける）で付けるため、ここでは焼き込まない -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- 24dpの枠に対して少し内側へ収めている。
+         ノブの中の描画領域は16dpのため、枠いっぱいに描くと稲妻の先端が欠けるため -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M8,4v9h2.5v7l5.5,-10h-3l3,-6z"/>
+</vector>
