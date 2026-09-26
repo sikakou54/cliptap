@@ -77,6 +77,7 @@
 "accessibility.close_button" = "Close button";
 "accessibility.copy_button" = "Copy button";
 "accessibility.sort_button" = "Sort button";
+"accessibility.next_keyboard_button" = "Next keyboard";
 "accessibility.insert_title_button" = "Insert title button";
 "accessibility.insert_newline_button" = "Insert newline button";
 "accessibility.show_shortcuts_button" = "Show shortcuts";

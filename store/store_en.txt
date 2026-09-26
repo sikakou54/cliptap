@@ -17,14 +17,9 @@ ClipTap: Text Snippet Keyboard
 Stop retyping: a snippet keyboard and text expander for canned replies.
 
 【リリースノート（Google Play／500 chars max）】
-Version 1.4.0
+Version 1.4.1
 
-- Shortcuts (free): save values you retype - name, phone, address - and insert just the value from the keyboard. Tap a value in the app to copy it.
-- Import/export is now Backup/Restore; restoring replaces all data on that device.
-- Search now spans every profile.
-- New free limits: 50 templates and 50 shortcuts (5 values each). Existing entries keep working; only new ones are blocked. Pro is unlimited.
-- Free plan: an ad may appear at startup.
-- UI and program improvements.
+- Fixed an issue where the globe icon was not displayed on the custom keyboard.
 
 【説明文（App Store・Google Play 共通／4,000 chars max）】
 Stop retyping the same messages.
